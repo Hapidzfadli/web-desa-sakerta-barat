@@ -46,11 +46,9 @@ const AuthForm = ({type} : {type :string}) => {
               name: data.name!,
               username: data.username!,
               email: data.email!,
-              password: data.password!
+              password: data.password!,
             }
-
             const newUser = await registerUser(userData);
-  
             setUser(newUser);
           }
           if(type === 'login') {

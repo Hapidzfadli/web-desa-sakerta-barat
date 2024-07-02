@@ -1,5 +1,3 @@
-'use server';
-import { cookies } from 'next/headers';
 import { API_URL } from '../../constants';
 
 export const loginUser = async ({username, password} : LoginProps) => {
@@ -18,14 +16,6 @@ export const loginUser = async ({username, password} : LoginProps) => {
     }
 
     const data = await response.json();
-    
-    // Set session cookie
-    cookies().set("session", data.data.token, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "strict",
-      secure: true,
-    });
 
     return data;
   } catch (error) {
@@ -51,14 +41,6 @@ export const registerUser = async ({...userData} : RegisterParams) => {
 
     const data = await response.json();
     
-    // Set session cookie after successful registration
-    cookies().set("session", data.data.token, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "strict",
-      secure: true,
-    });
-
     return data;
   } catch (error) {
     console.error('Registration error:', error);
