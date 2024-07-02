@@ -2,8 +2,8 @@ export class RegisterUserRequest {
   username: string;
   email: string;
   password: string;
-  first_name: string;
-  last_name?: string;
+  firstName: string;
+  lastName?: string;
   name: string;
 }
 export class UserResponse {
@@ -13,6 +13,6 @@ export class UserResponse {
   token?: string;
 }
 export class LoginUserRequest {
-  identifier: string;
+  username: string;
   password: string;
 }

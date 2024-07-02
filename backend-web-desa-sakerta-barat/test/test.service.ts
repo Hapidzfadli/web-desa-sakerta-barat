@@ -22,7 +22,7 @@ export class TestService {
         username: 'test',
         name: 'test',
         email: 'test@test.com',
-        first_name: 'test',
+        firstName: 'test',
         password: await bcrypt.hash('test', 10),
         token: 'test',
       },
