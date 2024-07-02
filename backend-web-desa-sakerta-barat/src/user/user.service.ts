@@ -1,11 +1,10 @@
 import { HttpException, Inject, Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
-import { UserValidation } from './user.validation';
-import * as bcrypt from 'bcrypt';
 import { ValidationService } from '../common/validation.service';
 import { PrismaService } from '../common/prisma.service';
-import { RegisterUserRequest, UserResponse } from '../model/user.model';
+import { UserResponse } from '../model/user.model';
+
 @Injectable()
 export class UserService {
   constructor(
@@ -14,28 +13,13 @@ export class UserService {
     private prismaService: PrismaService,
   ) {}
 
-  async register(request: RegisterUserRequest): Promise<UserResponse> {
-    this.logger.debug(`Register new user ${JSON.stringify(request)}`);
-    const registerRequest: RegisterUserRequest =
-      this.validationService.validate(UserValidation.REGISTER, request);
-    const totalUserWithSameUsername = await this.prismaService.user.count({
-      where: {
-        username: registerRequest.username,
-      },
+  async findOne(username: string): Promise<UserResponse> {
+    const user = await this.prismaService.user.findUnique({
+      where: { username },
     });
-
-    if (totalUserWithSameUsername != 0) {
-      throw new HttpException('Username alredy exist', 400);
+    if (!user) {
+      throw new HttpException('User not found', 404);
     }
-    registerRequest.password = await bcrypt.hash(registerRequest.password, 10);
-
-    const user = await this.prismaService.user.create({
-      data: registerRequest,
-    });
-    return {
-      username: user.username,
-      name: user.name,
-      email: user.email,
-    };
+    return user;
   }
 }

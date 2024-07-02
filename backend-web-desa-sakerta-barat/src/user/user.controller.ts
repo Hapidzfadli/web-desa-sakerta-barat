@@ -6,15 +6,4 @@ import { WebResponse } from '../model/web.model';
 @Controller('/api/users')
 export class UserController {
   constructor(private userService: UserService) {}
-
-  @Post()
-  @HttpCode(200)
-  async register(
-    @Body() request: RegisterUserRequest,
-  ): Promise<WebResponse<UserResponse>> {
-    const result = await this.userService.register(request);
-    return {
-      data: result,
-    };
-  }
 }

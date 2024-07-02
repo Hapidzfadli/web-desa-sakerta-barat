@@ -52,8 +52,8 @@ describe('UserController', () => {
           password: 'test',
           name: 'test',
           email: 'test@test.com',
-          first_name: 'test',
-          last_name: '',
+          firstName: 'test',
+          lastName: '',
         });
 
       logger.info(response.body);

@@ -19,17 +19,17 @@ enum Role {
 }
 
 model User {
-  id         Int      @id @default(autoincrement())
-  email      String   @unique @db.VarChar(100)
-  password   String   @db.VarChar(100)
-  username   String   @unique @db.VarChar(100)
-  name       String   @db.VarChar(100)
-  first_name String   @db.VarChar(100)
-  last_name  String?  @db.VarChar(100)
-  role       Role     @default(WARGA)
-  token      String?  @db.VarChar(255)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  email     String   @unique @db.VarChar(100)
+  password  String   @db.VarChar(100)
+  username  String   @unique @db.VarChar(100)
+  name      String   @db.VarChar(100)
+  firstName String   @db.VarChar(100)
+  lastName  String?  @db.VarChar(100)
+  role      Role     @default(WARGA)
+  token     String?  @db.VarChar(255)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("users")
 }
