@@ -21,3 +21,19 @@ declare interface ExploreProps {
 declare interface SiderbarProps {
   user: User;
 }
+
+declare interface LoginProps {
+  username: string;
+  password: string;
+}
+
+// ========================================
+
+declare type RegisterParams = {
+  firstName: string;
+  lastName: string;
+  username: string;
+  name: string;
+  email: string;
+  password: string;
+};

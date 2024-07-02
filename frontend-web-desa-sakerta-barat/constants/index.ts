@@ -63,3 +63,6 @@ export const exploreLink = [
     icon : "/assets/icons/charity.png"
   },
 ]
+
+
+export const API_URL = process.env.API_URL;
