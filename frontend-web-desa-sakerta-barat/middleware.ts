@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
 
   const isPrivatePath = path.startsWith('/member') || path.startsWith('/admin')
-  const token = request.cookies.get('authToken')?.value
+  const token = request.cookies.get('session')?.value
 
   if (isPrivatePath && !token) {
     return NextResponse.redirect(new URL('/login', request.url))

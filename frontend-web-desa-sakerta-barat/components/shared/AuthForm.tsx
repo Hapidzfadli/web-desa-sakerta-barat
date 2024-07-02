@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input"
 import CustomInput from './CustomInput';
 import { Loader2 } from 'lucide-react';
+import { loginUser, registerUser } from '../../lib/actions/user.actions';
 const AuthForm = ({type} : {type :string}) => {
     const router = useRouter();
     const [user, setUser] = useState(null);
@@ -34,30 +35,37 @@ const AuthForm = ({type} : {type :string}) => {
         },
       })
 
-    const onSubmit = async (data: z.infer<typeof formSchema>) => {
+      const onSubmit = async (data: z.infer<typeof formSchema>) => {
         setIsLoading(true);
-
-        try {
-            // Handle sign up or login logic here
-            console.log("Form data:", data);
-            
-            if(type === 'register') {
-                // Registration logic
-                // Example: await registerUser(data);
-            } else {
-                // Login logic
-                // Example: await loginUser(data);
+  
+        try { 
+          if(type === 'register') {
+            const userData = {
+              firstName: data.firstName!,
+              lastName: data.lastName!,
+              name: data.name!,
+              username: data.username!,
+              email: data.email!,
+              password: data.password!
             }
 
-            // Redirect after successful auth
-            router.push('/dashboard');
+            const newUser = await registerUser(userData);
+  
+            setUser(newUser);
+          }
+          if(type === 'login') {
+            const response = await loginUser({
+              username: data.username,
+              password: data.password,
+            })
+            if(response) router.push('/')
+          }
         } catch (error) {
-            console.error("Auth error:", error);
-            // Handle error (e.g., show error message to user)
+          console.log(error);
         } finally {
-            setIsLoading(false);
+          setIsLoading(false);
         }
-    }
+      }
   return (
     <section className='auth-from'>
         <header className='min-h-screen  bg-gray-900 flex items-center justify-center p-4'>
