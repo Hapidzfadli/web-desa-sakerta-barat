@@ -235,6 +235,9 @@ body {
   .toggle-switch {
     @apply bg-gray-300 !important;
   }
+  .form-btn {
+    @apply text-16 rounded-lg border border-bankGradient bg-bank-gradient font-semibold text-white shadow-form;
+  }
 }
 
 /* ==========explore */
