@@ -33,7 +33,7 @@ export class AuthService {
     if (totalUserWithSameUsername != 0) {
       throw new HttpException('Username alredy exist', 400);
     }
-    registerRequest.password = await bcrypt.hash(registerRequest.password, 100);
+    registerRequest.password = await bcrypt.hash(registerRequest.password, 10);
 
     const user = await this.prismaService.user.create({
       data: registerRequest,
