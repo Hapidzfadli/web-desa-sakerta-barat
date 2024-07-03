@@ -96,7 +96,7 @@ export class ResidentService {
 
   async getResidentById(id: number): Promise<ResidentResponse> {
     const resident = await this.prismaService.resident.findUnique({
-      where: { id },
+      where: { userId: id },
       include: { documents: true },
     });
 
@@ -127,7 +127,7 @@ export class ResidentService {
 
     try {
       const existingResident = await this.prismaService.resident.findUnique({
-        where: { id },
+        where: { userId: id },
       });
 
       if (!existingResident) {
