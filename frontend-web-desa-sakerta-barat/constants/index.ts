@@ -1,3 +1,4 @@
+import { Home, FilePlus, FileCheck, Settings, LogOut } from 'lucide-react';
 export const headerLinks = [
   {
 
@@ -20,7 +21,7 @@ export const headerLinks = [
 export const sidebarLinks = [
   {
     imgURL: "/assets/icons/home.svg",
-    route: "/dashboard",
+    route: "/member/dashboard",
     label: "Dashboard",
   },
   {
@@ -38,8 +39,28 @@ export const sidebarLinks = [
     route: "/Pertanahan",
     label: "Pertanahan",
   },
-  
-  
+];
+export const sidebarLinksMember = [
+  {
+    icon: Home,
+    route: "/member/dashboard",
+    label: "Dashboard",
+  },
+  {
+    icon: FilePlus,
+    route: "/member/permohonan",
+    label: "Ajukan Permohonan",
+  },
+  {
+    icon: FileCheck,
+    route: "/member/status",
+    label: "Status Permohonan",
+  },
+  {
+    icon: Settings,
+    route: "/member/pengaturan",
+    label: "Pengaturan",
+  },
 ];
 export const exploreLink = [
   {

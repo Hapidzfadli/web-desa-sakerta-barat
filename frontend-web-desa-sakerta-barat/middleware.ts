@@ -13,7 +13,7 @@ export function middleware(request: NextRequest) {
 
   const isPrivatePath = path.startsWith('/member') || path.startsWith('/admin')
   const token = request.cookies.get('session')?.value
-  console.log(token)
+ 
   if (isPrivatePath && !token) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
@@ -22,7 +22,6 @@ export function middleware(request: NextRequest) {
     try {
       const decodedToken = jwtDecode<CustomJwtPayload>(token);
       const userRole = decodedToken.role || 'WARGA';
-      console.log(decodedToken)
 
       if (path.startsWith('/admin') && userRole !== 'ADMIN') {
         return NextResponse.redirect(new URL('/unauthorized', request.url))

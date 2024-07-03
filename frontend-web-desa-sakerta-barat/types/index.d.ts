@@ -1,17 +1,17 @@
 declare type User = {
   id: string;
+  username: string;
   email: string;
-  userId: string;
   firstName: string;
   lastName: string;
-  name: string;
-  // address1: string;
-  // city: string;
-  // state: string;
-  // postalCode: string;
-  // dateOfBirth: string;
-  // ssn: string;
-};
+  role: string;
+}
+
+declare interface UserContextType {
+  user: User | null;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  logout: () => void;
+}
 
 declare interface ExploreProps {
     title: string;
