@@ -18,18 +18,53 @@ enum Role {
   WARGA
 }
 
+enum DocumentType {
+  ID_CARD
+  DRIVING_LICENSE
+  FAMILY_CARD
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique @db.VarChar(100)
-  password  String   @db.VarChar(100)
-  username  String   @unique @db.VarChar(100)
-  name      String   @db.VarChar(100)
-  firstName String   @db.VarChar(100)
-  lastName  String?  @db.VarChar(100)
-  role      Role     @default(WARGA)
-  token     String?  @db.VarChar(255)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        Int       @id @default(autoincrement())
+  email     String    @unique @db.VarChar(100)
+  password  String    @db.VarChar(100)
+  username  String    @unique @db.VarChar(100)
+  name      String    @db.VarChar(100)
+  firstName String    @db.VarChar(100)
+  lastName  String?   @db.VarChar(100)
+  role      Role      @default(WARGA)
+  token     String?   @db.VarChar(255)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Resident  Resident?
 
   @@map("users")
+}
+
+model Resident {
+  id                 Int        @id @default(autoincrement())
+  nationalId         String     @unique @db.VarChar(16)
+  name               String     @db.VarChar(100)
+  dateOfBirth        DateTime
+  idCardAddress      String     @db.Text
+  residentialAddress String     @db.Text
+  userId             Int        @unique
+  user               User       @relation(fields: [userId], references: [id])
+  documents          Document[]
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  @@map("residents")
+}
+
+model Document {
+  id         Int          @id @default(autoincrement())
+  type       DocumentType
+  fileUrl    String       @db.Text
+  residentId Int
+  resident   Resident     @relation(fields: [residentId], references: [id])
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@map("documents")
 }
