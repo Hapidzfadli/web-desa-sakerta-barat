@@ -50,13 +50,22 @@ const AuthForm = ({type} : {type :string}) => {
             }
             const newUser = await registerUser(userData);
             setUser(newUser);
+            if(newUser) router.push('/login')
           }
           if(type === 'login') {
             const response = await loginUser({
               username: data.username,
               password: data.password,
             })
-            if(response) router.push('/')
+
+            if(response) {
+              if(response.role === 'ADMIN'){
+                router.push('/admin/dashboard')
+              } else {
+                router.push('/member/dashboard')
+              }
+            }
+            
           }
         } catch (error) {
           console.log(error);

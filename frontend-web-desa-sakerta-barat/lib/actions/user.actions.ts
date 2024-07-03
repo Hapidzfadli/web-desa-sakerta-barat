@@ -1,5 +1,5 @@
 import { API_URL } from '../../constants';
-
+import Cookies from 'js-cookie';
 export const loginUser = async ({username, password} : LoginProps) => {
   try {
     const response = await fetch(`${API_URL}/api/auth/login`, {
@@ -16,7 +16,10 @@ export const loginUser = async ({username, password} : LoginProps) => {
     }
 
     const data = await response.json();
+    Cookies.set('session', data.data.token, { expires: 7 });
 
+    localStorage.setItem('userData', JSON.stringify(data.data));
+    
     return data;
   } catch (error) {
     console.error('Login error:', error);
