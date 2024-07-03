@@ -1,3 +1,5 @@
+import { Role } from '@prisma/client';
+
 export class RegisterUserRequest {
   username: string;
   email: string;
@@ -10,6 +12,7 @@ export class UserResponse {
   username: string;
   name: string;
   email: string;
+  role?: Role;
   token?: string;
 }
 export class LoginUserRequest {

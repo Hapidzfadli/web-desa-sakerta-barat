@@ -69,7 +69,7 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new HttpException('Username or password is invalid', 401);
     }
-    const payload = { sub: user.id, username: user.username };
+    const payload = { sub: user.id, username: user.username, role: user.role };
     user = await this.prismaService.user.update({
       where: {
         username: loginRequest.username,
@@ -83,6 +83,7 @@ export class AuthService {
       name: user.name,
       email: user.email,
       token: user.token,
+      role: user.role,
     };
   }
 }
