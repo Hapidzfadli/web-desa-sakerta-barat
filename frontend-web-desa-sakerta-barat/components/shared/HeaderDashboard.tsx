@@ -1,24 +1,45 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Bell, ChevronDown, LogOut, Moon, Search, User } from 'lucide-react'
 import { useUser } from '../../app/context/UserContext'
 import MobileNav from './MobileNav'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 const HeaderDashboard = () => {
   const { user, logout } = useUser()
   const [showDropdown, setShowDropdown] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
+
   const handleLogout = () => {
     logout()
-    router.push('/login') // Asumsikan '/login' adalah route untuk halaman login
+    router.push('/login') 
   }
+
+  const pageTitle = useMemo(() => {
+    const routeTitleMap: { [key: string]: string } = {
+      '/member/dashboard': 'Dashboard',
+      '/member/pengaturan': 'Pengaturan',
+    }
+
+    const matchedRoute = Object.keys(routeTitleMap).find(route => pathname.startsWith(route))
+    if (matchedRoute && matchedRoute in routeTitleMap) {
+      return routeTitleMap[matchedRoute]
+    } else if (pathname.startsWith('/member/pengaturan/')) {
+      const subRoute = pathname.split('/').pop()
+      return subRoute ? subRoute.charAt(0).toUpperCase() + subRoute.slice(1) : 'Pengaturan'
+    } else {
+      return 'Halaman'
+    }
+  }, [pathname])
+
+
   return (
     <header className="flex items-center justify-between p-4 bg-white border-b border-gray-200">
       {/* Left section */}
       <div className="flex items-center">
         
-        <h1 className="text-2xl font-bold text-navy-700 hidden md:block">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-black-2 hidden md:block">{pageTitle}</h1>
       </div>
 
       {/* Center section - Search */}

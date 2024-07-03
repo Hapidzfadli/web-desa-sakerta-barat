@@ -7,6 +7,25 @@ declare type User = {
   role: string;
 }
 
+declare type BiodataType = {
+  nama: string
+  nik: string
+  nokk: string
+  tempatLahir: string
+  tanggalLahir: string
+  jenisKelamin: string
+  alamat: string
+  rt: string
+  rw: string
+  kelurahanDesa: string
+  kecamatan: string
+  agama: string
+  statusPerkawinan: string
+  pekerjaan: string
+  kewarganegaraan: string
+  berlakuHingga: string
+}
+
 declare interface UserContextType {
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;

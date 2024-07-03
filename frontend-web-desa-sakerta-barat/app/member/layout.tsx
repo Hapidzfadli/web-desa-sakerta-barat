@@ -1,7 +1,7 @@
 "use client"
 import Sidebar from "@/components/shared/Sidebar"
-import { UserProvider } from "../../context/UserContext"
-import HeaderDashboard from "../../../components/shared/HeaderDashboard"
+import { UserProvider } from "../context/UserContext"
+import HeaderDashboard from "../../components/shared/HeaderDashboard"
 
 export default function RootLayout({
     children,
