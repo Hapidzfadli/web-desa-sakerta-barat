@@ -46,6 +46,12 @@ declare interface LoginProps {
   password: string;
 }
 
+declare interface DecodedToken {
+  sub : number,
+  userId: number,
+  username :string,
+}
+
 // ========================================
 
 declare type RegisterParams = {
