@@ -8,8 +8,8 @@ const Pengaturan = () => {
     const [activeTab, setActiveTab] = useState('biodata')
 
     const tabs = [
-      { id: 'biodata', label: 'Biodata Diri', component: BiodataDiri },
-      { id: 'keamanan', label: 'Keamanan', component: Keamanan },
+      { id: 'biodata', label: 'Biodata Diri', component: <BiodataDiri /> },
+      { id: 'keamanan', label: 'Keamanan', component: <Keamanan /> },
     ]
   
     return (
@@ -34,7 +34,7 @@ const Pengaturan = () => {
         </div>
   
         <div className="mt-6">
-          {tabs.find(tab => tab.id === activeTab)?.component()}
+          {tabs.find(tab => tab.id === activeTab)?.component}
         </div>
       </div>
     )

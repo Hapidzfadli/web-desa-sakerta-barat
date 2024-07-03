@@ -85,6 +85,74 @@ body {
     hue-rotate(32deg) brightness(98%) contrast(92%);
 }
 
+.custom-dialog-content {
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 
+              0 5px 10px rgba(0, 0, 0, 0.04) !important;
+  border-radius: 12px !important;
+  padding: 24px !important;
+}
+
+.custom-dialog-content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  border-radius: inherit;
+  z-index: -1;
+}
+
+.custom-dialog-content::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  border-radius: inherit;
+  z-index: -1;
+  filter: blur(2px);
+}
+.custom-dialog-overlay {
+  background-color: rgba(0, 0, 0, 0.5) !important; /* Ubah nilai alpha untuk mengatur kegelapan */
+}
+
+
+.glassy-input {
+  background: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(5px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: rgba(0, 0, 0, 0.8) !important;
+  transition: all 0.3s ease;
+}
+
+.glassy-input:focus {
+  background: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+.glassy-input::placeholder {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.glassy-label {
+  color: rgba(0, 0, 0, 0.7) !important;
+  font-weight: 500;
+}
 
 /* ========================================== TAILWIND STYLES */
 @layer utilities {
@@ -224,9 +292,7 @@ body {
     @apply bg-grey-50 h-[54px] focus-visible:ring-offset-0 placeholder:text-grey-500 rounded-full p-regular-16 px-4 py-3 border-none focus-visible:ring-transparent !important;
   }
 
-  .textarea {
-    @apply bg-grey-50 flex flex-1 placeholder:text-grey-500 p-regular-16 px-5 py-3 border-none focus-visible:ring-transparent !important;
-  }
+
 
   .button {
     @apply rounded-full h-[54px] p-regular-16;
