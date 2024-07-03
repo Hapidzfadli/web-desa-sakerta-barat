@@ -20,7 +20,7 @@ import { Logger } from 'winston';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 
 @Injectable()
 export class ResidentService {
@@ -32,9 +32,22 @@ export class ResidentService {
 
   async createResident(
     request: CreateResidentRequest,
+    user: any,
     file?: Express.Multer.File,
   ): Promise<ResidentResponse> {
     this.logger.debug(`Creating new resident: ${JSON.stringify(request)}`);
+    if (user.role === Role.WARGA) {
+      const existingResidentCount = await this.prismaService.resident.count({
+        where: { userId: user.id },
+      });
+
+      if (existingResidentCount > 0) {
+        throw new ConflictException(
+          'You cannot have more than one resident data',
+        );
+      }
+    }
+
     const validatedData = this.validationService.validate(
       ResidentValidation.CREATE,
       request,
@@ -97,6 +110,7 @@ export class ResidentService {
   async updateResident(
     id: number,
     request: UpdateResidentRequest,
+    user: any,
     file?: Express.Multer.File,
   ): Promise<ResidentResponse> {
     this.logger.debug(`Updating resident ${id}: ${JSON.stringify(request)}`);
@@ -118,6 +132,13 @@ export class ResidentService {
 
       if (!existingResident) {
         throw new NotFoundException(`Resident with ID ${id} not found`);
+      }
+
+      if (user.role === Role.WARGA && existingResident.userId !== user.id) {
+        throw new HttpException(
+          'You do not have permission to update this resident data',
+          HttpStatus.FORBIDDEN,
+        );
       }
 
       const updateData: Prisma.ResidentUpdateInput = {};

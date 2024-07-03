@@ -16,6 +16,7 @@ import {
   HttpException,
   HttpStatus,
   ConflictException,
+  Request,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ResidentService } from './resident.service';
@@ -26,6 +27,7 @@ import {
   UpdateResidentRequest,
 } from '../model/resident.model';
 import { WebResponse } from '../model/web.model';
+import { Auth } from '../auth/decorators/auth.decorator';
 
 @Controller('/api/residents')
 @UseGuards(AuthGuard)
@@ -37,6 +39,7 @@ export class ResidentController {
   @UseInterceptors(FileInterceptor('document'))
   async createResident(
     @Body() request: CreateResidentRequest,
+    @Auth() user: any,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -49,7 +52,11 @@ export class ResidentController {
     file?: Express.Multer.File,
   ): Promise<WebResponse<ResidentResponse>> {
     try {
-      const result = await this.residentService.createResident(request, file);
+      const result = await this.residentService.createResident(
+        request,
+        user,
+        file,
+      );
       return {
         data: result,
       };
@@ -82,6 +89,7 @@ export class ResidentController {
   async updateResident(
     @Param('id') id: string,
     @Body() request: UpdateResidentRequest,
+    @Auth() user: any,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -96,6 +104,7 @@ export class ResidentController {
     const result = await this.residentService.updateResident(
       parseInt(id),
       request,
+      user,
       file,
     );
     return {
