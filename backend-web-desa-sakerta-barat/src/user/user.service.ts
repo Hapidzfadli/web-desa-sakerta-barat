@@ -8,7 +8,10 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { ValidationService } from '../common/validation.service';
 import { PrismaService } from '../common/prisma.service';
-import { UserResponse } from '../model/user.model';
+import { UpdateUserRequest, UserResponse } from '../model/user.model';
+import { UserValidation } from './user.validation';
+import * as bcrypt from 'bcrypt';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -55,5 +58,52 @@ export class UserService {
       );
       throw new HttpException('Failed to fetch user profile', 500);
     }
+  }
+
+  async updateUser(
+    userId: number,
+    updateData: UpdateUserRequest,
+  ): Promise<UserResponse> {
+    try {
+      // Remove profilePicture from validation as it's handled separately
+      const { profilePicture, ...dataToValidate } = updateData;
+
+      const validatedData = this.validationService.validate(
+        UserValidation.UPDATE,
+        dataToValidate,
+      );
+
+      if (validatedData.password) {
+        validatedData.password = await bcrypt.hash(validatedData.password, 10);
+      }
+
+      // Add profilePicture back if it exists
+      if (profilePicture) {
+        validatedData.profilePicture = profilePicture;
+      }
+
+      const updatedUser = await this.prismaService.user.update({
+        where: { id: userId },
+        data: validatedData,
+      });
+
+      // Remove sensitive information
+      delete updatedUser.password;
+
+      return updatedUser;
+    } catch (error) {
+      this.logger.error(`Error updating user: ${error.message}`, error.stack);
+      throw new HttpException('Failed to update user', 500);
+    }
+  }
+
+  async getUserByProfilePicture(fileName: string): Promise<User | null> {
+    return this.prismaService.user.findFirst({
+      where: {
+        profilePicture: {
+          endsWith: fileName,
+        },
+      },
+    });
   }
 }

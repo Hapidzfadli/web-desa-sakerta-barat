@@ -15,12 +15,15 @@ export class UserResponse {
   role?: Role;
   token?: string;
   isVerified?: boolean;
+  profilePicture?: string;
 }
+
 export class UpdateUserRequest {
   name?: string;
   email?: string;
   password?: string;
   isVerified?: boolean;
+  profilePicture?: string;
 }
 export class LoginUserRequest {
   username: string;

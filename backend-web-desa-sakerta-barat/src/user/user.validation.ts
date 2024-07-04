@@ -68,5 +68,21 @@ export class UserValidation {
       .max(100, 'Email maksimal 100 karakter')
       .optional(),
     isVerified: z.boolean().optional(),
+    profilePicture: z
+      .string()
+      .url('Format URL tidak valid')
+      .max(255, 'URL foto profil maksimal 255 karakter')
+      .optional()
+      .refine(
+        (url) => {
+          if (!url) return true; // Allow empty values
+          const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
+          return validExtensions.some((ext) => url.toLowerCase().endsWith(ext));
+        },
+        {
+          message:
+            'URL foto profil harus berakhiran .jpg, .jpeg, .png, atau .gif',
+        },
+      ),
   });
 }
