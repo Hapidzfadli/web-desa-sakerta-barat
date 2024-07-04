@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import BiodataDiri from '../../../components/page/BiodataDiri'
 import Keamanan from '../../../components/page/Keamanan'
 import { cn } from '../../../lib/utils'
+import { Toaster } from '../../../components/ui/toaster'
 
 const Pengaturan = () => {
     const [activeTab, setActiveTab] = useState('biodata')
@@ -36,6 +37,7 @@ const Pengaturan = () => {
         <div className="mt-6">
           {tabs.find(tab => tab.id === activeTab)?.component}
         </div>
+        
       </div>
     )
 }

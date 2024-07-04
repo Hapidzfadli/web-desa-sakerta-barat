@@ -20,6 +20,7 @@ const HeaderDashboard = () => {
     const routeTitleMap: { [key: string]: string } = {
       '/member/dashboard': 'Dashboard',
       '/member/pengaturan': 'Pengaturan',
+      '/member/permohonan': 'Permohonan',
     }
 
     const matchedRoute = Object.keys(routeTitleMap).find(route => pathname.startsWith(route))
