@@ -2,6 +2,7 @@
 import Sidebar from "@/components/shared/Sidebar"
 import { UserProvider } from "../context/UserContext"
 import HeaderDashboard from "../../components/shared/HeaderDashboard"
+import { Toaster } from "../../components/ui/toaster"
 
 export default function RootLayout({
     children,
@@ -19,6 +20,7 @@ export default function RootLayout({
               {children}
             </div>
           </div>
+          <Toaster />
       </main>
       </UserProvider>
     )

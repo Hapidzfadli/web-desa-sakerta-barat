@@ -3,14 +3,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { useUser } from '../../app/context/UserContext'
-import { fetchResidentData } from '../../lib/actions/setting.actions'
+import { fetchResidentData, saveResidentData, saveProfileData } from '../../lib/actions/setting.actions'
 import EditPopup from '../shared/EditPopup'
+import { useToast } from "../ui/use-toast"
+import { formatDate, toInputDateValue } from '../../lib/utils'
+import { createResidentSchema, updateProfileSchema, updateResidentSchema } from '../../lib/settingUtils'
 
 const BiodataDiri = () => {
   const { user } = useUser();
   const [profileData, setProfileData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast()
 
   useEffect(() => {
     const loadProfileData = async () => {
@@ -30,10 +34,72 @@ const BiodataDiri = () => {
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
   if (!profileData) return <div>No profile data available</div>;
-  const handleSave = (data: Record<string, string>) => {
-    console.log('Saved data:', data);
-    // Implementasi logika untuk menyimpan data
+
+  const handleSaveProfile = async (data: Record<string, string>, errors?: Record<string, string>) => {
+    if (errors) {
+      // Handle validation errors
+      const errorMessage = Object.values(errors).join(', ');
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: errorMessage,
+      });
+      return;
+    }
+
+    try {
+      const validatedData = updateProfileSchema.parse(data);
+      const savedData = await saveProfileData(validatedData);
+      setProfileData(prevData => ({ ...prevData, ...savedData }));
+      toast({
+        title: "Success",
+        description: "Profile data saved successfully",
+      });
+    } catch (error) {
+      console.error('Save profile error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save profile data. Please check your input and try again.",
+      });
+    }
   };
+
+
+
+  const handleSaveResident = async (data: Record<string, string>, errors?: Record<string, string>) => {
+    if (errors) {
+      // Handle validation errors
+      const errorMessage = Object.values(errors).join(', ');
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: errorMessage,
+      });
+      return;
+    }
+
+    try {
+      const validatedData = updateResidentSchema.parse(data);
+      const savedData = await saveResidentData(validatedData);
+      setProfileData(prevData => ({ 
+        ...prevData, 
+        Resident: { ...prevData.Resident, ...savedData } 
+      }));
+      toast({
+        title: "Success",
+        description: "Resident data saved successfully",
+      });
+    } catch (error) {
+      console.error('Save resident error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save resident data. Please check your input and try again.",
+      });
+    }
+  };
+
   return (
     <div className="p-4 space-y-4">
       <Card>
@@ -48,43 +114,33 @@ const BiodataDiri = () => {
               <p className="text-sm text-gray-500">Last updated: {new Date(profileData.updatedAt).toLocaleString()}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm">Edit</Button>
-        </div>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Personal Information</CardTitle>
-            <EditPopup
-              title="Edit Personal Information"
+          <EditPopup
+              title="Edit Informasi Akun"
               fields={[
                 { label: 'Nama Lengkap', name: 'name', value: profileData.name },
+                { label: 'Nama Depan', name: 'firstName', value: profileData.firstName },
+                { label: 'Nama Belakang', name: 'lastName', value: profileData.lastName },
                 { label: 'Email', name: 'email', value: profileData.email },
-                { label: 'Nomor Hp', name: 'phone', value: profileData.phoneNumber },
-                { label: 'NIK', name: 'phone', value: profileData.Resident.nationalId },
-                { label: 'Alamat KTP', name: 'address', value: profileData.Resident.idCardAddress, type: 'textarea' },
-                { label: 'Alamat Domisili', name: 'address', value: profileData.Resident.residentialAddress, type: 'textarea' },
+                { label: 'Nomor Hp', name: 'phoneNumber', value: profileData.phoneNumber },
               ]}
-              onSave={handleSave}
+              onSave={handleSaveProfile}
+              validationSchema={updateProfileSchema}
             />
-          </div>
-        </CardHeader>
+        </div>
         <CardContent>
           <div className="grid md:grid-cols-2 gap-4">
             {[
-              { label: 'Username', field: 'username' },
+              { label: 'Nama Depan', field: 'firstName' },
+              { label: 'Nama Belakang', field: 'lastName' },
               { label: 'Nama Lengkap', field: 'name' },
-              { label: 'NIK', field: 'Resident.nationalId' },
-              { label: 'Tanggal Lahir', field: 'Resident.dateOfBirth' },
+              { label: 'Role', field: 'role' },
               { label: 'Email', field: 'email' },
               { label: 'Nomor HP', field: 'phoneNumber' },
-              { label: 'Alamat Tempat Tinggal', field: 'Resident.idCardAddress' },
-              { label: 'Alamat Domisili', field: 'Resident.residentialAddress' },
+              { label: 'Status', field: 'isVerified' }
             ].map((item) => (
               <div key={item.field}>
                 <p className="text-sm font-medium text-gray-500">{item.label}</p>
-                <p>{item.field.split('.').reduce((obj, key) => obj?.[key], profileData) || 'Not provided'}</p>
+                <p>{profileData[item.field] !== undefined ? String(profileData[item.field]) : 'Not provided'}</p>
               </div>
             ))}
           </div>
@@ -93,14 +149,72 @@ const BiodataDiri = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Role Information</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Biodata Penduduk</CardTitle>
+            <EditPopup
+              title="Edit Biodata Penduduk"
+              fields={[
+                { label: 'Nama Lengkap', name: 'name', value: profileData.Resident?.name, required : true },
+                { label: 'NIK', name: 'nationalId', value: profileData.Resident?.nationalId, required : true },
+                { 
+                  label: 'Tanggal Lahir', 
+                  name: 'dateOfBirth', 
+                  value: profileData.Resident?.dateOfBirth ? toInputDateValue(profileData.Resident.dateOfBirth) : '',
+                  type: 'date',
+                  required: true
+                },
+                { label: 'Agama', name: 'religion', value: profileData.Resident?.religion, required : true },
+                { label: 'Status Pernikahan', name: 'maritalStatus', value: profileData.Resident?.maritalStatus, required : true },
+                { label: 'Pekerjaan', name: 'occupation', value: profileData.Resident?.occupation, required : true },
+                { label: 'Kewarganegaraan', name: 'nationality', value: profileData.Resident?.nationality, required : true },
+                { label: 'Tempat Lahir', name: 'placeOfBirth', value: profileData.Resident?.placeOfBirth, required : true },
+                { label: 'Jenis Kelamin', name: 'gender', value: profileData.Resident?.gender, required : true },
+                { label: 'Nomor Kartu Keluarga', name: 'familyCardNumber', value: profileData.Resident?.familyCardNumber, required : true },
+                { label: 'Kecamatan', name: 'district', value: profileData.Resident?.district, required : true },
+                { label: 'Kabupaten', name: 'regency', value: profileData.Resident?.regency, required : true },
+                { label: 'Provinsi', name: 'province', value: profileData.Resident?.province, required : true },
+                { label: 'Kode Pos', name: 'postalCode', value: profileData.Resident?.postalCode, required : true },
+                { label: 'Alamat KTP', name: 'idCardAddress', value: profileData.Resident?.idCardAddress, type: 'textarea', required : true },
+                { label: 'Alamat Domisili', name: 'residentialAddress', value: profileData.Resident?.residentialAddress, type: 'textarea', required : true },
+              ]}
+              onSave={handleSaveResident}
+              validationSchema={updateResidentSchema}
+            />
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Role</p>
-              <p>{profileData.role}</p>
-            </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            {[
+              { label: 'Nama Lengkap', field: 'name' },
+              { label: 'NIK', field: 'nationalId' },
+              { 
+                label: 'Tanggal Lahir', 
+                field: 'dateOfBirth', 
+                format: (value: string) => formatDate(value)
+              },
+              { label: 'Agama', field: 'religion' },
+              { label: 'Status Pernikahan', field: 'maritalStatus' },
+              { label: 'Pekerjaan', field: 'occupation' },
+              { label: 'Kewarganegaraan', field: 'nationality' },
+              { label: 'Tempat Lahir', field: 'placeOfBirth' },
+              { label: 'Jenis Kelamin', field: 'gender' },
+              { label: 'Nomor Kartu Keluarga', field: 'familyCardNumber' },
+              { label: 'Kecamatan', field: 'district' },
+              { label: 'Kabupaten', field: 'regency' },
+              { label: 'Provinsi', field: 'province' },
+              { label: 'Kode Pos', field: 'postalCode' },
+              { label: 'Alamat KTP', field: 'idCardAddress' },
+              { label: 'Alamat Domisili', field: 'residentialAddress' },
+            ].map((item) => (
+              <div key={item.field}>
+                <p className="text-sm font-medium text-gray-500">{item.label}</p>
+                <p>
+                  {item.format 
+                    ? item.format(profileData.Resident?.[item.field])
+                    : profileData.Resident?.[item.field] || 'Not provided'}
+                </p>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -110,9 +224,9 @@ const BiodataDiri = () => {
           <CardTitle className="text-lg">Documents</CardTitle>
         </CardHeader>
         <CardContent>
-          {profileData.resident?.documents?.length > 0 ? (
+          {profileData.Resident?.documents?.length > 0 ? (
             <ul>
-              {profileData.resident.documents.map((doc: any) => (
+              {profileData.Resident.documents.map((doc: any) => (
                 <li key={doc.id}>
                   <p className="text-sm font-medium">{doc.type}</p>
                   <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">

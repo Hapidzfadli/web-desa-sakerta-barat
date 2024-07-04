@@ -3,6 +3,26 @@ import Cookies from 'js-cookie';
 import { getDecodedToken } from '../jwtUtils';
 
 
+export const saveResidentData = async (residentData: any) => {
+  try {
+    const existingData = await fetchResidentData();
+
+    let data;
+
+    if (existingData && existingData.Resident) {
+      data = updateResidentData(residentData)
+    } else {
+      data = createResidentData(residentData);
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Save resident data error:', error);
+    throw error;
+  }
+};
+
+
 export const createResidentData = async (residentData: any) => {
     try {
       const token = Cookies.get('session');
