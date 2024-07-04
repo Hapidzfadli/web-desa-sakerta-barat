@@ -14,6 +14,13 @@ export class UserResponse {
   email: string;
   role?: Role;
   token?: string;
+  isVerified?: boolean;
+}
+export class UpdateUserRequest {
+  name?: string;
+  email?: string;
+  password?: string;
+  isVerified?: boolean;
 }
 export class LoginUserRequest {
   username: string;

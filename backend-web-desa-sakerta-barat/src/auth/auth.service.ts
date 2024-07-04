@@ -42,6 +42,7 @@ export class AuthService {
       username: user.username,
       name: user.name,
       email: user.email,
+      isVerified: false,
     };
   }
   async login(request: LoginUserRequest): Promise<UserResponse> {
