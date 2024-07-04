@@ -67,5 +67,6 @@ export class UserValidation {
       .email('Format email tidak valid')
       .max(100, 'Email maksimal 100 karakter')
       .optional(),
+    isVerified: z.boolean().optional(),
   });
 }

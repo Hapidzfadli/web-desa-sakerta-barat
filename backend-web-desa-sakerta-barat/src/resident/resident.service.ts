@@ -36,6 +36,7 @@ export class ResidentService {
     file?: Express.Multer.File,
   ): Promise<ResidentResponse> {
     this.logger.debug(`Creating new resident: ${JSON.stringify(request)}`);
+
     if (user.role === Role.WARGA) {
       const existingResidentCount = await this.prismaService.resident.count({
         where: { userId: user.id },
@@ -68,6 +69,17 @@ export class ResidentService {
           idCardAddress: validatedData.idCardAddress,
           residentialAddress: validatedData.residentialAddress,
           userId: validatedData.userId,
+          religion: validatedData.religion,
+          maritalStatus: validatedData.maritalStatus,
+          occupation: validatedData.occupation,
+          nationality: validatedData.nationality,
+          placeOfBirth: validatedData.placeOfBirth,
+          gender: validatedData.gender,
+          familyCardNumber: validatedData.familyCardNumber,
+          district: validatedData.district,
+          regency: validatedData.regency,
+          province: validatedData.province,
+          postalCode: validatedData.postalCode,
           documents: file
             ? {
                 create: {
@@ -142,17 +154,37 @@ export class ResidentService {
       }
 
       const updateData: Prisma.ResidentUpdateInput = {};
-      if ('name' in validatedData) updateData.name = validatedData.name;
-      if ('residentialAddress' in validatedData)
-        updateData.residentialAddress = validatedData.residentialAddress;
-      if ('idCardAddress' in validatedData)
-        updateData.idCardAddress = validatedData.idCardAddress;
-      if ('dateOfBirth' in validatedData)
-        updateData.dateOfBirth = validatedData.dateOfBirth;
       if ('nationalId' in validatedData)
         updateData.nationalId = validatedData.nationalId;
+      if ('name' in validatedData) updateData.name = validatedData.name;
+      if ('dateOfBirth' in validatedData)
+        updateData.dateOfBirth = validatedData.dateOfBirth;
+      if ('idCardAddress' in validatedData)
+        updateData.idCardAddress = validatedData.idCardAddress;
+      if ('residentialAddress' in validatedData)
+        updateData.residentialAddress = validatedData.residentialAddress;
+      if ('religion' in validatedData)
+        updateData.religion = validatedData.religion;
+      if ('maritalStatus' in validatedData)
+        updateData.maritalStatus = validatedData.maritalStatus;
+      if ('occupation' in validatedData)
+        updateData.occupation = validatedData.occupation;
+      if ('nationality' in validatedData)
+        updateData.nationality = validatedData.nationality;
+      if ('placeOfBirth' in validatedData)
+        updateData.placeOfBirth = validatedData.placeOfBirth;
+      if ('gender' in validatedData) updateData.gender = validatedData.gender;
+      if ('familyCardNumber' in validatedData)
+        updateData.familyCardNumber = validatedData.familyCardNumber;
+      if ('district' in validatedData)
+        updateData.district = validatedData.district;
+      if ('regency' in validatedData)
+        updateData.regency = validatedData.regency;
+      if ('province' in validatedData)
+        updateData.province = validatedData.province;
+      if ('postalCode' in validatedData)
+        updateData.postalCode = validatedData.postalCode;
 
-      // Add document update if file is provided
       if (file) {
         updateData.documents = {
           create: {
@@ -164,7 +196,7 @@ export class ResidentService {
 
       // Perform the update
       const resident = await this.prismaService.resident.update({
-        where: { id },
+        where: { userId: id },
         data: updateData,
         include: { documents: true },
       });
@@ -226,6 +258,17 @@ export class ResidentService {
       dateOfBirth: resident.dateOfBirth,
       idCardAddress: resident.idCardAddress,
       residentialAddress: resident.residentialAddress,
+      religion: resident.religion,
+      maritalStatus: resident.maritalStatus,
+      occupation: resident.occupation,
+      nationality: resident.nationality,
+      placeOfBirth: resident.placeOfBirth,
+      gender: resident.gender,
+      familyCardNumber: resident.familyCardNumber,
+      district: resident.district,
+      regency: resident.regency,
+      province: resident.province,
+      postalCode: resident.postalCode,
       documents: resident.documents.map((doc) => ({
         id: doc.id,
         type: doc.type,

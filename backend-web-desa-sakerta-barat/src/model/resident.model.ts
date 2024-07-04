@@ -1,4 +1,4 @@
-import { DocumentType } from '@prisma/client';
+import { DocumentType, MaritalStatus } from '@prisma/client';
 
 export class CreateResidentRequest {
   nationalId: string;
@@ -7,6 +7,17 @@ export class CreateResidentRequest {
   idCardAddress: string;
   residentialAddress: string;
   documentType?: DocumentType;
+  religion?: string;
+  maritalStatus?: MaritalStatus;
+  occupation?: string;
+  nationality?: string;
+  placeOfBirth?: string;
+  gender?: 'LAKI_LAKI' | 'PEREMPUAN';
+  familyCardNumber?: string;
+  district?: string;
+  regency?: string;
+  province?: string;
+  postalCode?: string;
 }
 
 export class UpdateResidentRequest {
@@ -16,6 +27,17 @@ export class UpdateResidentRequest {
   idCardAddress?: string;
   residentialAddress?: string;
   documentType?: DocumentType;
+  religion?: string;
+  maritalStatus?: MaritalStatus;
+  occupation?: string;
+  nationality?: string;
+  placeOfBirth?: string;
+  gender?: 'LAKI_LAKI' | 'PEREMPUAN';
+  familyCardNumber?: string;
+  district?: string;
+  regency?: string;
+  province?: string;
+  postalCode?: string;
 }
 
 export class ResidentResponse {
@@ -25,6 +47,17 @@ export class ResidentResponse {
   dateOfBirth: Date;
   idCardAddress: string;
   residentialAddress: string;
+  religion?: string;
+  maritalStatus?: MaritalStatus;
+  occupation?: string;
+  nationality?: string;
+  placeOfBirth?: string;
+  gender?: 'LAKI_LAKI' | 'PEREMPUAN';
+  familyCardNumber?: string;
+  district?: string;
+  regency?: string;
+  province?: string;
+  postalCode?: string;
   documents: DocumentResponse[];
 }
 
