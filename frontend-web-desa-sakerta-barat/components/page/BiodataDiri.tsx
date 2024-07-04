@@ -74,13 +74,13 @@ const BiodataDiri = () => {
           <div className="grid md:grid-cols-2 gap-4">
             {[
               { label: 'Username', field: 'username' },
-              { label: 'Full Name', field: 'name' },
+              { label: 'Nama Lengkap', field: 'name' },
               { label: 'NIK', field: 'Resident.nationalId' },
-              { label: 'Date of Birth', field: 'Resident.dateOfBirth' },
+              { label: 'Tanggal Lahir', field: 'Resident.dateOfBirth' },
               { label: 'Email', field: 'email' },
-              { label: 'Phone Number', field: 'phoneNumber' },
-              { label: 'ID Card Address', field: 'Resident.idCardAddress' },
-              { label: 'Residential Address', field: 'Resident.residentialAddress' },
+              { label: 'Nomor HP', field: 'phoneNumber' },
+              { label: 'Alamat Tempat Tinggal', field: 'Resident.idCardAddress' },
+              { label: 'Alamat Domisili', field: 'Resident.residentialAddress' },
             ].map((item) => (
               <div key={item.field}>
                 <p className="text-sm font-medium text-gray-500">{item.label}</p>
