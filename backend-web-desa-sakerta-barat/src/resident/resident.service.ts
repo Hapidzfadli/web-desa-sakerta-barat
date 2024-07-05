@@ -6,6 +6,7 @@ import {
   ConflictException,
   HttpException,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
 import { ValidationService } from '../common/validation.service';
@@ -217,16 +218,28 @@ export class ResidentService {
     }
   }
 
-  async deleteResident(id: number): Promise<void> {
+  async deleteResident(id: number, user: any): Promise<string> {
+    if (user.role !== Role.ADMIN && user.role !== Role.KADES) {
+      throw new ForbiddenException('Only ADMIN or KADES can delete residents');
+    }
+
     try {
       await this.prismaService.resident.delete({
         where: { id },
       });
+      return 'Resident deleted successfully';
     } catch (error) {
       if (error.code === 'P2025') {
         throw new NotFoundException('Resident not found');
       }
-      throw error;
+      this.logger.error(
+        `Error deleting resident: ${error.message}`,
+        error.stack,
+      );
+      throw new HttpException(
+        'An error occurred while deleting the resident',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 

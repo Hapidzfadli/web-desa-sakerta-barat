@@ -7,12 +7,16 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { PrismaService } from '../../common/prisma.service';
+import { Reflector } from '@nestjs/core';
+import { ROLES_KEY } from '../decorators/roles.decorator';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
     private prismaService: PrismaService,
+    private reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -26,7 +30,6 @@ export class AuthGuard implements CanActivate {
         secret: process.env.JWT_SECRET,
       });
 
-      // Check if the user exists and the token is valid
       const user = await this.prismaService.user.findUnique({
         where: { id: payload.sub },
       });
@@ -35,8 +38,17 @@ export class AuthGuard implements CanActivate {
         throw new UnauthorizedException();
       }
 
-      // Attach the user to the request object
       request['user'] = user;
+
+      const requiredRoles = this.reflector.getAllAndOverride<Role[]>(
+        ROLES_KEY,
+        [context.getHandler(), context.getClass()],
+      );
+      if (requiredRoles && !requiredRoles.includes(user.role as Role)) {
+        throw new UnauthorizedException(
+          'You do not have permission to access this resource',
+        );
+      }
     } catch {
       throw new UnauthorizedException();
     }

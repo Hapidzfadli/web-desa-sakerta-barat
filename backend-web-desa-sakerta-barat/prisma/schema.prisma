@@ -107,7 +107,7 @@ model Document {
   fileUrl     String       @db.Text
   residentId  Int
   resident    Resident     @relation(fields: [residentId], references: [id])
-  attachments Attachment[] // New relation
+  attachments Attachment[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -163,7 +163,7 @@ model Attachment {
   letterRequest   LetterRequest @relation(fields: [letterRequestId], references: [id])
   fileName        String        @db.VarChar(255)
   fileUrl         String?       @db.Text
-  documentId      Int? // New field
+  documentId      Int?
   document        Document?     @relation(fields: [documentId], references: [id])
   createdAt       DateTime      @default(now())
 
