@@ -13,6 +13,7 @@ import {
   Res,
   NotFoundException,
   ForbiddenException,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
@@ -24,17 +25,23 @@ import { UpdateUserRequest, UserResponse } from '../model/user.model';
 import { uploadFileAndGetUrl } from '../common/utils/utils';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { PaginateOptions } from '../common/utils/paginator';
 @Controller('/api/users')
 @UseGuards(AuthGuard)
 export class UserController {
   constructor(private userService: UserService) {}
 
   @Get('profile')
-  async getProfile(@Auth() user: any): Promise<WebResponse<any>> {
+  async getProfile(@Auth() user: any): Promise<WebResponse<UserResponse>> {
     const profile = await this.userService.getFullProfile(user.id);
     return {
       data: profile,
     };
+  }
+
+  @Get()
+  async getAllUsers(@Query() query: PaginateOptions) {
+    return this.userService.findAll(query);
   }
 
   @Put('profile')

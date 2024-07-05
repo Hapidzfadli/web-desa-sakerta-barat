@@ -12,6 +12,7 @@ import { UpdateUserRequest, UserResponse } from '../model/user.model';
 import { UserValidation } from './user.validation';
 import * as bcrypt from 'bcrypt';
 import { User } from '@prisma/client';
+import { PaginateOptions, prismaPaginate } from '../common/utils/paginator';
 
 @Injectable()
 export class UserService {
@@ -30,7 +31,36 @@ export class UserService {
     }
     return user;
   }
-  async getFullProfile(userId: number): Promise<any> {
+  async findAll(options: PaginateOptions) {
+    try {
+      const searchFields = ['username', 'name', 'email'];
+
+      const data = await prismaPaginate<UserResponse>(
+        this.prismaService,
+        'User',
+        {
+          ...options,
+          searchFields,
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            email: true,
+            role: true,
+            isVerified: true,
+            profilePicture: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      );
+      return data;
+    } catch (error) {
+      this.logger.error(`Error fetching users: ${error.message}`, error.stack);
+      throw new Error('Failed to fetch users');
+    }
+  }
+  async getFullProfile(userId: number): Promise<UserResponse> {
     try {
       const profile = await this.prismaService.user.findUnique({
         where: { id: userId },

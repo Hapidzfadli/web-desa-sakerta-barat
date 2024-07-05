@@ -29,3 +29,14 @@ export class LoginUserRequest {
   username: string;
   password: string;
 }
+export class UserResponseWithoutPassword {
+  id: number;
+  username: string;
+  name: string;
+  email: string;
+  role: Role;
+  isVerified: boolean;
+  profilePicture?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
