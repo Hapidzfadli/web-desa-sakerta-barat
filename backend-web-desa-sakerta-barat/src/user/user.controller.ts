@@ -78,7 +78,6 @@ export class UserController {
       throw new NotFoundException('Profile picture not found');
     }
 
-    // Check if the requesting user is the owner of the picture or an admin
     if (user.id !== requestedUser.id && user.role !== 'ADMIN') {
       throw new ForbiddenException(
         'You do not have permission to view this profile picture',

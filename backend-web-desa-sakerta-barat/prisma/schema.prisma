@@ -44,6 +44,13 @@ enum RequestStatus {
   REJECTED
 }
 
+enum BloodType {
+  A
+  B
+  AB
+  O
+}
+
 model User {
   id             Int       @id @default(autoincrement())
   email          String    @unique @db.VarChar(100)
@@ -83,6 +90,9 @@ model Resident {
   regency            String?         @db.VarChar(50)
   province           String?         @db.VarChar(50)
   postalCode         String?         @db.VarChar(10)
+  rt                 Int?
+  rw                 Int?
+  bloodType          BloodType?
   documents          Document[]
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
