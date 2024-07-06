@@ -1,4 +1,4 @@
-import { DocumentType, MaritalStatus } from '@prisma/client';
+import { DocumentType, MaritalStatus, BloodType } from '@prisma/client';
 
 export class CreateResidentRequest {
   nationalId: string;
@@ -18,6 +18,9 @@ export class CreateResidentRequest {
   regency?: string;
   province?: string;
   postalCode?: string;
+  rt?: number;
+  rw?: number;
+  bloodType?: BloodType;
 }
 
 export class UpdateResidentRequest {
@@ -38,6 +41,9 @@ export class UpdateResidentRequest {
   regency?: string;
   province?: string;
   postalCode?: string;
+  rt?: number;
+  rw?: number;
+  bloodType?: BloodType;
 }
 
 export class ResidentResponse {
@@ -58,6 +64,9 @@ export class ResidentResponse {
   regency?: string;
   province?: string;
   postalCode?: string;
+  rt?: number;
+  rw?: number;
+  bloodType?: BloodType;
   documents: DocumentResponse[];
 }
 

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DocumentType, MaritalStatus } from '@prisma/client';
+import { BloodType, DocumentType, MaritalStatus } from '@prisma/client';
 
 export class ResidentValidation {
   static readonly CREATE = z.object({
@@ -57,6 +57,9 @@ export class ResidentValidation {
       .string()
       .max(10, 'Postal Code must not exceed 10 characters')
       .optional(),
+    rt: z.number().int().min(1).max(999).optional(),
+    rw: z.number().int().min(1).max(999).optional(),
+    bloodType: z.nativeEnum(BloodType).optional(),
   });
 
   static readonly UPDATE = ResidentValidation.CREATE.partial().omit({

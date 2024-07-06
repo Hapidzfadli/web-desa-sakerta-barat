@@ -6,6 +6,7 @@ import {
   ConflictException,
   HttpException,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
 import { ValidationService } from '../common/validation.service';
@@ -80,6 +81,9 @@ export class ResidentService {
           regency: validatedData.regency,
           province: validatedData.province,
           postalCode: validatedData.postalCode,
+          rt: validatedData.rt,
+          rw: validatedData.rw,
+          bloodType: validatedData.bloodType,
           documents: file
             ? {
                 create: {
@@ -153,37 +157,27 @@ export class ResidentService {
         );
       }
 
-      const updateData: Prisma.ResidentUpdateInput = {};
-      if ('nationalId' in validatedData)
-        updateData.nationalId = validatedData.nationalId;
-      if ('name' in validatedData) updateData.name = validatedData.name;
-      if ('dateOfBirth' in validatedData)
-        updateData.dateOfBirth = validatedData.dateOfBirth;
-      if ('idCardAddress' in validatedData)
-        updateData.idCardAddress = validatedData.idCardAddress;
-      if ('residentialAddress' in validatedData)
-        updateData.residentialAddress = validatedData.residentialAddress;
-      if ('religion' in validatedData)
-        updateData.religion = validatedData.religion;
-      if ('maritalStatus' in validatedData)
-        updateData.maritalStatus = validatedData.maritalStatus;
-      if ('occupation' in validatedData)
-        updateData.occupation = validatedData.occupation;
-      if ('nationality' in validatedData)
-        updateData.nationality = validatedData.nationality;
-      if ('placeOfBirth' in validatedData)
-        updateData.placeOfBirth = validatedData.placeOfBirth;
-      if ('gender' in validatedData) updateData.gender = validatedData.gender;
-      if ('familyCardNumber' in validatedData)
-        updateData.familyCardNumber = validatedData.familyCardNumber;
-      if ('district' in validatedData)
-        updateData.district = validatedData.district;
-      if ('regency' in validatedData)
-        updateData.regency = validatedData.regency;
-      if ('province' in validatedData)
-        updateData.province = validatedData.province;
-      if ('postalCode' in validatedData)
-        updateData.postalCode = validatedData.postalCode;
+      const updateData: Prisma.ResidentUpdateInput = {
+        nationalId: validatedData.nationalId,
+        name: validatedData.name,
+        dateOfBirth: validatedData.dateOfBirth,
+        idCardAddress: validatedData.idCardAddress,
+        residentialAddress: validatedData.residentialAddress,
+        religion: validatedData.religion,
+        maritalStatus: validatedData.maritalStatus,
+        occupation: validatedData.occupation,
+        nationality: validatedData.nationality,
+        placeOfBirth: validatedData.placeOfBirth,
+        gender: validatedData.gender,
+        familyCardNumber: validatedData.familyCardNumber,
+        district: validatedData.district,
+        regency: validatedData.regency,
+        province: validatedData.province,
+        postalCode: validatedData.postalCode,
+        rt: validatedData.rt,
+        rw: validatedData.rw,
+        bloodType: validatedData.bloodType,
+      };
 
       if (file) {
         updateData.documents = {
@@ -224,16 +218,28 @@ export class ResidentService {
     }
   }
 
-  async deleteResident(id: number): Promise<void> {
+  async deleteResident(id: number, user: any): Promise<string> {
+    if (user.role !== Role.ADMIN && user.role !== Role.KADES) {
+      throw new ForbiddenException('Only ADMIN or KADES can delete residents');
+    }
+
     try {
       await this.prismaService.resident.delete({
         where: { id },
       });
+      return 'Resident deleted successfully';
     } catch (error) {
       if (error.code === 'P2025') {
         throw new NotFoundException('Resident not found');
       }
-      throw error;
+      this.logger.error(
+        `Error deleting resident: ${error.message}`,
+        error.stack,
+      );
+      throw new HttpException(
+        'An error occurred while deleting the resident',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -269,6 +275,9 @@ export class ResidentService {
       regency: resident.regency,
       province: resident.province,
       postalCode: resident.postalCode,
+      rt: resident.rt,
+      rw: resident.rw,
+      bloodType: resident.bloodType,
       documents: resident.documents.map((doc) => ({
         id: doc.id,
         type: doc.type,

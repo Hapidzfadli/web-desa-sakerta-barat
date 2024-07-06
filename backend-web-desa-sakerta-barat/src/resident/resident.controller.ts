@@ -16,7 +16,6 @@ import {
   HttpException,
   HttpStatus,
   ConflictException,
-  Request,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ResidentService } from './resident.service';
@@ -28,9 +27,12 @@ import {
 } from '../model/resident.model';
 import { WebResponse } from '../model/web.model';
 import { Auth } from '../auth/decorators/auth.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '@prisma/client';
+import { RolesGuard } from '../auth/guards/roles.guard';
 
 @Controller('/api/residents')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, RolesGuard)
 export class ResidentController {
   constructor(private residentService: ResidentService) {}
 
@@ -113,8 +115,15 @@ export class ResidentController {
   }
 
   @Delete('/:id')
-  @HttpCode(204)
-  async deleteResident(@Param('id') id: string): Promise<void> {
-    await this.residentService.deleteResident(parseInt(id));
+  @HttpCode(200)
+  @Roles(Role.ADMIN, Role.KADES)
+  async deleteResident(
+    @Param('id') id: string,
+    @Auth() user: any,
+  ): Promise<WebResponse<string>> {
+    await this.residentService.deleteResident(parseInt(id), user);
+    return {
+      data: 'Resident deleted successfully',
+    };
   }
 }
