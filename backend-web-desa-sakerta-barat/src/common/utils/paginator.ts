@@ -38,7 +38,8 @@ export async function prismaPaginate<T>(
   const search = options.search || '';
   const searchFields = options.searchFields || [];
   const filter = options.filter || {};
-  const select = options.select || {};
+  const select =
+    Object.keys(options.select || {}).length > 0 ? options.select : undefined;
   const whereClause: any = { ...filter };
 
   if (search && searchFields.length > 0) {
@@ -53,7 +54,7 @@ export async function prismaPaginate<T>(
       skip,
       take: limit,
       orderBy: { [sortBy]: sortOrder },
-      select,
+      ...(select ? { select } : {}),
     }),
     prisma[model].count({ where: whereClause }),
   ]);

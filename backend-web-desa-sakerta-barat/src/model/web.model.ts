@@ -8,6 +8,7 @@ export class Paging {
   size: number;
   total_page: number;
   current_page: number;
+  total?: number;
   perPage?: number;
   prev?: number;
   next?: number;
