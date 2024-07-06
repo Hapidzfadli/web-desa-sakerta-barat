@@ -116,7 +116,7 @@ model Document {
 
 model LetterCategory {
   id          Int          @id @default(autoincrement())
-  name        String       @db.VarChar(50)
+  name        String       @unique @db.VarChar(50)
   description String?      @db.Text
   letterTypes LetterType[]
   createdAt   DateTime     @default(now())
@@ -129,7 +129,7 @@ model LetterType {
   id             Int             @id @default(autoincrement())
   categoryId     Int
   category       LetterCategory  @relation(fields: [categoryId], references: [id])
-  name           String          @db.VarChar(100)
+  name           String          @unique @db.VarChar(100)
   description    String?         @db.Text
   requirements   String?         @db.Text
   icon           String?

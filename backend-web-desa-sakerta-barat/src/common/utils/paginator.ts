@@ -30,8 +30,8 @@ export async function prismaPaginate<T>(
   model: string,
   options: PaginateOptions,
 ): Promise<PaginatedResult<T>> {
-  const page = options.page || 1;
-  const limit = options.limit || 10;
+  const page = parseInt(options.page?.toString() || '1', 10);
+  const limit = parseInt(options.limit?.toString() || '10', 10);
   const skip = (page - 1) * limit;
   const sortBy = options.sortBy || 'id';
   const sortOrder = options.sortOrder || 'desc';
