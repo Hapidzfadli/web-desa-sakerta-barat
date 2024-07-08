@@ -1,4 +1,3 @@
-import { UserResponse } from '../../model/user.model';
 import { PrismaService } from '../prisma.service';
 
 export interface PaginateOptions {
@@ -10,6 +9,7 @@ export interface PaginateOptions {
   searchFields?: string[];
   filter?: Record<string, any>;
   select?: Record<string, boolean>;
+  include?: Record<string, boolean>;
 }
 
 export interface PaginatedResult<T> {
@@ -40,6 +40,8 @@ export async function prismaPaginate<T>(
   const filter = options.filter || {};
   const select =
     Object.keys(options.select || {}).length > 0 ? options.select : undefined;
+  const include =
+    Object.keys(options.include || {}).length > 0 ? options.include : undefined;
   const whereClause: any = { ...filter };
 
   if (search && searchFields.length > 0) {
@@ -55,6 +57,7 @@ export async function prismaPaginate<T>(
       take: limit,
       orderBy: { [sortBy]: sortOrder },
       ...(select ? { select } : {}),
+      ...(include ? { include } : {}),
     }),
     prisma[model].count({ where: whereClause }),
   ]);
