@@ -37,6 +37,7 @@ export class LetterTypeService {
   async createLetterType(
     request: CreateLetterTypeRequest,
     iconFile?: Express.Multer.File,
+    templateFile?: Express.Multer.File,
   ): Promise<ResponseLetterType> {
     this.logger.debug(`Creating new letter type: ${JSON.stringify(request)}`);
 
@@ -55,6 +56,15 @@ export class LetterTypeService {
         );
       }
 
+      let templateUrl: string | undefined;
+      if (templateFile) {
+        templateUrl = await uploadFileAndGetUrl(
+          templateFile,
+          'uploads/letter-type-templates',
+          '/api/letter-type/template',
+        );
+      }
+
       const letterType = await this.prismaService.letterType.create({
         data: {
           categoryId: validatedData.categoryId,
@@ -62,6 +72,7 @@ export class LetterTypeService {
           description: validatedData.description ?? null,
           requirements: validatedData.requirements ?? null,
           icon: iconUrl ?? null,
+          template: templateUrl || null,
         },
       });
 
@@ -129,6 +140,7 @@ export class LetterTypeService {
     id: number,
     request: UpdateLetterTypeRequest,
     iconFile?: Express.Multer.File,
+    templateFile?: Express.Multer.File,
   ): Promise<ResponseLetterType> {
     this.logger.debug(`Updating letter type ${id}: ${JSON.stringify(request)}`);
 
@@ -147,11 +159,21 @@ export class LetterTypeService {
         );
       }
 
+      let templateUrl: string | undefined;
+      if (templateFile) {
+        templateUrl = await uploadFileAndGetUrl(
+          templateFile,
+          'uploads/letter-type-templates',
+          '/api/letter-type/template',
+        );
+      }
+
       const updatedLetterType = await this.prismaService.letterType.update({
         where: { id },
         data: {
           ...validatedData,
           icon: iconUrl || '',
+          template: templateUrl || '',
         },
       });
       return this.mapToResponseLetterType(updatedLetterType);
@@ -198,6 +220,7 @@ export class LetterTypeService {
       description: letterType.description,
       requirements: letterType.requirements,
       icon: letterType.icon,
+      template: letterType.template,
       createdAt: letterType.createdAt,
       updatedAt: letterType.updatedAt,
     };

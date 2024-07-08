@@ -19,6 +19,7 @@ export class ResponseLetterType {
   description: string | null;
   requirements: string | null;
   icon: string | null;
+  template: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

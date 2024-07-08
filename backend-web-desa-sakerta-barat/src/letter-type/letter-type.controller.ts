@@ -9,14 +9,15 @@ import {
   MaxFileSizeValidator,
   NotFoundException,
   Param,
-  ParseFilePipe,
   Post,
   Put,
   Query,
-  UploadedFile,
   UseGuards,
   UseInterceptors,
   Res,
+  UploadedFiles,
+  BadRequestException,
+  StreamableFile,
 } from '@nestjs/common';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -30,10 +31,11 @@ import {
 } from '../model/letter-type.model';
 import { WebResponse } from '../model/web.model';
 import { PaginateOptions } from '../common/utils/paginator';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import * as path from 'path';
-import * as fs from 'fs/promises';
+import { promises as fsPromises } from 'fs';
+import * as fs from 'fs';
 
 @Controller('/api/letter-type')
 @UseGuards(AuthGuard, RolesGuard)
@@ -43,23 +45,49 @@ export class LetterTypeController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @Roles(Role.ADMIN, Role.KADES)
-  @UseInterceptors(FileInterceptor('icon'))
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'icon', maxCount: 1 },
+      { name: 'template', maxCount: 1 },
+    ]),
+  )
   async createLetterType(
     @Body() request: CreateLetterTypeRequest,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png|gif|svg)$/ }),
-        ],
-        fileIsRequired: false,
-      }),
-    )
-    iconFile?: Express.Multer.File,
+    @UploadedFiles()
+    files: { icon?: Express.Multer.File[]; template?: Express.Multer.File[] },
   ): Promise<WebResponse<ResponseLetterType>> {
+    const iconFile = files?.icon?.[0];
+    const templateFile = files?.template?.[0];
+    const maxSize = new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 });
+    const templateType = new FileTypeValidator({
+      fileType:
+        /application\/(vnd.openxmlformats-officedocument.wordprocessingml.document|vnd.openxmlformats-officedocument.spreadsheetml.sheet)$/,
+    });
+    const iconType = new FileTypeValidator({
+      fileType: /(jpg|jpeg|png|gif|svg)$/,
+    });
+    if (iconFile) {
+      if (!maxSize.isValid(iconFile)) {
+        throw new BadRequestException('Icon file is too large');
+      }
+      if (!iconType.isValid(iconFile)) {
+        throw new BadRequestException('Invalid icon file type');
+      }
+    }
+
+    if (templateFile) {
+      console.log(templateFile.mimetype);
+      if (!maxSize.isValid(templateFile)) {
+        throw new BadRequestException('Template file is too large');
+      }
+      if (!templateType.isValid(templateFile)) {
+        throw new BadRequestException('Invalid template file type');
+      }
+    }
     const result = await this.letterTypeService.createLetterType(
       request,
       iconFile,
+      templateFile,
     );
     return {
       data: result,
@@ -97,25 +125,53 @@ export class LetterTypeController {
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   @Roles(Role.ADMIN, Role.KADES)
-  @UseInterceptors(FileInterceptor('icon'))
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'icon', maxCount: 1 },
+      { name: 'template', maxCount: 1 },
+    ]),
+  )
   async updateLetterType(
     @Param('id') id: string,
     @Body() request: UpdateLetterTypeRequest,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png|gif|svg)$/ }),
-        ],
-        fileIsRequired: false,
-      }),
-    )
-    iconFile?: Express.Multer.File,
+    @UploadedFiles()
+    files: { icon?: Express.Multer.File[]; template?: Express.Multer.File[] },
   ): Promise<WebResponse<ResponseLetterType>> {
+    const iconFile = files?.icon?.[0];
+    const templateFile = files?.template?.[0];
+    const maxSize = new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 });
+    const templateType = new FileTypeValidator({
+      fileType:
+        /application\/(vnd.openxmlformats-officedocument.wordprocessingml.document|vnd.openxmlformats-officedocument.spreadsheetml.sheet)$/,
+    });
+    const iconType = new FileTypeValidator({
+      fileType: /(jpg|jpeg|png|gif|svg)$/,
+    });
+
+    if (iconFile) {
+      if (!maxSize.isValid(iconFile)) {
+        throw new BadRequestException('Icon file is too large');
+      }
+      if (!iconType.isValid(iconFile)) {
+        throw new BadRequestException('Invalid icon file type');
+      }
+    }
+
+    if (templateFile) {
+      console.log(templateFile.mimetype);
+      if (!maxSize.isValid(templateFile)) {
+        throw new BadRequestException('Template file is too large');
+      }
+      if (!templateType.isValid(templateFile)) {
+        throw new BadRequestException('Invalid template file type');
+      }
+    }
+
     const result = await this.letterTypeService.updateLetterType(
       parseInt(id),
       request,
       iconFile,
+      templateFile,
     );
     return {
       data: result,
@@ -132,7 +188,7 @@ export class LetterTypeController {
     );
 
     try {
-      await fs.access(filePath);
+      await fsPromises.access(filePath);
       res.sendFile(filePath);
     } catch (error) {
       throw new NotFoundException('Icon not found');
@@ -149,5 +205,61 @@ export class LetterTypeController {
     return {
       data: 'Letter type deleted successfully',
     };
+  }
+
+  @Get('template/:fileName')
+  async getTemplate(@Param('fileName') fileName: string, @Res() res: Response) {
+    const filePath = path.join(
+      process.cwd(),
+      'uploads',
+      'letter-type-template',
+      fileName,
+    );
+
+    try {
+      await fsPromises.access(filePath);
+      res.sendFile(filePath);
+    } catch (error) {
+      throw new NotFoundException('Template not found');
+    }
+  }
+
+  @Get(':id/download-template')
+  async downloadTemplate(
+    @Param('id') id: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    const letterType = await this.letterTypeService.getLetterType(parseInt(id));
+
+    if (!letterType.template) {
+      throw new NotFoundException('Template not found for this letter type');
+    }
+
+    // Menghapus string '\api\letter-type\template\' dari path
+    const templatePath = letterType.template.replace(
+      '/api/letter-type/template/',
+      '',
+    );
+    const basePath = path.join(
+      process.cwd(),
+      'uploads',
+      'letter-type-templates',
+    );
+    const filePath = path.join(basePath, templatePath);
+    console.log(filePath);
+
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException('Template file not found');
+    }
+
+    const file = fs.createReadStream(filePath);
+    const fileName = path.basename(filePath);
+
+    res.set({
+      'Content-Type': 'application/octet-stream',
+      'Content-Disposition': `attachment; filename="${fileName}"`,
+    });
+
+    return new StreamableFile(file);
   }
 }

@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { ResidentModule } from './resident/resident.module';
 import { LetterCategoryModule } from './letter-category/letter-category.module';
 import { LetterTypeModule } from './letter-type/letter-type.module';
+import { LetterRequestModule } from './letter-request/letter-request.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { LetterTypeModule } from './letter-type/letter-type.module';
     ResidentModule,
     LetterCategoryModule,
     LetterTypeModule,
+    LetterRequestModule,
   ],
   controllers: [],
   providers: [],
