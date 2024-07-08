@@ -4,6 +4,6 @@ import { LetterTypeController } from './letter-type.controller';
 
 @Module({
   providers: [LetterTypeService],
-  controllers: [LetterTypeController]
+  controllers: [LetterTypeController],
 })
 export class LetterTypeModule {}
