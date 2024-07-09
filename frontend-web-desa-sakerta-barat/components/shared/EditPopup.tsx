@@ -1,5 +1,11 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
@@ -18,15 +24,25 @@ interface Field {
 interface EditPopupProps {
   title: string;
   fields: Field[];
-  onSave: (data: Record<string, string>, errors?: Record<string, string>) => void;
+  onSave: (
+    data: Record<string, string>,
+    errors?: Record<string, string>
+  ) => void;
   validationSchema: z.ZodSchema<any>;
 }
 
-const EditPopup: React.FC<EditPopupProps> = ({ title, fields, onSave, validationSchema }) => {
+const EditPopup: React.FC<EditPopupProps> = ({
+  title,
+  fields,
+  onSave,
+  validationSchema,
+}) => {
   const [formData, setFormData] = React.useState<Record<string, string>>({});
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     if (errors[e.target.name]) {
       setErrors({ ...errors, [e.target.name]: '' });
@@ -40,10 +56,13 @@ const EditPopup: React.FC<EditPopupProps> = ({ title, fields, onSave, validation
       onSave(formData);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const errorMessages = error.errors.reduce((acc, curr) => {
-          acc[curr.path[0]] = curr.message;
-          return acc;
-        }, {} as Record<string, string>);
+        const errorMessages = error.errors.reduce(
+          (acc, curr) => {
+            acc[curr.path[0]] = curr.message;
+            return acc;
+          },
+          {} as Record<string, string>
+        );
         setErrors(errorMessages);
         onSave(formData, errorMessages); // Pass errors back to parent component
       }
@@ -55,16 +74,20 @@ const EditPopup: React.FC<EditPopupProps> = ({ title, fields, onSave, validation
       <DialogTrigger asChild>
         <Button variant="outline">Edit</Button>
       </DialogTrigger>
-      <DialogContent className="custom-dialog-content max-h-[80vh] overflow-y-auto" style={{ width: 'auto', maxWidth: '100vw', minWidth: '65vw' }}>
+      <DialogContent
+        className="custom-dialog-content "
+        style={{ width: 'auto', maxWidth: '100vw', minWidth: '65vw' }}
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="max-h-[80vh] overflow-y-auto">
           <div className="grid grid-cols-2 gap-4 py-4">
             {fields.map((field) => (
               <div key={field.name} className="flex flex-col items-start gap-2">
                 <Label htmlFor={field.name} className="glassy-label text-left">
-                  {field.label}{field.required && <span className="text-red-500">*</span>}
+                  {field.label}
+                  {field.required && <span className="text-red-500">*</span>}
                 </Label>
                 {field.type === 'textarea' ? (
                   <Textarea
@@ -87,7 +110,9 @@ const EditPopup: React.FC<EditPopupProps> = ({ title, fields, onSave, validation
                     required={field.required}
                   />
                 )}
-                {errors[field.name] && <p className="text-red-500 text-sm">{errors[field.name]}</p>}
+                {errors[field.name] && (
+                  <p className="text-red-500 text-sm">{errors[field.name]}</p>
+                )}
               </div>
             ))}
           </div>

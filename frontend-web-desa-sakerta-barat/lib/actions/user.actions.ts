@@ -1,6 +1,6 @@
 import { API_URL } from '../../constants';
 import Cookies from 'js-cookie';
-export const loginUser = async ({username, password} : LoginProps) => {
+export const loginUser = async ({ username, password }: LoginProps) => {
   try {
     const response = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
@@ -19,7 +19,7 @@ export const loginUser = async ({username, password} : LoginProps) => {
     Cookies.set('session', data.data.token, { expires: 7 });
 
     localStorage.setItem('userData', JSON.stringify(data.data));
-    
+
     return data;
   } catch (error) {
     console.error('Login error:', error);
@@ -27,7 +27,7 @@ export const loginUser = async ({username, password} : LoginProps) => {
   }
 };
 
-export const registerUser = async ({...userData} : RegisterParams) => {
+export const registerUser = async ({ ...userData }: RegisterParams) => {
   try {
     const response = await fetch(`${API_URL}/api/auth/register`, {
       method: 'POST',
@@ -39,11 +39,13 @@ export const registerUser = async ({...userData} : RegisterParams) => {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'An error occurred during registration');
+      throw new Error(
+        errorData.message || 'An error occurred during registration'
+      );
     }
 
     const data = await response.json();
-    
+
     return data;
   } catch (error) {
     console.error('Registration error:', error);

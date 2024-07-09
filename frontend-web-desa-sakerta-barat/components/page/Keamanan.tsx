@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 
 const Keamanan = () => {
   const [securityData, setSecurityData] = useState(null);
@@ -13,7 +13,7 @@ const Keamanan = () => {
       <h2>Keamanan</h2>
       {/* Konten keamanan akan ditambahkan di sini */}
     </div>
-  )
-}
+  );
+};
 
-export default Keamanan
+export default Keamanan;
