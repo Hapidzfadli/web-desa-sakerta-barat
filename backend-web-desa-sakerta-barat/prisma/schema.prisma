@@ -52,20 +52,22 @@ enum BloodType {
 }
 
 model User {
-  id             Int       @id @default(autoincrement())
-  email          String    @unique @db.VarChar(100)
-  password       String    @db.VarChar(100)
-  username       String    @unique @db.VarChar(100)
-  name           String    @db.VarChar(100)
-  firstName      String    @db.VarChar(50)
-  lastName       String?   @db.VarChar(50)
-  role           Role      @default(WARGA)
-  isVerified     Boolean   @default(false)
-  profilePicture String?   @db.Text
-  token          String?   @db.VarChar(255)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  Resident       Resident?
+  id              Int             @id @default(autoincrement())
+  email           String          @unique @db.VarChar(100)
+  password        String          @db.VarChar(100)
+  username        String          @unique @db.VarChar(100)
+  name            String          @db.VarChar(100)
+  firstName       String          @db.VarChar(50)
+  lastName        String?         @db.VarChar(50)
+  role            Role            @default(WARGA)
+  isVerified      Boolean         @default(false)
+  profilePicture  String?         @db.Text
+  token           String?         @db.VarChar(255)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  Resident        Resident?
+  printedLetters  PrintedLetter[] @relation("PrintedBy")
+  archivedLetters PrintedLetter[] @relation("ArchivedBy")
 
   @@map("users")
 }
@@ -142,18 +144,19 @@ model LetterType {
 }
 
 model LetterRequest {
-  id           Int           @id @default(autoincrement())
-  residentId   Int
-  resident     Resident      @relation(fields: [residentId], references: [id])
-  letterTypeId Int
-  letterType   LetterType    @relation(fields: [letterTypeId], references: [id])
-  letterNumber String?       @db.VarChar(50)
-  requestDate  DateTime      @default(now())
-  status       RequestStatus @default(SUBMITTED)
-  notes        String?       @db.Text
-  attachments  Attachment[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id            Int             @id @default(autoincrement())
+  residentId    Int
+  resident      Resident        @relation(fields: [residentId], references: [id])
+  letterTypeId  Int
+  letterType    LetterType      @relation(fields: [letterTypeId], references: [id])
+  letterNumber  String?         @db.VarChar(50)
+  requestDate   DateTime        @default(now())
+  status        RequestStatus   @default(SUBMITTED)
+  notes         String?         @db.Text
+  attachments   Attachment[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  PrintedLetter PrintedLetter[]
 
   @@map("letter_requests")
 }
@@ -169,4 +172,23 @@ model Attachment {
   createdAt       DateTime      @default(now())
 
   @@map("attachments")
+}
+
+model PrintedLetter {
+  id                 Int           @id @default(autoincrement())
+  letterRequestId    Int
+  letterRequest      LetterRequest @relation(fields: [letterRequestId], references: [id])
+  printedAt          DateTime
+  printedBy          Int
+  printedByUser      User          @relation("PrintedBy", fields: [printedBy], references: [id])
+  archivedAt         DateTime?
+  archivedBy         Int?
+  archivedByUser     User?         @relation("ArchivedBy", fields: [archivedBy], references: [id])
+  notificationSent   Boolean       @default(false)
+  notificationSentAt DateTime?
+  fileUrl            String?       @db.Text
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@map("printed_letters")
 }
