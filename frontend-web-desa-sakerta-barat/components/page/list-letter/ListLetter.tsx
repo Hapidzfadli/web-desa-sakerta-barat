@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   fetchLetterType,
   createLetterType,
@@ -20,42 +20,39 @@ import Image from 'next/image';
 import { CirclePlus, EyeIcon, PencilIcon, Trash2Icon } from 'lucide-react';
 import LetterTypeForm from '../../shared/LetterTypeForm';
 import { useToast } from '@/components/ui/use-toast';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import debounce from 'lodash/debounce';
 
 const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isContentLoading, setIsContentLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [letterTypeData, setLetterTypeData] = useState<LetterTypeProps[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedLetterTypeId, setSelectedLetterTypeId] = useState<
-    number | null
-  >(null);
-  const [currentLetterType, setCurrentLetterType] =
-    useState<LetterTypeProps | null>(null);
-  const [filter, setFilter] = useState('');
-  const [sort, setSort] = useState('');
+  const [selectedLetterTypeId, setSelectedLetterTypeId] = useState<number | null>(null);
+  const [currentLetterType, setCurrentLetterType] = useState<LetterTypeProps | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('name');
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadLetterTypeData();
-  }, [categoryId]);
-
-  useEffect(() => {
-    if (selectedLetterTypeId !== null) {
-      const selectedType = letterTypeData.find(
-        (lt) => lt.id === selectedLetterTypeId
-      );
-
-      setCurrentLetterType(selectedType || null);
-      setIsFormOpen(true);
-    }
-  }, [selectedLetterTypeId]);
-
-  const loadLetterTypeData = async () => {
-    setIsLoading(true);
+  const loadLetterTypeData = useCallback(async () => {
+    setIsContentLoading(true);
     setError(null);
     try {
-      const data = await fetchLetterType({ categoryId });
+      const data = await fetchLetterType({
+        categoryId,
+        search,
+        sortBy,
+        sortOrder,
+      });
       setLetterTypeData(data);
     } catch (err) {
       setError('Failed to load letter type data');
@@ -65,9 +62,33 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
         variant: 'destructive',
       });
     } finally {
-      setIsLoading(false);
+      setIsContentLoading(false);
+      setIsInitialLoading(false);
     }
-  };
+  }, [categoryId, search, sortBy, sortOrder, toast]);
+
+  const debouncedLoadLetterTypeData = useCallback(
+    debounce(loadLetterTypeData, 300),
+    [loadLetterTypeData]
+  );
+
+  useEffect(() => {
+    loadLetterTypeData();
+  }, [categoryId, sortBy, sortOrder]);
+
+  useEffect(() => {
+    debouncedLoadLetterTypeData();
+  }, [search]);
+
+  useEffect(() => {
+    if (selectedLetterTypeId !== null) {
+      const selectedType = letterTypeData.find(
+        (lt) => lt.id === selectedLetterTypeId
+      );
+      setCurrentLetterType(selectedType || null);
+      setIsFormOpen(true);
+    }
+  }, [selectedLetterTypeId, letterTypeData]);
 
   const handleAddEdit = async (data: any) => {
     data.categoryId = Number(categoryId);
@@ -120,6 +141,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
 
   const openAddForm = () => {
     setSelectedLetterTypeId(null);
+    setCurrentLetterType(null);
     setIsFormOpen(true);
   };
 
@@ -176,32 +198,61 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
     </Card>
   );
 
-  if (isLoading) return <LoadingSpinner />;
-  if (error) return <div>Error: {error}</div>;
-
-  const midpoint = Math.ceil(letterTypeData.length / 2);
-  const firstHalf = letterTypeData.slice(0, midpoint);
-  const secondHalf = letterTypeData.slice(midpoint);
+  if (isInitialLoading) return <LoadingSpinner />;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <Button
           className="bg-bank-gradient shadow-sm text-white"
-          onClick={() => openAddForm()}
+          onClick={openAddForm}
         >
           Tambah <CirclePlus className="h-4 w-4 ml-2 text-white" />
         </Button>
-       
-      </div>
-      <div className="grid grid-cols-2 gap-6">
-        <div className="grid grid-cols-1 gap-6">
-          {firstHalf.map(renderLetterTypeCard)}
+        <div className="flex gap-2">
+          <Input
+            placeholder="Search letter types..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-64"
+          />
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name">Name</SelectItem>
+              <SelectItem value="createdAt">Created Date</SelectItem>
+              <SelectItem value="updatedAt">Updated Date</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortOrder} onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Sort order" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="asc">Ascending</SelectItem>
+              <SelectItem value="desc">Descending</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <div className="grid grid-cols-1 gap-6">
-          {secondHalf.map(renderLetterTypeCard)}
-        </div>
       </div>
+      {isContentLoading ? (
+        <div className="flex justify-center items-center h-64 relative">
+          <LoadingSpinner />
+        </div>
+      ) : error ? (
+        <div>Error: {error}</div>
+      ) : (
+        <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6">
+            {letterTypeData.slice(0, Math.ceil(letterTypeData.length / 2)).map(renderLetterTypeCard)}
+          </div>
+          <div className="grid grid-cols-1 gap-6">
+            {letterTypeData.slice(Math.ceil(letterTypeData.length / 2)).map(renderLetterTypeCard)}
+          </div>
+        </div>
+      )}
       <LetterTypeForm
         key={currentLetterType ? currentLetterType.id : 'new'}
         isOpen={isFormOpen}

@@ -1,14 +1,10 @@
 import { API_URL } from '../../constants';
 import Cookies from 'js-cookie';
+import { getHeaders } from '../utils';
 
-const getHeaders = () => {
-  const token = Cookies.get('session');
-  return {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  };
-};
 
+
+// Api Call Letter Category
 export const fetchLetterCategory = async () => {
   try {
     const token = Cookies.get('session');
@@ -32,13 +28,85 @@ export const fetchLetterCategory = async () => {
   }
 };
 
+export const createLetterCategory = async (letterCategoryData : any) => {
+  try {
+    
+    const response = await fetch(`${API_URL}/api/letter-category`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(letterCategoryData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create letter category data');
+    }
+
+    const data = await response.json();
+    return data.data;
+
+  } catch (error) {
+    console.error('Create letter category  data error:', error);
+    throw error;
+  }
+}
+
+export const updateLetterCategory = async (letterCategoryData : any) => {
+  try {
+    const response = await fetch(
+      `${API_URL}/api/letter-category/${letterCategoryData.id}`,
+      {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(letterCategoryData),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to update letter category  data');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Update letter category  data error:', error);
+    throw error;
+  }
+}
+
+export const deleteLetterCategory = async (id: number) => {
+  try {
+    const response = await fetch(`${API_URL}/api/letter-category/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete letter category');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Delete letter category error:', error);
+    throw error;
+  }
+};
+
+// Api Call Letter Type
 export const fetchLetterType = async ({
   categoryId,
-}: {
-  categoryId: number;
-}) => {
+  search,
+  sortBy,
+  sortOrder,
+  page,
+  limit,
+}: OptionsProps & { categoryId: number }) => {
   try {
     let url = `${API_URL}/api/letter-type?categoryId=${categoryId}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (sortBy) url += `&sortBy=${sortBy}`;
+    if (sortOrder) url += `&sortOrder=${sortOrder}`;
+    if (page) url += `&page=${page}`;
+    if (limit) url += `&limit=${limit}`;
 
     const response = await fetch(url, {
       method: 'GET',

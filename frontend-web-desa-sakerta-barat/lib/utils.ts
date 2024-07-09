@@ -3,7 +3,7 @@ import { type ClassValue, clsx } from 'clsx';
 import qs from 'query-string';
 import { twMerge } from 'tailwind-merge';
 import { z } from 'zod';
-
+import Cookies from 'js-cookie';
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -140,3 +140,12 @@ export const authFormSchema = (type: string) =>
     username: z.string().min(3, 'Username must be at least 3 characters long'),
     password: z.string().min(8),
   });
+
+
+  export const getHeaders = () => {
+    const token = Cookies.get('session');
+    return {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+  };

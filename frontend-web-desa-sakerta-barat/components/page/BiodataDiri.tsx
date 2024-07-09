@@ -17,12 +17,15 @@ import {
   updateResidentSchema,
 } from '../../lib/settingUtils';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import { PencilIcon } from 'lucide-react';
 
 const BiodataDiri = () => {
   const { user } = useUser();
   const [profileData, setProfileData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isProfilePopupOpen, setIsProfilePopupOpen] = useState(false);
+  const [isResidentPopupOpen, setIsResidentPopupOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,7 +52,6 @@ const BiodataDiri = () => {
     errors?: Record<string, string>
   ) => {
     if (errors) {
-      // Handle validation errors
       const errorMessage = Object.values(errors).join(', ');
       toast({
         variant: 'destructive',
@@ -63,6 +65,7 @@ const BiodataDiri = () => {
       const validatedData = updateProfileSchema.parse(data);
       const savedData = await saveProfileData(validatedData);
       setProfileData((prevData) => ({ ...prevData, ...savedData }));
+      setIsProfilePopupOpen(false);
       toast({
         title: 'Success',
         description: 'Profile data saved successfully',
@@ -72,8 +75,7 @@ const BiodataDiri = () => {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description:
-          'Failed to save profile data. Please check your input and try again.',
+        description: 'Failed to save profile data. Please check your input and try again.',
       });
     }
   };
@@ -83,7 +85,6 @@ const BiodataDiri = () => {
     errors?: Record<string, string>
   ) => {
     if (errors) {
-      // Handle validation errors
       const errorMessage = Object.values(errors).join(', ');
       toast({
         variant: 'destructive',
@@ -100,6 +101,7 @@ const BiodataDiri = () => {
         ...prevData,
         Resident: { ...prevData.Resident, ...savedData },
       }));
+      setIsResidentPopupOpen(false);
       toast({
         title: 'Success',
         description: 'Resident data saved successfully',
@@ -109,8 +111,7 @@ const BiodataDiri = () => {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description:
-          'Failed to save resident data. Please check your input and try again.',
+        description: 'Failed to save resident data. Please check your input and try again.',
       });
     }
   };
@@ -121,10 +122,7 @@ const BiodataDiri = () => {
         <div className="flex items-center justify-between p-6">
           <div className="flex items-center space-x-4">
             <Avatar className="h-12 w-12">
-              <AvatarImage
-                src="/path-to-avatar.jpg"
-                alt={profileData.username}
-              />
+              <AvatarImage src="/path-to-avatar.jpg" alt={profileData.username} />
               <AvatarFallback>{profileData.username?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
@@ -134,30 +132,13 @@ const BiodataDiri = () => {
               </p>
             </div>
           </div>
-          <EditPopup
-            title="Edit Informasi Akun"
-            fields={[
-              { label: 'Nama Lengkap', name: 'name', value: profileData.name },
-              {
-                label: 'Nama Depan',
-                name: 'firstName',
-                value: profileData.firstName,
-              },
-              {
-                label: 'Nama Belakang',
-                name: 'lastName',
-                value: profileData.lastName,
-              },
-              { label: 'Email', name: 'email', value: profileData.email },
-              {
-                label: 'Nomor Hp',
-                name: 'phoneNumber',
-                value: profileData.phoneNumber,
-              },
-            ]}
-            onSave={handleSaveProfile}
-            validationSchema={updateProfileSchema}
-          />
+          <Button
+            className="bg-edit h-8 w-8 rounded-full p-0"
+            title="Edit"
+            onClick={() => setIsProfilePopupOpen(true)}
+          >
+            <PencilIcon className="h-4 w-4 text-white" />
+          </Button>
         </div>
         <CardContent>
           <div className="grid md:grid-cols-2 gap-4">
@@ -171,14 +152,8 @@ const BiodataDiri = () => {
               { label: 'Status', field: 'isVerified' },
             ].map((item) => (
               <div key={item.field}>
-                <p className="text-sm font-medium text-gray-500">
-                  {item.label}
-                </p>
-                <p>
-                  {profileData[item.field] !== undefined
-                    ? String(profileData[item.field])
-                    : 'Not provided'}
-                </p>
+                <p className="text-sm font-medium text-gray-500">{item.label}</p>
+                <p>{profileData[item.field] !== undefined ? String(profileData[item.field]) : 'Not provided'}</p>
               </div>
             ))}
           </div>
@@ -189,114 +164,13 @@ const BiodataDiri = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Biodata Penduduk</CardTitle>
-            <EditPopup
-              title="Edit Biodata Penduduk"
-              fields={[
-                {
-                  label: 'Nama Lengkap',
-                  name: 'name',
-                  value: profileData.Resident?.name,
-                  required: true,
-                },
-                {
-                  label: 'NIK',
-                  name: 'nationalId',
-                  value: profileData.Resident?.nationalId,
-                  required: true,
-                },
-                {
-                  label: 'Tanggal Lahir',
-                  name: 'dateOfBirth',
-                  value: profileData.Resident?.dateOfBirth
-                    ? toInputDateValue(profileData.Resident.dateOfBirth)
-                    : '',
-                  type: 'date',
-                  required: true,
-                },
-                {
-                  label: 'Agama',
-                  name: 'religion',
-                  value: profileData.Resident?.religion,
-                  required: true,
-                },
-                {
-                  label: 'Status Pernikahan',
-                  name: 'maritalStatus',
-                  value: profileData.Resident?.maritalStatus,
-                  required: true,
-                },
-                {
-                  label: 'Pekerjaan',
-                  name: 'occupation',
-                  value: profileData.Resident?.occupation,
-                  required: true,
-                },
-                {
-                  label: 'Kewarganegaraan',
-                  name: 'nationality',
-                  value: profileData.Resident?.nationality,
-                  required: true,
-                },
-                {
-                  label: 'Tempat Lahir',
-                  name: 'placeOfBirth',
-                  value: profileData.Resident?.placeOfBirth,
-                  required: true,
-                },
-                {
-                  label: 'Jenis Kelamin',
-                  name: 'gender',
-                  value: profileData.Resident?.gender,
-                  required: true,
-                },
-                {
-                  label: 'Nomor Kartu Keluarga',
-                  name: 'familyCardNumber',
-                  value: profileData.Resident?.familyCardNumber,
-                  required: true,
-                },
-                {
-                  label: 'Kecamatan',
-                  name: 'district',
-                  value: profileData.Resident?.district,
-                  required: true,
-                },
-                {
-                  label: 'Kabupaten',
-                  name: 'regency',
-                  value: profileData.Resident?.regency,
-                  required: true,
-                },
-                {
-                  label: 'Provinsi',
-                  name: 'province',
-                  value: profileData.Resident?.province,
-                  required: true,
-                },
-                {
-                  label: 'Kode Pos',
-                  name: 'postalCode',
-                  value: profileData.Resident?.postalCode,
-                  required: true,
-                },
-                {
-                  label: 'Alamat KTP',
-                  name: 'idCardAddress',
-                  value: profileData.Resident?.idCardAddress,
-                  type: 'textarea',
-                  required: true,
-                },
-                {
-                  label: 'Alamat Domisili',
-                  name: 'residentialAddress',
-                  value: profileData.Resident?.residentialAddress,
-                  type: 'textarea',
-                  required: true,
-                },
-              ]}
-              onSave={handleSaveResident}
-              validationSchema={updateResidentSchema}
-            />
+            <Button
+              className="bg-edit h-8 w-8 rounded-full p-0"
+              title="Edit"
+              onClick={() => setIsResidentPopupOpen(true)}
+            >
+              <PencilIcon className="h-4 w-4 text-white" />
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -304,11 +178,7 @@ const BiodataDiri = () => {
             {[
               { label: 'Nama Lengkap', field: 'name' },
               { label: 'NIK', field: 'nationalId' },
-              {
-                label: 'Tanggal Lahir',
-                field: 'dateOfBirth',
-                format: (value: string) => formatDate(value),
-              },
+              { label: 'Tanggal Lahir', field: 'dateOfBirth', format: (value: string) => formatDate(value) },
               { label: 'Agama', field: 'religion' },
               { label: 'Status Pernikahan', field: 'maritalStatus' },
               { label: 'Pekerjaan', field: 'occupation' },
@@ -324,9 +194,7 @@ const BiodataDiri = () => {
               { label: 'Alamat Domisili', field: 'residentialAddress' },
             ].map((item) => (
               <div key={item.field}>
-                <p className="text-sm font-medium text-gray-500">
-                  {item.label}
-                </p>
+                <p className="text-sm font-medium text-gray-500">{item.label}</p>
                 <p>
                   {item.format
                     ? item.format(profileData.Resident?.[item.field])
@@ -364,6 +232,47 @@ const BiodataDiri = () => {
           )}
         </CardContent>
       </Card>
+
+      <EditPopup
+        title="Edit Informasi Akun"
+        fields={[
+          { label: 'Nama Lengkap', name: 'name', value: profileData.name },
+          { label: 'Nama Depan', name: 'firstName', value: profileData.firstName },
+          { label: 'Nama Belakang', name: 'lastName', value: profileData.lastName },
+          { label: 'Email', name: 'email', value: profileData.email },
+          { label: 'Nomor Hp', name: 'phoneNumber', value: profileData.phoneNumber },
+        ]}
+        onSave={handleSaveProfile}
+        validationSchema={updateProfileSchema}
+        isOpen={isProfilePopupOpen}
+        onClose={() => setIsProfilePopupOpen(false)}
+      />
+
+      <EditPopup
+        title="Edit Biodata Penduduk"
+        fields={[
+          { label: 'Nama Lengkap', name: 'name', value: profileData.Resident?.name, required: true },
+          { label: 'NIK', name: 'nationalId', value: profileData.Resident?.nationalId, required: true },
+          { label: 'Tanggal Lahir', name: 'dateOfBirth', value: profileData.Resident?.dateOfBirth ? toInputDateValue(profileData.Resident.dateOfBirth) : '', type: 'date', required: true },
+          { label: 'Agama', name: 'religion', value: profileData.Resident?.religion, required: true },
+          { label: 'Status Pernikahan', name: 'maritalStatus', value: profileData.Resident?.maritalStatus, required: true },
+          { label: 'Pekerjaan', name: 'occupation', value: profileData.Resident?.occupation, required: true },
+          { label: 'Kewarganegaraan', name: 'nationality', value: profileData.Resident?.nationality, required: true },
+          { label: 'Tempat Lahir', name: 'placeOfBirth', value: profileData.Resident?.placeOfBirth, required: true },
+          { label: 'Jenis Kelamin', name: 'gender', value: profileData.Resident?.gender, required: true },
+          { label: 'Nomor Kartu Keluarga', name: 'familyCardNumber', value: profileData.Resident?.familyCardNumber, required: true },
+          { label: 'Kecamatan', name: 'district', value: profileData.Resident?.district, required: true },
+          { label: 'Kabupaten', name: 'regency', value: profileData.Resident?.regency, required: true },
+          { label: 'Provinsi', name: 'province', value: profileData.Resident?.province, required: true },
+          { label: 'Kode Pos', name: 'postalCode', value: profileData.Resident?.postalCode, required: true },
+          { label: 'Alamat KTP', name: 'idCardAddress', value: profileData.Resident?.idCardAddress, type: 'textarea', required: true },
+          { label: 'Alamat Domisili', name: 'residentialAddress', value: profileData.Resident?.residentialAddress, type: 'textarea', required: true },
+        ]}
+        onSave={handleSaveResident}
+        validationSchema={updateResidentSchema}
+        isOpen={isResidentPopupOpen}
+        onClose={() => setIsResidentPopupOpen(false)}
+      />
     </div>
   );
 };

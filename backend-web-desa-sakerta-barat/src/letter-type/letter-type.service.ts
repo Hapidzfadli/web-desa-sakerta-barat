@@ -103,10 +103,11 @@ export class LetterTypeService {
       const filter = options.categoryId
         ? { categoryId: options.categoryId }
         : {};
+      const searchFields = ['requirements', 'name'];
       const result = await prismaPaginate<LetterType>(
         this.prismaService,
         'letterType',
-        { ...options, filter },
+        { ...options, filter, searchFields },
       );
 
       const mappedData = Array.isArray(result.data)
