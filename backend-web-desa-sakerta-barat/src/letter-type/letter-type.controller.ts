@@ -246,7 +246,6 @@ export class LetterTypeController {
       'letter-type-templates',
     );
     const filePath = path.join(basePath, templatePath);
-    console.log(filePath);
 
     if (!fs.existsSync(filePath)) {
       throw new NotFoundException('Template file not found');

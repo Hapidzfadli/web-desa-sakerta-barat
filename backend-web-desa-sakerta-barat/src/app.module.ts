@@ -6,6 +6,7 @@ import { ResidentModule } from './resident/resident.module';
 import { LetterCategoryModule } from './letter-category/letter-category.module';
 import { LetterTypeModule } from './letter-type/letter-type.module';
 import { LetterRequestModule } from './letter-request/letter-request.module';
+import { PrintedLetterModule } from './printed-letter/printed-letter.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { LetterRequestModule } from './letter-request/letter-request.module';
     LetterCategoryModule,
     LetterTypeModule,
     LetterRequestModule,
+    PrintedLetterModule,
   ],
   controllers: [],
   providers: [],
