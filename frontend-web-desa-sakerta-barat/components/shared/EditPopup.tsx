@@ -81,7 +81,7 @@ const EditPopup: React.FC<EditPopupProps> = ({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className='max-h-[80vh] overflow-y-auto'>
+        <form onSubmit={handleSubmit} className="max-h-[80vh] overflow-y-auto">
           <div className="grid grid-cols-2 gap-4 py-4">
             {fields.map((field) => (
               <div key={field.name} className="flex flex-col items-start gap-2">

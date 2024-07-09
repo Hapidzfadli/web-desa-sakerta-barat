@@ -1,19 +1,31 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import Image from 'next/image';
 import { API_URL } from '../../constants';
 
-
-
-const LetterTypeForm: React.FC<LetterTypeFormProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
+const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  initialData,
+}) => {
   const [formData, setFormData] = useState(initialData || {});
-  const [iconPreview, setIconPreview] = useState(initialData?.icon ? API_URL + initialData?.icon :  initialData?.icon || '');
+  const [iconPreview, setIconPreview] = useState(
+    initialData?.icon ? API_URL + initialData?.icon : initialData?.icon || ''
+  );
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -29,8 +41,6 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({ isOpen, onClose, onSubm
     }
   };
 
-  
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
@@ -38,12 +48,12 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({ isOpen, onClose, onSubm
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className='custom-dialog-content '>
+      <DialogContent className="custom-dialog-content ">
         <DialogHeader>
           <DialogTitle>{initialData ? 'Edit' : 'Add'} Letter Type</DialogTitle>
-        </DialogHeader> 
-        
-        <form onSubmit={handleSubmit} className='max-h-[80vh] overflow-y-auto'>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="max-h-[80vh] overflow-y-auto">
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-left">
@@ -84,7 +94,12 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({ isOpen, onClose, onSubm
             {iconPreview && (
               <div className="grid grid-cols-4 items-center gap-4">
                 <div className="col-start-2 col-span-3">
-                  <Image src={iconPreview} alt="Icon preview" width={100} height={100} />
+                  <Image
+                    src={iconPreview}
+                    alt="Icon preview"
+                    width={100}
+                    height={100}
+                  />
                 </div>
               </div>
             )}

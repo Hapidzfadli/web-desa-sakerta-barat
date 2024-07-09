@@ -1,22 +1,37 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { fetchLetterType, createLetterType, updateLetterType, deleteLetterType } from '../../../lib/actions/list-letter.action';
+import {
+  fetchLetterType,
+  createLetterType,
+  updateLetterType,
+  deleteLetterType,
+} from '../../../lib/actions/list-letter.action';
 import LoadingSpinner from '../../shared/LoadingSpinner';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { CirclePlus, EyeIcon, PencilIcon, Trash2Icon } from 'lucide-react';
 import LetterTypeForm from '../../shared/LetterTypeForm';
 import FilterSort from '../../shared/FilterSort';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from '@/components/ui/use-toast';
 
 const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [letterTypeData, setLetterTypeData] = useState<LetterTypeProps[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedLetterTypeId, setSelectedLetterTypeId] = useState<number | null>(null);
-  const [currentLetterType, setCurrentLetterType] = useState<LetterTypeProps | null>(null);
+  const [selectedLetterTypeId, setSelectedLetterTypeId] = useState<
+    number | null
+  >(null);
+  const [currentLetterType, setCurrentLetterType] =
+    useState<LetterTypeProps | null>(null);
   const [filter, setFilter] = useState('');
   const [sort, setSort] = useState('');
   const { toast } = useToast();
@@ -26,14 +41,14 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
   }, [categoryId, filter, sort]);
 
   useEffect(() => {
-    
     if (selectedLetterTypeId !== null) {
-      const selectedType = letterTypeData.find(lt => lt.id === selectedLetterTypeId);
-     
+      const selectedType = letterTypeData.find(
+        (lt) => lt.id === selectedLetterTypeId
+      );
+
       setCurrentLetterType(selectedType || null);
       setIsFormOpen(true);
-    } 
-    
+    }
   }, [selectedLetterTypeId]);
 
   const loadLetterTypeData = async () => {
@@ -45,9 +60,9 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
     } catch (err) {
       setError('Failed to load letter type data');
       toast({
-        title: "Error",
-        description: "Failed to load letter types",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to load letter types',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -60,14 +75,14 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
       if (currentLetterType) {
         await updateLetterType(currentLetterType.id, data);
         toast({
-          title: "Success",
-          description: "Letter type updated successfully",
+          title: 'Success',
+          description: 'Letter type updated successfully',
         });
       } else {
         await createLetterType(data);
         toast({
-          title: "Success",
-          description: "New letter type created successfully",
+          title: 'Success',
+          description: 'New letter type created successfully',
         });
       }
       setIsFormOpen(false);
@@ -75,9 +90,9 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
       loadLetterTypeData();
     } catch (err) {
       toast({
-        title: "Error",
-        description: "Failed to save letter type",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to save letter type',
+        variant: 'destructive',
       });
     }
   };
@@ -86,15 +101,15 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
     try {
       await deleteLetterType(id);
       toast({
-        title: "Success",
-        description: "Letter type deleted successfully",
+        title: 'Success',
+        description: 'Letter type deleted successfully',
       });
       loadLetterTypeData();
     } catch (err) {
       toast({
-        title: "Error",
-        description: "Failed to delete letter type",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to delete letter type',
+        variant: 'destructive',
       });
     }
   };
@@ -109,7 +124,10 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
   };
 
   const renderLetterTypeCard = (letterType: LetterTypeProps) => (
-    <Card key={letterType.id} className="flex flex-col shadow-creditCard border-0">
+    <Card
+      key={letterType.id}
+      className="flex flex-col shadow-creditCard border-0"
+    >
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-sm text-black-2">
           {letterType.name}
@@ -117,8 +135,8 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
       </CardHeader>
       <CardContent className="flex-grow">
         {letterType.icon && (
-          <div className='h-40 mb-4 rounded-lg overflow-hidden'>
-            <div className='relative w-full h-full'>
+          <div className="h-40 mb-4 rounded-lg overflow-hidden">
+            <div className="relative w-full h-full">
               <Image
                 src={`http://localhost:3001${letterType.icon}`}
                 layout="fill"
@@ -129,16 +147,29 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
             </div>
           </div>
         )}
-        <CardDescription className='text-[#A3AED0]'>{letterType.description}</CardDescription>
+        <CardDescription className="text-[#A3AED0]">
+          {letterType.description}
+        </CardDescription>
       </CardContent>
       <CardFooter className="flex justify-end gap-3">
-        <Button className='bg-red-500 hover:bg-red-600 h-8 w-8 rounded-full p-0' title="Hapus" onClick={() => handleDelete(letterType.id)}>
+        <Button
+          className="bg-red-500 hover:bg-red-600 h-8 w-8 rounded-full p-0"
+          title="Hapus"
+          onClick={() => handleDelete(letterType.id)}
+        >
           <Trash2Icon className="h-4 w-4 text-white" />
         </Button>
-        <Button className='bg-blue-500 hover:bg-blue-600 h-8 w-8 rounded-full p-0' title="Edit" onClick={() => openEditForm(letterType)}>
+        <Button
+          className="bg-blue-500 hover:bg-blue-600 h-8 w-8 rounded-full p-0"
+          title="Edit"
+          onClick={() => openEditForm(letterType)}
+        >
           <PencilIcon className="h-4 w-4 text-white" />
         </Button>
-        <Button className='bg-green-500 hover:bg-green-600 h-8 w-8 rounded-full p-0' title="Lihat">
+        <Button
+          className="bg-green-500 hover:bg-green-600 h-8 w-8 rounded-full p-0"
+          title="Lihat"
+        >
           <EyeIcon className="h-4 w-4 text-white" />
         </Button>
       </CardFooter>
@@ -154,8 +185,11 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
 
   return (
     <div>
-      <div className='flex justify-between items-center mb-4'>
-        <Button className='bg-bank-gradient shadow-sm text-white' onClick={() => openAddForm()}>
+      <div className="flex justify-between items-center mb-4">
+        <Button
+          className="bg-bank-gradient shadow-sm text-white"
+          onClick={() => openAddForm()}
+        >
           Tambah <CirclePlus className="h-4 w-4 ml-2 text-white" />
         </Button>
         <FilterSort onFilter={setFilter} onSort={setSort} />

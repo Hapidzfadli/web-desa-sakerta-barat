@@ -4,7 +4,7 @@ import Cookies from 'js-cookie';
 const getHeaders = () => {
   const token = Cookies.get('session');
   return {
-    'Authorization': `Bearer ${token}`,
+    Authorization: `Bearer ${token}`,
     'Content-Type': 'application/json',
   };
 };
@@ -33,7 +33,15 @@ export const fetchLetterCategory = async () => {
   }
 };
 
-export const fetchLetterType = async ({ categoryId, filter, sort }: { categoryId: number, filter?: string, sort?: string }) => {
+export const fetchLetterType = async ({
+  categoryId,
+  filter,
+  sort,
+}: {
+  categoryId: number;
+  filter?: string;
+  sort?: string;
+}) => {
   try {
     let url = `${API_URL}/api/letter-type?categoryId=${categoryId}`;
     if (filter) url += `&filter=${filter}`;
@@ -60,8 +68,8 @@ export const createLetterType = async (data: any) => {
   try {
     const token = Cookies.get('session');
     const formData = new FormData();
-    
-    Object.keys(data).forEach(key => {
+
+    Object.keys(data).forEach((key) => {
       if (key !== 'icon' && key !== 'template') {
         formData.append(key, data[key]);
       }
@@ -73,7 +81,7 @@ export const createLetterType = async (data: any) => {
     const response = await fetch(`${API_URL}/api/letter-type`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
       body: formData,
     });
@@ -90,13 +98,12 @@ export const createLetterType = async (data: any) => {
   }
 };
 
-
 export const updateLetterType = async (id: number, data: any) => {
   try {
     const token = Cookies.get('session');
     const formData = new FormData();
-    
-    Object.keys(data).forEach(key => {
+
+    Object.keys(data).forEach((key) => {
       if (key !== 'icon' && key !== 'template') {
         formData.append(key, data[key]);
       }
@@ -108,7 +115,7 @@ export const updateLetterType = async (id: number, data: any) => {
     const response = await fetch(`${API_URL}/api/letter-type/${id}`, {
       method: 'PUT',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
       body: formData,
     });

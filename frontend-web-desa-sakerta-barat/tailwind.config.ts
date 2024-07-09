@@ -85,7 +85,6 @@ const config = {
           '0px 12px 16px -4px rgba(16, 24, 40, 0.08), 0px 4px 6px -2px rgba(16, 24, 40, 0.03)',
         creditCard: '8px 10px 16px 0px rgba(0, 0, 0, 0.05)',
         letterCard: '0 18px 40px 0 rgba(112, 144, 128, 0.12)',
-        
       },
       fontFamily: {
         inter: 'var(--font-inter)',
