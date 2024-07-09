@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { ResponseLetterType } from './letter-type.model';
 // letter-category.model.ts
 export class CreateLetterCategoryRequest {
   name: string;
@@ -13,12 +15,12 @@ export class ResponseLetterCategory {
   id: number;
   name: string;
   description: string | null;
+  letterTypes?: ResponseLetterType[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 // letter-category.validation.ts
-import { z } from 'zod';
 
 export class LetterCategoryValidation {
   static readonly CREATE = z.object({

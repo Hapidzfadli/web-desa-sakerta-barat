@@ -38,11 +38,11 @@ import { promises as fsPromises } from 'fs';
 import * as fs from 'fs';
 
 @Controller('/api/letter-type')
-@UseGuards(AuthGuard, RolesGuard)
 export class LetterTypeController {
   constructor(private letterTypeService: LetterTypeService) {}
 
   @Post()
+  @UseGuards(AuthGuard, RolesGuard)
   @HttpCode(HttpStatus.CREATED)
   @Roles(Role.ADMIN, Role.KADES)
   @UseInterceptors(
@@ -95,11 +95,18 @@ export class LetterTypeController {
   }
 
   @Get()
+  @UseGuards(AuthGuard, RolesGuard)
   @HttpCode(HttpStatus.OK)
   async getLetterTypes(
-    @Query() options: PaginateOptions,
+    @Query() options: PaginateOptions & { categoryId?: string },
   ): Promise<WebResponse<ResponseLetterType[]>> {
-    const result = await this.letterTypeService.getLetterTypes(options);
+    const categoryId = options.categoryId
+      ? parseInt(options.categoryId, 10)
+      : undefined;
+    const result = await this.letterTypeService.getLetterTypes({
+      ...options,
+      categoryId,
+    });
     return {
       data: result.data,
       paging: {
@@ -112,6 +119,7 @@ export class LetterTypeController {
   }
 
   @Get(':id')
+  @UseGuards(AuthGuard, RolesGuard)
   @HttpCode(HttpStatus.OK)
   async getLetterType(
     @Param('id') id: string,
@@ -123,6 +131,7 @@ export class LetterTypeController {
   }
 
   @Put(':id')
+  @UseGuards(AuthGuard, RolesGuard)
   @HttpCode(HttpStatus.OK)
   @Roles(Role.ADMIN, Role.KADES)
   @UseInterceptors(
@@ -196,6 +205,7 @@ export class LetterTypeController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard, RolesGuard)
   @HttpCode(HttpStatus.OK)
   @Roles(Role.ADMIN, Role.KADES)
   async deleteLetterType(
@@ -225,6 +235,7 @@ export class LetterTypeController {
   }
 
   @Get(':id/download-template')
+  @UseGuards(AuthGuard, RolesGuard)
   async downloadTemplate(
     @Param('id') id: string,
     @Res({ passthrough: true }) res: Response,

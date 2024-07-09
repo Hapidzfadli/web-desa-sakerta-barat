@@ -41,6 +41,8 @@ export class LetterTypeService {
   ): Promise<ResponseLetterType> {
     this.logger.debug(`Creating new letter type: ${JSON.stringify(request)}`);
 
+    request.categoryId = Number(request.categoryId);
+
     const validatedData = this.validationService.validate(
       LetterTypeValidation.CREATE,
       request,
@@ -95,13 +97,16 @@ export class LetterTypeService {
   }
 
   async getLetterTypes(
-    options: PaginateOptions,
+    options: PaginateOptions & { categoryId?: number },
   ): Promise<PaginatedResult<ResponseLetterType[]>> {
     try {
+      const filter = options.categoryId
+        ? { categoryId: options.categoryId }
+        : {};
       const result = await prismaPaginate<LetterType>(
         this.prismaService,
         'letterType',
-        options,
+        { ...options, filter },
       );
 
       const mappedData = Array.isArray(result.data)
@@ -136,6 +141,18 @@ export class LetterTypeService {
     return this.mapToResponseLetterType(letterType);
   }
 
+  async getLetterTypeByCategory(id: number): Promise<ResponseLetterType> {
+    const letterType = await this.prismaService.letterType.findUnique({
+      where: { id },
+    });
+
+    if (!letterType) {
+      throw new NotFoundException('Letter Type not found');
+    }
+
+    return this.mapToResponseLetterType(letterType);
+  }
+
   async updateLetterType(
     id: number,
     request: UpdateLetterTypeRequest,
@@ -143,6 +160,8 @@ export class LetterTypeService {
     templateFile?: Express.Multer.File,
   ): Promise<ResponseLetterType> {
     this.logger.debug(`Updating letter type ${id}: ${JSON.stringify(request)}`);
+
+    request.categoryId = Number(request.categoryId);
 
     const validatedData = this.validationService.validate(
       LetterTypeValidation.UPDATE,
