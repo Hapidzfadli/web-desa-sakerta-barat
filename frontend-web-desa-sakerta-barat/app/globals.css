@@ -74,11 +74,11 @@
 }
 
 body {
-  font-family: var(--font-poppins)
+  font-family: var(--font-poppins);
 }
 
 #login {
-  font-family: var(--font-glory)
+  font-family: var(--font-glory);
 }
 .filter-grey {
   filter: brightness(0) saturate(100%) invert(47%) sepia(0%) saturate(217%)
@@ -89,20 +89,21 @@ body {
   background: rgba(255, 255, 255, 0.7) !important;
   backdrop-filter: blur(20px) saturate(180%) !important;
   border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 
-              0 5px 10px rgba(0, 0, 0, 0.04) !important;
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.1),
+    0 5px 10px rgba(0, 0, 0, 0.04) !important;
   border-radius: 12px !important;
   padding: 24px !important;
 }
 
 .custom-dialog-content::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(
+  background: linear-gradient( 
     135deg,
     rgba(255, 255, 255, 0.3) 0%,
     rgba(255, 255, 255, 0.1) 100%
@@ -112,7 +113,7 @@ body {
 }
 
 .custom-dialog-content::after {
-  content: "";
+  content: '';
   position: absolute;
   top: -1px;
   left: -1px;
@@ -128,9 +129,13 @@ body {
   filter: blur(2px);
 }
 .custom-dialog-overlay {
-  background-color: rgba(0, 0, 0, 0.5) !important; /* Ubah nilai alpha untuk mengatur kegelapan */
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.5
+  ) !important; /* Ubah nilai alpha untuk mengatur kegelapan */
 }
-
 
 .glassy-input {
   background: rgba(255, 255, 255, 0.2) !important;
@@ -292,8 +297,6 @@ body {
     @apply bg-grey-50 h-[54px] focus-visible:ring-offset-0 placeholder:text-grey-500 rounded-full p-regular-16 px-4 py-3 border-none focus-visible:ring-transparent !important;
   }
 
-
-
   .button {
     @apply rounded-full h-[54px] p-regular-16;
   }
@@ -334,7 +337,7 @@ body {
 .cl-formButtonPrimary:hover,
 .cl-formButtonPrimary:focus,
 .cl-formButtonPrimary:active {
-  background-color: #705CF7
+  background-color: #705cf7;
 }
 
 /* ========================================== REACT-DATEPICKER STYLES */
@@ -366,21 +369,21 @@ body {
   .text-26 {
     @apply text-[26px] leading-[32px];
   }
-  
-/* Sidebar */
-.sidebar {
-  @apply sticky left-0 top-0 flex h-screen w-fit flex-col  justify-between border-r border-gray-200 bg-white pt-8 text-white max-md:hidden sm:p-4 xl:p-6;
-}
 
-.sidebar-logo {
-  @apply 2xl:text-26 font-ibm-plex-serif text-[18px] font-bold text-black-1 max-xl:hidden;
-}
+  /* Sidebar */
+  .sidebar {
+    @apply sticky left-0 top-0 flex h-screen w-fit flex-col  justify-between border-r border-gray-200 bg-white pt-8 text-white max-md:hidden sm:p-4 xl:p-6;
+  }
 
-.sidebar-link {
-  @apply flex gap-3 items-center py-1 md:p-3 2xl:p-4 rounded-lg ;
-}
+  .sidebar-logo {
+    @apply 2xl:text-26 font-ibm-plex-serif text-[18px] font-bold text-black-1 max-xl:hidden;
+  }
 
-.sidebar-label {
-  @apply text-16   ;
-}
+  .sidebar-link {
+    @apply flex gap-3 items-center py-1 md:p-3 2xl:p-4 rounded-lg;
+  }
+
+  .sidebar-label {
+    @apply text-16;
+  }
 }

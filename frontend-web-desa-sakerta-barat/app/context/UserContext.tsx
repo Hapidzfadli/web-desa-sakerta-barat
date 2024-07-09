@@ -3,13 +3,15 @@ import Cookies from 'js-cookie';
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const token = Cookies.get('session');
     const storedUser = localStorage.getItem('userData');
-    
+
     if (token && storedUser) {
       setUser(JSON.parse(storedUser));
     }

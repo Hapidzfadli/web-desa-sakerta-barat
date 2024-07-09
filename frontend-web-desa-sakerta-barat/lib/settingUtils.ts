@@ -1,17 +1,17 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // Define enums (assuming these are defined elsewhere in your project)
 enum DocumentType {
-  ID_CARD = "ID_CARD",
-  DRIVING_LICENSE = "DRIVING_LICENSE",
-  FAMILY_CARD = "FAMILY_CARD",
+  ID_CARD = 'ID_CARD',
+  DRIVING_LICENSE = 'DRIVING_LICENSE',
+  FAMILY_CARD = 'FAMILY_CARD',
 }
 
 enum MaritalStatus {
-  BELUM_KAWIN = "BELUM_KAWIN",
-  KAWIN = "KAWIN",
-  CERAI_HIDUP = "CERAI_HIDUP",
-  CERAI_MATI = "CERAI_MATI",
+  BELUM_KAWIN = 'BELUM',
+  KAWIN = 'KAWIN',
+  CERAI_HIDUP = 'CERAI_HIDUP',
+  CERAI_MATI = 'CERAI_MATI',
 }
 
 export const updateProfileSchema = z.object({
@@ -19,7 +19,10 @@ export const updateProfileSchema = z.object({
   lastName: z.string().optional(),
   name: z.string().optional(),
   email: z.string().email().max(50).optional(),
-  username: z.string().min(3, "Username must be at least 3 characters long").optional(),
+  username: z
+    .string()
+    .min(3, 'Username must be at least 3 characters long')
+    .optional(),
   phoneNumber: z.string().optional(), // Changed to string as phone numbers are typically handled as strings
 });
 
