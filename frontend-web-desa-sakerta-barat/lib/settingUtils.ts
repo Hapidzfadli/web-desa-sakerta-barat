@@ -10,8 +10,27 @@ enum DocumentType {
 enum MaritalStatus {
   BELUM_KAWIN = 'BELUM',
   KAWIN = 'KAWIN',
-  CERAI_HIDUP = 'CERAI_HIDUP',
-  CERAI_MATI = 'CERAI_MATI',
+  JANDA = 'JANDA',
+  DUDA = 'DUDA',
+}
+
+enum Gender {
+  LAKI_LAKI = 'LAKI_LAKI',
+  PEREMPUAN = 'PEREMPUAN'
+}
+
+enum RequestStatus {
+  SUBMITTED = 'SUBMITTED',
+  PROCESSING = 'PROCESSING',
+  COMPLETED = 'COMPLETED',
+  REJECTED = 'REJECTED',
+}
+
+enum BloodType {
+  A = 'A',
+  B = 'B',
+  AB  = 'AB',
+  O = 'O',
 }
 
 export const updateProfileSchema = z.object({
@@ -91,3 +110,42 @@ export const updateResidentSchema = createResidentSchema.partial().omit({
 export type UpdateProfileData = z.infer<typeof updateProfileSchema>;
 export type CreateResidentData = z.infer<typeof createResidentSchema>;
 export type UpdateResidentData = z.infer<typeof updateResidentSchema>;
+
+
+export const createLetterCategorySchema = z.object({
+  name: z.string().min(1).max(50),
+  description: z.string().max(255).optional(),
+});
+export const updateLetterCategorySchema = createLetterCategorySchema.partial();
+
+
+export const createLetterTypeSchema = z.object({
+  categoryId: z.number().int().positive(),
+  name: z.string().min(1).max(100),
+  description: z.string().max(255).optional(),
+  requirements: z.string().optional(),
+});
+
+export const updateLetterTypeSchema = createLetterTypeSchema.partial();
+
+
+export const createLetterRequestSchema = z.object({
+  letterTypeId: z.number().int().positive(),
+  notes: z.string().optional(),
+  attachments: z
+    .array(
+      z.object({
+        fileName: z.string(),
+        fileUrl: z.string().optional(),
+        documentId: z.number().int().positive().optional(),
+      }),
+    )
+    .optional(),
+});
+
+export const updateLetterRequestSchema = createLetterRequestSchema.partial();
+
+export const verifyLetterRequestSchema = z.object({
+  status: z.enum([RequestStatus.COMPLETED, RequestStatus.REJECTED, RequestStatus.PROCESSING]),
+  notes: z.string().optional(),
+});

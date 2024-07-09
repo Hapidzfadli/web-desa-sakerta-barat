@@ -19,7 +19,6 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { CirclePlus, EyeIcon, PencilIcon, Trash2Icon } from 'lucide-react';
 import LetterTypeForm from '../../shared/LetterTypeForm';
-import FilterSort from '../../shared/FilterSort';
 import { useToast } from '@/components/ui/use-toast';
 
 const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
@@ -34,11 +33,12 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
     useState<LetterTypeProps | null>(null);
   const [filter, setFilter] = useState('');
   const [sort, setSort] = useState('');
+  const [search, setSearch] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
     loadLetterTypeData();
-  }, [categoryId, filter, sort]);
+  }, [categoryId]);
 
   useEffect(() => {
     if (selectedLetterTypeId !== null) {
@@ -55,7 +55,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchLetterType({ categoryId, filter, sort });
+      const data = await fetchLetterType({ categoryId });
       setLetterTypeData(data);
     } catch (err) {
       setError('Failed to load letter type data');
@@ -160,14 +160,14 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
           <Trash2Icon className="h-4 w-4 text-white" />
         </Button>
         <Button
-          className="bg-blue-500 hover:bg-blue-600 h-8 w-8 rounded-full p-0"
+          className="bg-edit h-8 w-8 rounded-full p-0"
           title="Edit"
           onClick={() => openEditForm(letterType)}
         >
           <PencilIcon className="h-4 w-4 text-white" />
         </Button>
         <Button
-          className="bg-green-500 hover:bg-green-600 h-8 w-8 rounded-full p-0"
+          className="bg-bank-gradient hover:bg-blue-500 h-8 w-8 rounded-full p-0"
           title="Lihat"
         >
           <EyeIcon className="h-4 w-4 text-white" />
@@ -192,7 +192,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
         >
           Tambah <CirclePlus className="h-4 w-4 ml-2 text-white" />
         </Button>
-        <FilterSort onFilter={setFilter} onSort={setSort} />
+       
       </div>
       <div className="grid grid-cols-2 gap-6">
         <div className="grid grid-cols-1 gap-6">

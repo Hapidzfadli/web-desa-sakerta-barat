@@ -97,6 +97,15 @@ declare interface LetterTypeFormProps {
   onSubmit: (data: any) => void;
   initialData?: any;
 }
+
+declare interface OptionsProps {
+  filter?: Record<string, any>;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  search?: string;
+}
 // ========================================
 
 declare type RegisterParams = {

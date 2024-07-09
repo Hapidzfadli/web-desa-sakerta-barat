@@ -19,7 +19,6 @@ export const fetchLetterCategory = async () => {
         Authorization: `Bearer ${token}`,
       },
     });
-
     if (!response.ok) {
       throw new Error('Failed to fetch letter category data');
     }
@@ -35,17 +34,11 @@ export const fetchLetterCategory = async () => {
 
 export const fetchLetterType = async ({
   categoryId,
-  filter,
-  sort,
 }: {
   categoryId: number;
-  filter?: string;
-  sort?: string;
 }) => {
   try {
     let url = `${API_URL}/api/letter-type?categoryId=${categoryId}`;
-    if (filter) url += `&filter=${filter}`;
-    if (sort) url += `&sort=${sort}`;
 
     const response = await fetch(url, {
       method: 'GET',
