@@ -4,13 +4,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
-import { toInputDateValue } from '../../lib/utils';
 import { z } from 'zod';
 
 interface Field {
@@ -29,6 +27,8 @@ interface EditPopupProps {
     errors?: Record<string, string>
   ) => void;
   validationSchema: z.ZodSchema<any>;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 const EditPopup: React.FC<EditPopupProps> = ({
@@ -36,9 +36,18 @@ const EditPopup: React.FC<EditPopupProps> = ({
   fields,
   onSave,
   validationSchema,
+  isOpen,
+  onClose,
 }) => {
   const [formData, setFormData] = React.useState<Record<string, string>>({});
   const [errors, setErrors] = React.useState<Record<string, string>>({});
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setFormData(fields.reduce((acc, field) => ({ ...acc, [field.name]: field.value }), {}));
+      setErrors({});
+    }
+  }, [isOpen, fields]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -64,18 +73,15 @@ const EditPopup: React.FC<EditPopupProps> = ({
           {} as Record<string, string>
         );
         setErrors(errorMessages);
-        onSave(formData, errorMessages); // Pass errors back to parent component
+        onSave(formData, errorMessages);
       }
     }
   };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">Edit</Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="custom-dialog-content "
+        className="custom-dialog-content"
         style={{ width: 'auto', maxWidth: '100vw', minWidth: '65vw' }}
       >
         <DialogHeader>
@@ -93,7 +99,7 @@ const EditPopup: React.FC<EditPopupProps> = ({
                   <Textarea
                     id={field.name}
                     name={field.name}
-                    defaultValue={field.value}
+                    value={formData[field.name] || ''}
                     onChange={handleInputChange}
                     className="flex-grow glassy-input"
                     rows={3}
@@ -104,7 +110,7 @@ const EditPopup: React.FC<EditPopupProps> = ({
                     id={field.name}
                     name={field.name}
                     type={field.type || 'text'}
-                    defaultValue={field.value}
+                    value={formData[field.name] || ''}
                     onChange={handleInputChange}
                     className="flex-grow glassy-input"
                     required={field.required}

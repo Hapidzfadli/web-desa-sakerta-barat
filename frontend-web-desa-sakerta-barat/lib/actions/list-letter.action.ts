@@ -1,51 +1,125 @@
 import { API_URL } from '../../constants';
 import Cookies from 'js-cookie';
+import { getHeaders } from '../utils';
 
-const getHeaders = () => {
-  const token = Cookies.get('session');
-  return {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  };
-};
 
-export const fetchLetterCategory = async () => {
+
+// Api Call Letter Category
+export const fetchLetterCategory = async (options: { limit?: number; page?: number } = {}) => {
   try {
     const token = Cookies.get('session');
+    let url = `${API_URL}/api/letter-category`;
+    
+    const params = new URLSearchParams();
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.page) params.append('page', options.page.toString());
+    
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
 
-    const response = await fetch(`${API_URL}/api/letter-category`, {
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-
+    
     if (!response.ok) {
       throw new Error('Failed to fetch letter category data');
     }
 
     const data = await response.json();
-
-    return data.data;
+    return {
+      data: data.data,
+      pagination: data.paging,
+    };
   } catch (error) {
     console.error('Fetch letter category data error:', error);
     throw error;
   }
 };
 
+
+export const createLetterCategory = async (letterCategoryData : any) => {
+  try {
+    
+    const response = await fetch(`${API_URL}/api/letter-category`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(letterCategoryData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create letter category data');
+    }
+
+    const data = await response.json();
+    return data.data;
+
+  } catch (error) {
+    console.error('Create letter category  data error:', error);
+    throw error;
+  }
+}
+
+export const updateLetterCategory = async (letterCategoryData : any) => {
+  try {
+    const response = await fetch(
+      `${API_URL}/api/letter-category/${letterCategoryData.id}`,
+      {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(letterCategoryData),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to update letter category  data');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Update letter category  data error:', error);
+    throw error;
+  }
+}
+
+export const deleteLetterCategory = async (id: number) => {
+  try {
+    const response = await fetch(`${API_URL}/api/letter-category/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete letter category');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Delete letter category error:', error);
+    throw error;
+  }
+};
+
+// Api Call Letter Type
 export const fetchLetterType = async ({
   categoryId,
-  filter,
-  sort,
-}: {
-  categoryId: number;
-  filter?: string;
-  sort?: string;
-}) => {
+  search,
+  sortBy,
+  sortOrder,
+  page,
+  limit,
+}: OptionsProps & { categoryId: number }) => {
   try {
     let url = `${API_URL}/api/letter-type?categoryId=${categoryId}`;
-    if (filter) url += `&filter=${filter}`;
-    if (sort) url += `&sort=${sort}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (sortBy) url += `&sortBy=${sortBy}`;
+    if (sortOrder) url += `&sortOrder=${sortOrder}`;
+    if (page) url += `&page=${page}`;
+    if (limit) url += `&limit=${limit}`;
 
     const response = await fetch(url, {
       method: 'GET',

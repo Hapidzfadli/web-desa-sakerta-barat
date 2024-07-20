@@ -80,6 +80,7 @@ export class LetterCategoryService {
         {
           ...options,
           select: {
+            id: true,
             name: true,
             description: true,
             createdAt: true,
