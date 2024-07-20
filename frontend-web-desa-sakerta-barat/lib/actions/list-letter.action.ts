@@ -5,28 +5,41 @@ import { getHeaders } from '../utils';
 
 
 // Api Call Letter Category
-export const fetchLetterCategory = async () => {
+export const fetchLetterCategory = async (options: { limit?: number; page?: number } = {}) => {
   try {
     const token = Cookies.get('session');
+    let url = `${API_URL}/api/letter-category`;
+    
+    const params = new URLSearchParams();
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.page) params.append('page', options.page.toString());
+    
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
 
-    const response = await fetch(`${API_URL}/api/letter-category`, {
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
+    
     if (!response.ok) {
       throw new Error('Failed to fetch letter category data');
     }
 
     const data = await response.json();
-
-    return data.data;
+    return {
+      data: data.data,
+      pagination: data.paging,
+    };
   } catch (error) {
     console.error('Fetch letter category data error:', error);
     throw error;
   }
 };
+
 
 export const createLetterCategory = async (letterCategoryData : any) => {
   try {

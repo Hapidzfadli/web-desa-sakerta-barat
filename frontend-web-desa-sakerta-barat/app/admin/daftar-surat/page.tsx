@@ -1,14 +1,13 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { fetchLetterCategory, createLetterCategory, updateLetterCategory, deleteLetterCategory } from '../../../lib/actions/list-letter.action';
 import ListLetter from '../../../components/page/list-letter/ListLetter';
 import { cn } from '../../../lib/utils';
 import LoadingSpinner from '../../../components/shared/LoadingSpinner';
 import { Button } from '../../../components/ui/button';
-import { CirclePlus, EyeIcon, PencilIcon, Trash2Icon } from 'lucide-react';
+import { CirclePlus, EyeIcon, PencilIcon, ChevronRight } from 'lucide-react';
 import EditPopup from '../../../components/shared/EditPopup';
 import { useToast } from "../../../components/ui/use-toast";
-import { z } from 'zod';
 import { createLetterCategorySchema, updateLetterCategorySchema } from '../../../lib/settingUtils';
 
 const DaftarSurat = () => {
@@ -19,34 +18,56 @@ const DaftarSurat = () => {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<LetterCategoryProps | null>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const { toast } = useToast();
+
+  const ITEMS_PER_PAGE = 10;
 
   useEffect(() => {
     loadCategoryData();
   }, []);
 
-  const loadCategoryData = async () => {
+  const loadCategoryData = async (loadMore = false) => {
     try {
-      const data = await fetchLetterCategory();
-      setLetterCategoryData(data);
-      setIsLoading(false);
+      setIsLoading(true);
+      const newPage = loadMore ? page + 1 : 1;
+      const { data, pagination } = await fetchLetterCategory({ limit: ITEMS_PER_PAGE, page: newPage });
+      
+      if (loadMore) {
+        setLetterCategoryData(prev => [...prev, ...data]);
+      } else {
+        setLetterCategoryData(data);
+      }
+
+      setPage(newPage);
+      setHasMore(data.length === ITEMS_PER_PAGE);
+
       if (data.length > 0) {
         const newTabs = data.map((category) => ({
           id: category.id,
           label: category.name,
           component: <ListLetter categoryId={category.id} />,
         }));
-        setTabs(newTabs);
-        setActiveTab(newTabs[0].id);
+        setTabs(loadMore ? [...tabs, ...newTabs] : newTabs);
+        if (!loadMore) setActiveTab(newTabs[0].id);
       }
     } catch (err) {
       setError('Failed to load category data');
-      setIsLoading(false);
       toast({
         title: "Error",
         description: "Failed to load categories",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (hasMore) {
+      loadCategoryData(true);
     }
   };
 
@@ -111,20 +132,20 @@ const DaftarSurat = () => {
     }
   };
 
-  if (isLoading) return <LoadingSpinner />;
+  if (isLoading && page === 1) return <LoadingSpinner />;
   if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="container mx-auto p-4">
       <div className="mb-6 relative">
         <nav className="flex justify-between space-x-4 border-b">
-          <div>
+          <div ref={tabsRef} className='max-w-xl overflow-x-auto overflow-y-hidden h-10 flex thin-scrollbar'>
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'py-2 px-4 text-sm font-medium',
+                  'py-2 px-4 text-sm font-medium whitespace-nowrap',
                   activeTab === tab.id
                     ? 'border-b-2 border-blue-500 text-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
@@ -133,6 +154,15 @@ const DaftarSurat = () => {
                 {tab.label}
               </button>
             ))}
+            {hasMore && (
+              <Button 
+                onClick={handleLoadMore} 
+                className="ml-2 p-2 rounded-full"
+                variant="ghost"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
           </div>
           
           <div className='grid grid-cols-3 gap-4'>
