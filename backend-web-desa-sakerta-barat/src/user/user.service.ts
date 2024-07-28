@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpException,
   Inject,
   Injectable,
@@ -13,6 +14,7 @@ import { UserValidation } from './user.validation';
 import * as bcrypt from 'bcrypt';
 import { User } from '@prisma/client';
 import { PaginateOptions, prismaPaginate } from '../common/utils/paginator';
+import { ZodError } from 'zod';
 
 @Injectable()
 export class UserService {
@@ -95,19 +97,28 @@ export class UserService {
     updateData: UpdateUserRequest,
   ): Promise<UserResponse> {
     try {
-      // Remove profilePicture from validation as it's handled separately
       const { profilePicture, ...dataToValidate } = updateData;
 
-      const validatedData = this.validationService.validate(
-        UserValidation.UPDATE,
-        dataToValidate,
-      );
+      let validatedData;
+      try {
+        validatedData = this.validationService.validate(
+          UserValidation.UPDATE,
+          dataToValidate,
+        );
+      } catch (error) {
+        if (error instanceof ZodError) {
+          const errorMessages = error.errors
+            .map((err) => `${err.path.join('.')}: ${err.message}`)
+            .join(', ');
+          throw new BadRequestException(errorMessages);
+        }
+        throw error;
+      }
 
       if (validatedData.password) {
         validatedData.password = await bcrypt.hash(validatedData.password, 10);
       }
 
-      // Add profilePicture back if it exists
       if (profilePicture) {
         validatedData.profilePicture = profilePicture;
       }
@@ -117,13 +128,15 @@ export class UserService {
         data: validatedData,
       });
 
-      // Remove sensitive information
       delete updatedUser.password;
 
       return updatedUser;
     } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       this.logger.error(`Error updating user: ${error.message}`, error.stack);
-      throw new HttpException('Failed to update user', 500);
+      throw new HttpException('Failed to update user: ' + error.message, 500);
     }
   }
 

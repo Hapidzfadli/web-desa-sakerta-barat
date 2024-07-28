@@ -60,7 +60,7 @@ model User {
   lastName             String?               @db.VarChar(50)
   role                 Role                  @default(WARGA)
   isVerified           Boolean               @default(false)
-  phoneNumber          Int?
+  phoneNumber          String?
   profilePicture       String?               @db.Text
   token                String?               @db.VarChar(255)
   digitalSignature     String?               @db.Text

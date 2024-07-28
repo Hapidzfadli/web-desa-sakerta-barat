@@ -14,6 +14,7 @@ import {
   NotFoundException,
   ForbiddenException,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
@@ -60,16 +61,28 @@ export class UserController {
     )
     file?: Express.Multer.File,
   ): Promise<WebResponse<UserResponse>> {
-    let fileUrl: string | undefined;
-    if (file) {
-      fileUrl = await uploadFileAndGetUrl(file);
-      updateData.profilePicture = fileUrl;
-    }
+    try {
+      let fileUrl: string | undefined;
+      if (file) {
+        fileUrl = await uploadFileAndGetUrl(file);
+        updateData.profilePicture = fileUrl;
+      }
 
-    const updatedUser = await this.userService.updateUser(user.id, updateData);
-    return {
-      data: updatedUser,
-    };
+      const updatedUser = await this.userService.updateUser(
+        user.id,
+        updateData,
+      );
+      return {
+        data: updatedUser,
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        return {
+          errors: error.message,
+        };
+      }
+      throw error; // Re-throw other types of errors
+    }
   }
 
   @Get('profile-picture/:fileName')

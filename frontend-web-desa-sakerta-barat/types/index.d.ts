@@ -116,3 +116,14 @@ declare type RegisterParams = {
   email: string;
   password: string;
 };
+
+declare interface profileData {
+  username?: string;
+  name?: string;
+  email?: string;
+  role?: Role;
+  token?: string;
+  isVerified?: boolean;
+  phoneNumber?: string;
+  profilePicture?: string;
+}

@@ -34,23 +34,6 @@ export class PrintedLetterController {
     res.send(buffer);
   }
 
-  @Post('archive/:id')
-  @Roles(Role.ADMIN, Role.KADES)
-  async archiveLetter(
-    @Param('id') id: string,
-    @Auth() user: any,
-  ): Promise<{ message: string }> {
-    await this.printedLetterService.archiveLetter(parseInt(id), user.id);
-    return { message: 'Letter archived successfully' };
-  }
-
-  @Post('notify/:id')
-  @Roles(Role.ADMIN, Role.KADES)
-  async notifyResident(@Param('id') id: string): Promise<{ message: string }> {
-    await this.printedLetterService.sendNotification(parseInt(id));
-    return { message: 'Notification sent successfully' };
-  }
-
   @Get('resident/:residentId')
   @Roles(Role.ADMIN, Role.KADES, Role.WARGA)
   async getPrintedLettersByResident(

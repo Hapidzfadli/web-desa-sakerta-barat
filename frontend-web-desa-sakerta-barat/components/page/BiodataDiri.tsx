@@ -7,6 +7,8 @@ import {
   fetchResidentData,
   saveResidentData,
   saveProfileData,
+  saveProfilePicture,
+  getAvatar,
 } from '../../lib/actions/setting.actions';
 import EditPopup from '../shared/EditPopup';
 import EditImageDialog from '../shared/EditImageDialog';
@@ -27,6 +29,7 @@ const BiodataDiri = () => {
   const [error, setError] = useState<string | null>(null);
   const [isProfilePopupOpen, setIsProfilePopupOpen] = useState(false);
   const [isResidentPopupOpen, setIsResidentPopupOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -34,6 +37,11 @@ const BiodataDiri = () => {
       try {
         const data = await fetchResidentData();
         setProfileData(data);
+        // Load avatar
+        if (data.profilePicture) {
+          const avatarUrl = await getAvatar(data.profilePicture);
+          setAvatarUrl(avatarUrl);
+        }
         setIsLoading(false);
       } catch (err) {
         setError('Failed to load profile data');
@@ -65,7 +73,7 @@ const BiodataDiri = () => {
     try {
       const validatedData = updateProfileSchema.parse(data);
       const savedData = await saveProfileData(validatedData);
-      setProfileData((prevData) => ({ ...prevData, ...savedData }));
+      setProfileData((prevData : profileData) => ({ ...prevData, ...savedData }));
       setIsProfilePopupOpen(false);
       toast({
         title: 'Success',
@@ -119,11 +127,18 @@ const BiodataDiri = () => {
 
   const handleSaveAvatar = async (file: File) => {
     try {
-      const updatedAvatarUrl = await updateAvatar(file);
+      const data = await saveProfilePicture(file);
       setProfileData(prevData => ({
         ...prevData,
-        avatarUrl: updatedAvatarUrl
+        profilePicture: data?.profilePicture
       }));
+
+      // Update avatar URL
+      if (data?.profilePicture) {
+        const newAvatarUrl = await getAvatar(data.profilePicture);
+        setAvatarUrl(newAvatarUrl);
+      }
+
       toast({
         title: 'Success',
         description: 'Avatar updated successfully',
@@ -133,10 +148,11 @@ const BiodataDiri = () => {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to update avatar. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to update avatar. Please try again.',
       });
     }
   };
+
 
   return (
     <div className="p-4 space-y-8">
@@ -144,8 +160,8 @@ const BiodataDiri = () => {
         <div className="flex items-center justify-between p-6">
           <div className="flex items-center space-x-4">
             <EditImageDialog
-              currentAvatar={profileData.avatarUrl || `https://api.dicebear.com/6.x/avataaars/svg?seed=${profileData.username}`}
-              username={profileData.username}
+              currentAvatar={avatarUrl || `https://api.dicebear.com/6.x/avataaars/svg?seed=${profileData?.username}`}
+              username={profileData?.username}
               label='Foto Profile'
               onSave={handleSaveAvatar}
             />

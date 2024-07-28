@@ -15,6 +15,7 @@ export class UserResponse {
   role?: Role;
   token?: string;
   isVerified?: boolean;
+  phoneNumber?: string;
   profilePicture?: string;
 }
 
@@ -23,6 +24,7 @@ export class UpdateUserRequest {
   email?: string;
   password?: string;
   isVerified?: boolean;
+  phoneNumber?: string;
   profilePicture?: string;
 }
 export class LoginUserRequest {
@@ -37,6 +39,7 @@ export class UserResponseWithoutPassword {
   role: Role;
   isVerified: boolean;
   profilePicture?: string;
+  phoneNumber?: string;
   createdAt: Date;
   updatedAt: Date;
 }

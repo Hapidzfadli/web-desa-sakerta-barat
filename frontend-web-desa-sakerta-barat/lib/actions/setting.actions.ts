@@ -126,3 +126,62 @@ export const saveProfileData = async (profileData: any) => {
     throw error;
   }
 };
+
+
+export const saveProfilePicture = async (file: File) => {
+  try {
+    const token = Cookies.get('session');
+    const decodedToken = getDecodedToken();
+    const formData = new FormData();
+    formData.append('profilePicture', file);
+    if (!decodedToken) throw new Error('No valid token found');
+    
+    // Debugging: Log file details before sending
+    console.log(`Uploading file: ${file.name}, size: ${file.size}, type: ${file.type}`);
+    
+    const response = await fetch(`${API_URL}/api/users/profile`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.errors || 'Failed to update avatar');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Update profile picture error:', error);
+    throw error;
+  }
+};
+
+
+export const getAvatar = async (profilePicture: string | null | undefined): Promise<string> => {
+  if (!profilePicture) {
+    return ''; // Atau URL default avatar
+  }
+
+  try {
+    const token = Cookies.get('session');
+    const response = await fetch(`${API_URL}${profilePicture}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch image');
+    }
+
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+  } catch (error) {
+    console.error('Error fetching profile image:', error);
+    return ''; // Atau URL default avatar
+  }
+}
