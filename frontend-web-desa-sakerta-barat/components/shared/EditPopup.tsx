@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
@@ -24,7 +19,7 @@ interface EditPopupProps {
   fields: Field[];
   onSave: (
     data: Record<string, string>,
-    errors?: Record<string, string>
+    errors?: Record<string, string>,
   ) => void;
   validationSchema: z.ZodSchema<any>;
   isOpen: boolean;
@@ -44,13 +39,18 @@ const EditPopup: React.FC<EditPopupProps> = ({
 
   React.useEffect(() => {
     if (isOpen) {
-      setFormData(fields.reduce((acc, field) => ({ ...acc, [field.name]: field.value }), {}));
+      setFormData(
+        fields.reduce(
+          (acc, field) => ({ ...acc, [field.name]: field.value }),
+          {},
+        ),
+      );
       setErrors({});
     }
   }, [isOpen, fields]);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     if (errors[e.target.name]) {
@@ -70,7 +70,7 @@ const EditPopup: React.FC<EditPopupProps> = ({
             acc[curr.path[0]] = curr.message;
             return acc;
           },
-          {} as Record<string, string>
+          {} as Record<string, string>,
         );
         setErrors(errorMessages);
         onSave(formData, errorMessages);

@@ -1,17 +1,28 @@
 import React, { useState, ChangeEvent } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
-import { Button } from "../ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
-import { Input } from "../ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../ui/dialog';
+import { Button } from '../ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
+import { Input } from '../ui/input';
 
 interface EditAvatarDialogProps {
   currentAvatar: string;
   username: string;
-  label : string;
+  label: string;
   onSave: (file: File) => Promise<void>;
 }
 
-const EditAvatarDialog: React.FC<EditAvatarDialogProps> = ({ currentAvatar, username, onSave, label }) => {
+const EditAvatarDialog: React.FC<EditAvatarDialogProps> = ({
+  currentAvatar,
+  username,
+  onSave,
+  label,
+}) => {
   const [open, setOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -52,8 +63,16 @@ const EditAvatarDialog: React.FC<EditAvatarDialogProps> = ({ currentAvatar, user
               <AvatarFallback>{username[0]}</AvatarFallback>
             </Avatar>
           </div>
-          <Input className='cursor-pointer input-form' id="avatar" type="file" accept="image/*" onChange={handleFileChange} />
-          <Button className='bg-save' onClick={handleSave} disabled={!file}>Save Avatar</Button>
+          <Input
+            className="cursor-pointer input-form"
+            id="avatar"
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+          />
+          <Button className="bg-save" onClick={handleSave} disabled={!file}>
+            Save Avatar
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

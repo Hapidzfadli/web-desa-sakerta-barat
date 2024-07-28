@@ -86,7 +86,7 @@ export const updateResidentData = async (residentData: any) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(residentData),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -127,7 +127,6 @@ export const saveProfileData = async (profileData: any) => {
   }
 };
 
-
 export const saveProfilePicture = async (file: File) => {
   try {
     const token = Cookies.get('session');
@@ -135,10 +134,12 @@ export const saveProfilePicture = async (file: File) => {
     const formData = new FormData();
     formData.append('profilePicture', file);
     if (!decodedToken) throw new Error('No valid token found');
-    
+
     // Debugging: Log file details before sending
-    console.log(`Uploading file: ${file.name}, size: ${file.size}, type: ${file.type}`);
-    
+    console.log(
+      `Uploading file: ${file.name}, size: ${file.size}, type: ${file.type}`,
+    );
+
     const response = await fetch(`${API_URL}/api/users/profile`, {
       method: 'PUT',
       headers: {
@@ -160,8 +161,9 @@ export const saveProfilePicture = async (file: File) => {
   }
 };
 
-
-export const getAvatar = async (profilePicture: string | null | undefined): Promise<string> => {
+export const getAvatar = async (
+  profilePicture: string | null | undefined,
+): Promise<string> => {
   if (!profilePicture) {
     return ''; // Atau URL default avatar
   }
@@ -170,7 +172,7 @@ export const getAvatar = async (profilePicture: string | null | undefined): Prom
     const token = Cookies.get('session');
     const response = await fetch(`${API_URL}${profilePicture}`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -184,4 +186,4 @@ export const getAvatar = async (profilePicture: string | null | undefined): Prom
     console.error('Error fetching profile image:', error);
     return ''; // Atau URL default avatar
   }
-}
+};

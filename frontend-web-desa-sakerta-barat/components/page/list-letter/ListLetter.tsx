@@ -36,8 +36,11 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
   const [error, setError] = useState<string | null>(null);
   const [letterTypeData, setLetterTypeData] = useState<LetterTypeProps[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedLetterTypeId, setSelectedLetterTypeId] = useState<number | null>(null);
-  const [currentLetterType, setCurrentLetterType] = useState<LetterTypeProps | null>(null);
+  const [selectedLetterTypeId, setSelectedLetterTypeId] = useState<
+    number | null
+  >(null);
+  const [currentLetterType, setCurrentLetterType] =
+    useState<LetterTypeProps | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('name');
@@ -69,7 +72,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
 
   const debouncedLoadLetterTypeData = useCallback(
     debounce(loadLetterTypeData, 300),
-    [loadLetterTypeData]
+    [loadLetterTypeData],
   );
 
   useEffect(() => {
@@ -83,7 +86,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
   useEffect(() => {
     if (selectedLetterTypeId !== null) {
       const selectedType = letterTypeData.find(
-        (lt) => lt.id === selectedLetterTypeId
+        (lt) => lt.id === selectedLetterTypeId,
       );
       setCurrentLetterType(selectedType || null);
       setIsFormOpen(true);
@@ -226,7 +229,10 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
               <SelectItem value="updatedAt">Updated Date</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={sortOrder} onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}>
+          <Select
+            value={sortOrder}
+            onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Sort order" />
             </SelectTrigger>
@@ -246,10 +252,14 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
       ) : (
         <div className="grid grid-cols-2 gap-6">
           <div className="grid grid-cols-1 gap-6">
-            {letterTypeData.slice(0, Math.ceil(letterTypeData.length / 2)).map(renderLetterTypeCard)}
+            {letterTypeData
+              .slice(0, Math.ceil(letterTypeData.length / 2))
+              .map(renderLetterTypeCard)}
           </div>
           <div className="grid grid-cols-1 gap-6">
-            {letterTypeData.slice(Math.ceil(letterTypeData.length / 2)).map(renderLetterTypeCard)}
+            {letterTypeData
+              .slice(Math.ceil(letterTypeData.length / 2))
+              .map(renderLetterTypeCard)}
           </div>
         </div>
       )}

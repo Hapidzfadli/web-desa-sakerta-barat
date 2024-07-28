@@ -1,5 +1,11 @@
 import type { Metadata } from 'next';
-import { Inter, IBM_Plex_Serif, Poppins, Glory, DM_Sans  } from 'next/font/google';
+import {
+  Inter,
+  IBM_Plex_Serif,
+  Poppins,
+  Glory,
+  DM_Sans,
+} from 'next/font/google';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });

@@ -16,7 +16,7 @@ enum MaritalStatus {
 
 enum Gender {
   LAKI_LAKI = 'LAKI_LAKI',
-  PEREMPUAN = 'PEREMPUAN'
+  PEREMPUAN = 'PEREMPUAN',
 }
 
 enum RequestStatus {
@@ -29,7 +29,7 @@ enum RequestStatus {
 enum BloodType {
   A = 'A',
   B = 'B',
-  AB  = 'AB',
+  AB = 'AB',
   O = 'O',
 }
 
@@ -111,13 +111,11 @@ export type UpdateProfileData = z.infer<typeof updateProfileSchema>;
 export type CreateResidentData = z.infer<typeof createResidentSchema>;
 export type UpdateResidentData = z.infer<typeof updateResidentSchema>;
 
-
 export const createLetterCategorySchema = z.object({
   name: z.string().min(1).max(50),
   description: z.string().max(255).optional(),
 });
 export const updateLetterCategorySchema = createLetterCategorySchema.partial();
-
 
 export const createLetterTypeSchema = z.object({
   categoryId: z.number().int().positive(),
@@ -127,7 +125,6 @@ export const createLetterTypeSchema = z.object({
 });
 
 export const updateLetterTypeSchema = createLetterTypeSchema.partial();
-
 
 export const createLetterRequestSchema = z.object({
   letterTypeId: z.number().int().positive(),
@@ -146,6 +143,10 @@ export const createLetterRequestSchema = z.object({
 export const updateLetterRequestSchema = createLetterRequestSchema.partial();
 
 export const verifyLetterRequestSchema = z.object({
-  status: z.enum([RequestStatus.COMPLETED, RequestStatus.REJECTED, RequestStatus.PROCESSING]),
+  status: z.enum([
+    RequestStatus.COMPLETED,
+    RequestStatus.REJECTED,
+    RequestStatus.PROCESSING,
+  ]),
   notes: z.string().optional(),
 });
