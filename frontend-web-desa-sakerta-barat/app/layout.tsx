@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, IBM_Plex_Serif, Poppins, Glory } from 'next/font/google';
+import { Inter, IBM_Plex_Serif, Poppins, Glory, DM_Sans  } from 'next/font/google';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -14,6 +14,11 @@ const poppins = Poppins({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-poppins',
+});
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  variable: '--font-dm-sans',
 });
 
 export const glory = Glory({
@@ -37,7 +42,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${glory.variable} ${poppins.variable} ${ibmPlexSerif.variable}`}
+        className={`${inter.variable} ${glory.variable} ${poppins.variable} ${ibmPlexSerif.variable} ${dmSans.variable}`}
       >
         {children}
       </body>

@@ -48,16 +48,16 @@ export class LetterRequestService {
 
     const user = await this.prismaService.user.findUnique({
       where: { id: userId },
-      include: { Resident: { include: { documents: true } } },
+      include: { resident: { include: { documents: true } } },
     });
 
-    if (!user || !user.Resident) {
+    if (!user || !user.resident) {
       throw new NotFoundException('User or Resident not found');
     }
 
     const existingRequest = await this.prismaService.letterRequest.findFirst({
       where: {
-        residentId: user.Resident.id,
+        residentId: user.resident.id,
         letterTypeId: validatedData.letterTypeId,
         status: { not: RequestStatus.COMPLETED },
       },
@@ -70,7 +70,7 @@ export class LetterRequestService {
     }
 
     const uploadedAttachments = await this.processAttachments(attachments);
-    const residentDocuments = user.Resident.documents.map((doc) => ({
+    const residentDocuments = user.resident.documents.map((doc) => ({
       fileName: path.basename(doc.fileUrl),
       fileUrl: doc.fileUrl,
       documentId: doc.id,
@@ -80,7 +80,7 @@ export class LetterRequestService {
 
     const letterRequest = await this.prismaService.letterRequest.create({
       data: {
-        residentId: user.Resident.id,
+        residentId: user.resident.id,
         letterTypeId: validatedData.letterTypeId,
         notes: validatedData.notes,
         attachments: {

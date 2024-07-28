@@ -65,7 +65,7 @@ export class UserService {
       const profile = await this.prismaService.user.findUnique({
         where: { id: userId },
         include: {
-          Resident: {
+          resident: {
             include: {
               documents: true,
             },

@@ -26,6 +26,7 @@ const config = {
         },
         bankGradient: '#0179FE',
         edit : '#fe7701',
+        save : "#F4F7FE",
         indigo: {
           500: '#6172F3',
           700: '#3538CD',
@@ -74,12 +75,14 @@ const config = {
       },
       backgroundImage: {
         'bank-gradient': 'linear-gradient(90deg, #0179FE 0%, #4893FF 100%)',
+        
         'gradient-mesh': "url('/icons/gradient-mesh.svg')",
         'bank-green-gradient':
           'linear-gradient(90deg, #01797A 0%, #489399 100%)',
       },
       boxShadow: {
         form: '0px 1px 2px 0px rgba(16, 24, 40, 0.05)',
+        card: '0 18px 40px -10px rgba(112, 144, 176, 0.12)',
         chart:
           '0px 1px 3px 0px rgba(16, 24, 40, 0.10), 0px 1px 2px 0px rgba(16, 24, 40, 0.06)',
         profile:
@@ -90,6 +93,10 @@ const config = {
       fontFamily: {
         inter: 'var(--font-inter)',
         'ibm-plex-serif': 'var(--font-ibm-plex-serif)',
+        'dm-sans': ['var(--font-dm-sans)', 'sans-serif'],
+      },
+      fontSize: {
+        '32': '32px',
       },
       keyframes: {
         'accordion-down': {

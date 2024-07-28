@@ -9,6 +9,7 @@ import {
   saveProfileData,
 } from '../../lib/actions/setting.actions';
 import EditPopup from '../shared/EditPopup';
+import EditImageDialog from '../shared/EditImageDialog';
 import { useToast } from '../ui/use-toast';
 import { formatDate, toInputDateValue } from '../../lib/utils';
 import {
@@ -116,15 +117,38 @@ const BiodataDiri = () => {
     }
   };
 
+  const handleSaveAvatar = async (file: File) => {
+    try {
+      const updatedAvatarUrl = await updateAvatar(file);
+      setProfileData(prevData => ({
+        ...prevData,
+        avatarUrl: updatedAvatarUrl
+      }));
+      toast({
+        title: 'Success',
+        description: 'Avatar updated successfully',
+      });
+    } catch (error) {
+      console.error('Update avatar error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to update avatar. Please try again.',
+      });
+    }
+  };
+
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-8">
       <Card>
         <div className="flex items-center justify-between p-6">
           <div className="flex items-center space-x-4">
-            <Avatar className="h-12 w-12">
-              <AvatarImage src="/path-to-avatar.jpg" alt={profileData.username} />
-              <AvatarFallback>{profileData.username?.charAt(0)}</AvatarFallback>
-            </Avatar>
+            <EditImageDialog
+              currentAvatar={profileData.avatarUrl || `https://api.dicebear.com/6.x/avataaars/svg?seed=${profileData.username}`}
+              username={profileData.username}
+              label='Foto Profile'
+              onSave={handleSaveAvatar}
+            />
             <div>
               <h2 className="text-xl font-semibold">{profileData.username}</h2>
               <p className="text-sm text-gray-500">
@@ -152,8 +176,8 @@ const BiodataDiri = () => {
               { label: 'Status', field: 'isVerified' },
             ].map((item) => (
               <div key={item.field}>
-                <p className="text-sm font-medium text-gray-500">{item.label}</p>
-                <p>{profileData[item.field] !== undefined ? String(profileData[item.field]) : 'Not provided'}</p>
+                <p className="label-form">{item.label}</p>
+                <p >{profileData[item.field] !== undefined ? String(profileData[item.field]) : 'Not provided'}</p>
               </div>
             ))}
           </div>
@@ -163,7 +187,7 @@ const BiodataDiri = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Biodata Penduduk</CardTitle>
+            <CardTitle className="head-form ">Biodata Penduduk</CardTitle>
             <Button
               className="bg-edit h-8 w-8 rounded-full p-0"
               title="Edit"
@@ -190,15 +214,17 @@ const BiodataDiri = () => {
               { label: 'Kabupaten', field: 'regency' },
               { label: 'Provinsi', field: 'province' },
               { label: 'Kode Pos', field: 'postalCode' },
+              { label: 'RT', field: 'rt' },
+              { label: 'RW', field: 'rw' },
               { label: 'Alamat KTP', field: 'idCardAddress' },
               { label: 'Alamat Domisili', field: 'residentialAddress' },
             ].map((item) => (
               <div key={item.field}>
-                <p className="text-sm font-medium text-gray-500">{item.label}</p>
+                <p className="label-form">{item.label}</p>
                 <p>
                   {item.format
-                    ? item.format(profileData.Resident?.[item.field])
-                    : profileData.Resident?.[item.field] || 'Not provided'}
+                    ? item.format(profileData.resident?.[item.field])
+                    : profileData.resident?.[item.field] || 'Not provided'}
                 </p>
               </div>
             ))}
@@ -208,7 +234,7 @@ const BiodataDiri = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Documents</CardTitle>
+          <CardTitle className="head-form">Documents</CardTitle>
         </CardHeader>
         <CardContent>
           {profileData.Resident?.documents?.length > 0 ? (
