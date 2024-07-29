@@ -7,21 +7,26 @@ import {
   HttpException,
   HttpStatus,
   ForbiddenException,
+  InternalServerErrorException,
+  StreamableFile,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
 import { ValidationService } from '../common/validation.service';
-import { ResidentValidation } from './resident.validation';
+import { DocumentValidation, ResidentValidation } from './resident.validation';
 import {
   CreateResidentRequest,
   UpdateResidentRequest,
   ResidentResponse,
+  createDocumentRequest,
+  DocumentResponse,
 } from '../model/resident.model';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import * as fs from 'fs/promises';
+import * as fss from 'fs';
 import * as path from 'path';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { Prisma, Role } from '@prisma/client';
+import { DocumentType, Prisma, Role } from '@prisma/client';
 
 @Injectable()
 export class ResidentService {
@@ -243,6 +248,224 @@ export class ResidentService {
     }
   }
 
+  // Dokument
+  async getDocumentFile(
+    documentId: number,
+    user: any,
+  ): Promise<{ file: StreamableFile; mimeType: string; fileName: string }> {
+    const document = await this.prismaService.document.findUnique({
+      where: { id: documentId },
+      include: { resident: true },
+    });
+
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
+
+    if (user.role !== Role.ADMIN && user.id !== document.resident.userId) {
+      throw new ForbiddenException(
+        'You do not have permission to view this document',
+      );
+    }
+
+    if (!document.fileUrl) {
+      throw new NotFoundException('Document file not found');
+    }
+
+    const filePath = path.join(
+      process.cwd(),
+      document.fileUrl.replace(/^\//, ''),
+    );
+
+    if (!fss.existsSync(filePath)) {
+      throw new NotFoundException('Document file not found on server');
+    }
+
+    const file = fss.createReadStream(filePath);
+    const mimeType = this.getMimeType(filePath);
+    const fileName = path.basename(filePath);
+
+    return {
+      file: new StreamableFile(file),
+      mimeType,
+      fileName,
+    };
+  }
+
+  private getMimeType(filePath: string): string {
+    const ext = path.extname(filePath).toLowerCase();
+    switch (ext) {
+      case '.pdf':
+        return 'application/pdf';
+      case '.jpg':
+      case '.jpeg':
+        return 'image/jpeg';
+      case '.png':
+        return 'image/png';
+      default:
+        return 'application/octet-stream';
+    }
+  }
+
+  async createDocument(
+    user: any,
+    request: createDocumentRequest,
+    file?: Express.Multer.File,
+  ): Promise<DocumentResponse> {
+    const resident = await this.prismaService.resident.findUnique({
+      where: { userId: user.id },
+      include: { user: true, documents: true },
+    });
+
+    if (!resident) {
+      throw new NotFoundException('Resident not found');
+    }
+
+    if (user.role !== Role.ADMIN && user.id !== resident.userId) {
+      throw new ForbiddenException(
+        'You do not have permission to add documents for this resident',
+      );
+    }
+
+    const existingDocument = resident.documents.find(
+      (doc) => doc.type === request.type,
+    );
+
+    if (existingDocument) {
+      throw new ConflictException(
+        `A document of type ${request.type} already exists for this resident`,
+      );
+    }
+
+    if (file && !this.isValidFile(file)) {
+      throw new BadRequestException(
+        'Invalid file type. Only PDF files are allowed.',
+      );
+    }
+
+    try {
+      const validatedData = this.validationService.validate(
+        DocumentValidation.CREATE,
+        request,
+      );
+      const document = await this.prismaService.document.create({
+        data: {
+          residentId: resident.id,
+          type: validatedData.type,
+          fileUrl: await this.saveFile(file),
+        },
+      });
+      return this.mapToDocumentResponse(document);
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Document with this type already exists');
+      }
+      throw error;
+    }
+  }
+
+  async updateDocument(
+    documentId: number,
+    updateData: { type?: DocumentType; file?: Express.Multer.File },
+    user: any,
+  ): Promise<any> {
+    const document = await this.prismaService.document.findUnique({
+      where: { id: documentId },
+      include: { resident: true },
+    });
+
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
+
+    if (user.role !== Role.ADMIN && user.id !== document.resident.userId) {
+      throw new ForbiddenException(
+        'You do not have permission to edit this document',
+      );
+    }
+
+    let fileUrl = document.fileUrl;
+
+    if (updateData.file) {
+      if (document.fileUrl) {
+        const oldFilePath = path.join(
+          process.cwd(),
+          document.fileUrl.replace(/^\//, ''),
+        );
+        try {
+          await fs.unlink(oldFilePath);
+        } catch (error) {
+          this.logger.warn(`Failed to delete old file: ${oldFilePath}`, error);
+        }
+      }
+      fileUrl = await this.saveFile(updateData.file);
+    }
+
+    const updateObject: Prisma.DocumentUpdateInput = {
+      fileUrl: fileUrl,
+    };
+
+    if (updateData.type) {
+      updateObject.type = updateData.type;
+    }
+
+    try {
+      const updatedDocument = await this.prismaService.document.update({
+        where: { id: documentId },
+        data: updateObject,
+      });
+
+      return updatedDocument;
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to update the document');
+    }
+  }
+
+  async deleteResidentDocument(documentId: number, user: any): Promise<void> {
+    const document = await this.prismaService.document.findUnique({
+      where: { id: documentId },
+      include: { resident: true },
+    });
+
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
+
+    if (user.role !== Role.ADMIN && user.id !== document.resident.userId) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this document',
+      );
+    }
+
+    if (document.fileUrl) {
+      const filePath = path.join(
+        process.cwd(),
+        document.fileUrl.replace(/^\//, ''),
+      );
+      try {
+        await fs.unlink(filePath);
+      } catch (error) {
+        throw new InternalServerErrorException(
+          'Failed to delete the physical file',
+        );
+      }
+    }
+
+    try {
+      await this.prismaService.document.delete({
+        where: { id: documentId },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to delete the document record',
+      );
+    }
+  }
+
+  // Fungsi
   private isValidFile(file: Express.Multer.File): boolean {
     return file.mimetype === 'application/pdf';
   }
@@ -254,6 +477,14 @@ export class ResidentService {
     const filepath = path.join(uploadDir, filename);
     await fs.writeFile(filepath, file.buffer);
     return `/uploads/${filename}`;
+  }
+
+  private mapToDocumentResponse(document: any): DocumentResponse {
+    return {
+      id: document.id,
+      type: document.type,
+      fileUrl: document.fileUrl,
+    };
   }
 
   private mapToResidentResponse(resident: any): ResidentResponse {

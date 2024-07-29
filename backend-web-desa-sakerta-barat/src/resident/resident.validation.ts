@@ -66,3 +66,11 @@ export class ResidentValidation {
     userId: true,
   });
 }
+
+export class DocumentValidation {
+  static readonly CREATE = z.object({
+    type: z.nativeEnum(DocumentType),
+  });
+
+  static readonly UPDATE = DocumentValidation.CREATE.partial();
+}
