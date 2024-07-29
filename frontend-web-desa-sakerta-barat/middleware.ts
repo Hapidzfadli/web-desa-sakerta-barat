@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { jwtDecode } from 'jwt-decode';
-import { JwtPayload as DefaultJwtPayload } from 'jwt-decode';
+import { jwtDecode, JwtPayload as DefaultJwtPayload } from 'jwt-decode';
 
 export interface CustomJwtPayload extends DefaultJwtPayload {
   role: string;

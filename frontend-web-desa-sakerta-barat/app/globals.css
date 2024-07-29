@@ -311,6 +311,15 @@ body {
   .form-btn {
     @apply text-16 rounded-lg border border-bankGradient bg-bank-gradient font-semibold text-white shadow-form;
   }
+  .label-form {
+    @apply text-16 text-[#A3AED0] font-medium;
+  }
+  .input-form {
+    @apply text-[#A3AED0] font-normal bg-[#F4F7FE];
+  }
+  .head-form {
+    @apply text-lg text-[#2B3674] font-bold;
+  }
 }
 
 /* ==========explore */

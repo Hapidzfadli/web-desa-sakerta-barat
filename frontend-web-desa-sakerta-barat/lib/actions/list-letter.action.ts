@@ -2,18 +2,18 @@ import { API_URL } from '../../constants';
 import Cookies from 'js-cookie';
 import { getHeaders } from '../utils';
 
-
-
 // Api Call Letter Category
-export const fetchLetterCategory = async (options: { limit?: number; page?: number } = {}) => {
+export const fetchLetterCategory = async (
+  options: { limit?: number; page?: number } = {},
+) => {
   try {
     const token = Cookies.get('session');
     let url = `${API_URL}/api/letter-category`;
-    
+
     const params = new URLSearchParams();
     if (options.limit) params.append('limit', options.limit.toString());
     if (options.page) params.append('page', options.page.toString());
-    
+
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
@@ -24,7 +24,7 @@ export const fetchLetterCategory = async (options: { limit?: number; page?: numb
         Authorization: `Bearer ${token}`,
       },
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch letter category data');
     }
@@ -40,10 +40,8 @@ export const fetchLetterCategory = async (options: { limit?: number; page?: numb
   }
 };
 
-
-export const createLetterCategory = async (letterCategoryData : any) => {
+export const createLetterCategory = async (letterCategoryData: any) => {
   try {
-    
     const response = await fetch(`${API_URL}/api/letter-category`, {
       method: 'POST',
       headers: getHeaders(),
@@ -56,14 +54,13 @@ export const createLetterCategory = async (letterCategoryData : any) => {
 
     const data = await response.json();
     return data.data;
-
   } catch (error) {
     console.error('Create letter category  data error:', error);
     throw error;
   }
-}
+};
 
-export const updateLetterCategory = async (letterCategoryData : any) => {
+export const updateLetterCategory = async (letterCategoryData: any) => {
   try {
     const response = await fetch(
       `${API_URL}/api/letter-category/${letterCategoryData.id}`,
@@ -71,7 +68,7 @@ export const updateLetterCategory = async (letterCategoryData : any) => {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify(letterCategoryData),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -84,7 +81,7 @@ export const updateLetterCategory = async (letterCategoryData : any) => {
     console.error('Update letter category  data error:', error);
     throw error;
   }
-}
+};
 
 export const deleteLetterCategory = async (id: number) => {
   try {

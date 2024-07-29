@@ -40,7 +40,7 @@ export const registerUser = async ({ ...userData }: RegisterParams) => {
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        errorData.message || 'An error occurred during registration'
+        errorData.message || 'An error occurred during registration',
       );
     }
 

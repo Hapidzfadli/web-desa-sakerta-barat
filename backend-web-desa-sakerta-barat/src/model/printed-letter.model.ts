@@ -7,7 +7,6 @@ export class PrintedLetterDto {
   printedBy: number;
   archivedAt?: Date | null;
   archivedBy?: number | null;
-  notificationSent: boolean;
   notificationSentAt?: Date | null;
   fileUrl?: string | null;
   createdAt: Date;
@@ -19,7 +18,6 @@ export class CreatePrintedLetterDto {
   printedAt: Date;
   printedBy: number;
   fileUrl?: string | null;
-  notificationSent: boolean;
 }
 
 export class UpdatePrintedLetterDto {

@@ -1,5 +1,16 @@
 import { z, ZodType } from 'zod';
 
+const phoneRegex = /^(08|02)\d{8,12}$/;
+
+export const phoneSchema = z
+  .string()
+  .regex(
+    phoneRegex,
+    'Nomor telepon harus diawali dengan 08 atau 02 dan diikuti oleh 8-12 digit',
+  )
+  .min(10, 'Nomor telepon minimal 10 digit')
+  .max(14, 'Nomor telepon maksimal 14 digit')
+  .optional();
 export class UserValidation {
   static readonly REGISTER: ZodType = z.object({
     username: z
@@ -68,6 +79,7 @@ export class UserValidation {
       .max(100, 'Email maksimal 100 karakter')
       .optional(),
     isVerified: z.boolean().optional(),
+    phoneNumber: phoneSchema,
     profilePicture: z
       .string()
       .url('Format URL tidak valid')

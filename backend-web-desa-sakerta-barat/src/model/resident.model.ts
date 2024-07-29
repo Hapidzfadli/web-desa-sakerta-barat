@@ -23,6 +23,11 @@ export class CreateResidentRequest {
   bloodType?: BloodType;
 }
 
+export class createDocumentRequest {
+  type: DocumentType;
+  fileUrl: string;
+}
+
 export class UpdateResidentRequest {
   nationalId?: string;
   name?: string;

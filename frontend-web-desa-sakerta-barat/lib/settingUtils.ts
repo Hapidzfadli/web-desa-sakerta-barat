@@ -16,7 +16,7 @@ enum MaritalStatus {
 
 enum Gender {
   LAKI_LAKI = 'LAKI_LAKI',
-  PEREMPUAN = 'PEREMPUAN'
+  PEREMPUAN = 'PEREMPUAN',
 }
 
 enum RequestStatus {
@@ -29,7 +29,7 @@ enum RequestStatus {
 enum BloodType {
   A = 'A',
   B = 'B',
-  AB  = 'AB',
+  AB = 'AB',
   O = 'O',
 }
 
@@ -100,6 +100,8 @@ export const createResidentSchema = z.object({
     .string()
     .max(10, 'Postal Code must not exceed 10 characters')
     .optional(),
+  rt: z.union([z.string(), z.number()]).transform(Number).optional(),
+  rw: z.union([z.string(), z.number()]).transform(Number).optional(),
 });
 
 export const updateResidentSchema = createResidentSchema.partial().omit({
@@ -111,13 +113,11 @@ export type UpdateProfileData = z.infer<typeof updateProfileSchema>;
 export type CreateResidentData = z.infer<typeof createResidentSchema>;
 export type UpdateResidentData = z.infer<typeof updateResidentSchema>;
 
-
 export const createLetterCategorySchema = z.object({
   name: z.string().min(1).max(50),
   description: z.string().max(255).optional(),
 });
 export const updateLetterCategorySchema = createLetterCategorySchema.partial();
-
 
 export const createLetterTypeSchema = z.object({
   categoryId: z.number().int().positive(),
@@ -127,7 +127,6 @@ export const createLetterTypeSchema = z.object({
 });
 
 export const updateLetterTypeSchema = createLetterTypeSchema.partial();
-
 
 export const createLetterRequestSchema = z.object({
   letterTypeId: z.number().int().positive(),
@@ -146,6 +145,15 @@ export const createLetterRequestSchema = z.object({
 export const updateLetterRequestSchema = createLetterRequestSchema.partial();
 
 export const verifyLetterRequestSchema = z.object({
-  status: z.enum([RequestStatus.COMPLETED, RequestStatus.REJECTED, RequestStatus.PROCESSING]),
+  status: z.enum([
+    RequestStatus.COMPLETED,
+    RequestStatus.REJECTED,
+    RequestStatus.PROCESSING,
+  ]),
   notes: z.string().optional(),
+});
+
+export const addDocumentSchema = z.object({
+  type: z.nativeEnum(DocumentType),
+  file: z.instanceof(File),
 });

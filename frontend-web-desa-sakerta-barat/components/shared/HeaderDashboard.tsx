@@ -27,7 +27,7 @@ const HeaderDashboard = () => {
     };
 
     const matchedRoute = Object.keys(routeTitleMap).find((route) =>
-      pathname.startsWith(route)
+      pathname.startsWith(route),
     );
     if (matchedRoute && matchedRoute in routeTitleMap) {
       return routeTitleMap[matchedRoute];

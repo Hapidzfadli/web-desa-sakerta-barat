@@ -12,7 +12,7 @@ export default function RootLayout({
 }) {
   return (
     <UserProvider>
-      <main className="flex h-screen w-full font-inter">
+      <main className="flex h-screen w-full font-dm-sans">
         <Sidebar sidebar={sidebarLinksMember} />
 
         <div className="flex flex-col flex-grow">

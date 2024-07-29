@@ -20,11 +20,11 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
 }) => {
   const [formData, setFormData] = useState(initialData || {});
   const [iconPreview, setIconPreview] = useState(
-    initialData?.icon ? API_URL + initialData?.icon : initialData?.icon || ''
+    initialData?.icon ? API_URL + initialData?.icon : initialData?.icon || '',
   );
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };

@@ -40,22 +40,22 @@ export const formatDateTime = (dateString: Date) => {
 
   const formattedDateTime: string = new Date(dateString).toLocaleString(
     'en-US',
-    dateTimeOptions
+    dateTimeOptions,
   );
 
   const formattedDateDay: string = new Date(dateString).toLocaleString(
     'en-US',
-    dateDayOptions
+    dateDayOptions,
   );
 
   const formattedDate: string = new Date(dateString).toLocaleString(
     'en-US',
-    dateOptions
+    dateOptions,
   );
 
   const formattedTime: string = new Date(dateString).toLocaleString(
     'en-US',
-    timeOptions
+    timeOptions,
   );
 
   return {
@@ -110,7 +110,7 @@ export function formUrlQuery({ params, key, value }: UrlQueryParams) {
       url: window.location.pathname,
       query: currentUrl,
     },
-    { skipNull: true }
+    { skipNull: true },
   );
 }
 
@@ -121,11 +121,6 @@ export function encryptId(id: string) {
 export function decryptId(id: string) {
   return atob(id);
 }
-
-const usernameOrEmail = z.union([
-  z.string().email(),
-  z.string().min(3, 'Username must be at least 3 characters long'),
-]);
 
 export const authFormSchema = (type: string) =>
   z.object({
@@ -141,11 +136,10 @@ export const authFormSchema = (type: string) =>
     password: z.string().min(8),
   });
 
-
-  export const getHeaders = () => {
-    const token = Cookies.get('session');
-    return {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
+export const getHeaders = () => {
+  const token = Cookies.get('session');
+  return {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
   };
+};

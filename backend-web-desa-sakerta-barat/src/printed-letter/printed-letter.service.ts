@@ -7,7 +7,6 @@ import * as path from 'path';
 import {
   PrintedLetterResponse,
   CreatePrintedLetterDto,
-  UpdatePrintedLetterDto,
 } from '../model/printed-letter.model';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
@@ -93,7 +92,6 @@ export class PrintedLetterService {
       printedBy: userId,
       printedAt: new Date(),
       fileUrl: `/api/printed-letters/download/${fileName}`,
-      notificationSent: false,
     };
 
     await this.prismaService.printedLetter.create({
@@ -111,33 +109,6 @@ export class PrintedLetterService {
     return buf;
   }
 
-  async archiveLetter(printedLetterId: number, userId: number): Promise<void> {
-    const updateDto: UpdatePrintedLetterDto = {
-      archivedAt: new Date(),
-      archivedBy: userId,
-    };
-
-    await this.prismaService.printedLetter.update({
-      where: { id: printedLetterId },
-      data: updateDto,
-    });
-  }
-
-  async sendNotification(printedLetterId: number): Promise<void> {
-    // Implement your notification logic here
-    // This could be sending an email, SMS, or pushing a notification to a mobile app
-
-    const updateDto: UpdatePrintedLetterDto = {
-      notificationSent: true,
-      notificationSentAt: new Date(),
-    };
-
-    await this.prismaService.printedLetter.update({
-      where: { id: printedLetterId },
-      data: updateDto,
-    });
-  }
-
   async getPrintedLettersByResident(
     residentId: number,
   ): Promise<PrintedLetterResponse[]> {
@@ -150,7 +121,6 @@ export class PrintedLetterService {
       include: {
         letterRequest: true,
         printedByUser: true,
-        archivedByUser: true,
       },
     });
   }
