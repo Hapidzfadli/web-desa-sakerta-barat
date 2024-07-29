@@ -100,6 +100,8 @@ export const createResidentSchema = z.object({
     .string()
     .max(10, 'Postal Code must not exceed 10 characters')
     .optional(),
+  rt: z.union([z.string(), z.number()]).transform(Number).optional(),
+  rw: z.union([z.string(), z.number()]).transform(Number).optional(),
 });
 
 export const updateResidentSchema = createResidentSchema.partial().omit({
@@ -149,4 +151,9 @@ export const verifyLetterRequestSchema = z.object({
     RequestStatus.PROCESSING,
   ]),
   notes: z.string().optional(),
+});
+
+export const addDocumentSchema = z.object({
+  type: z.nativeEnum(DocumentType),
+  file: z.instanceof(File),
 });

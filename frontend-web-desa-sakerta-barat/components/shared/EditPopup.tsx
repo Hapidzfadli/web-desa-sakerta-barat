@@ -1,24 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
 import { z } from 'zod';
 
 interface Field {
   label: string;
   name: string;
   value: string;
-  type?: 'text' | 'textarea' | 'date';
+  type?: 'text' | 'textarea' | 'date' | 'file' | 'select';
   required?: boolean;
+  options?: { value: string; label: string }[];
 }
 
 interface EditPopupProps {
   title: string;
   fields: Field[];
   onSave: (
-    data: Record<string, string>,
+    data: Record<string, string | File>,
     errors?: Record<string, string>,
   ) => void;
   validationSchema: z.ZodSchema<any>;
@@ -34,8 +42,8 @@ const EditPopup: React.FC<EditPopupProps> = ({
   isOpen,
   onClose,
 }) => {
-  const [formData, setFormData] = React.useState<Record<string, string>>({});
-  const [errors, setErrors] = React.useState<Record<string, string>>({});
+  const [formData, setFormData] = useState<Record<string, string | File>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   React.useEffect(() => {
     if (isOpen) {
@@ -50,11 +58,29 @@ const EditPopup: React.FC<EditPopupProps> = ({
   }, [isOpen, fields]);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (errors[e.target.name]) {
-      setErrors({ ...errors, [e.target.name]: '' });
+    const { name, value, type } = e.target;
+    if (type === 'file') {
+      const fileInput = e.target as HTMLInputElement;
+      const file = fileInput.files?.[0];
+      if (file) {
+        setFormData({ ...formData, [name]: file });
+      }
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: '' });
+    }
+  };
+
+  const handleSelectChange = (value: string, name: string) => {
+    setFormData({ ...formData, [name]: value });
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: '' });
     }
   };
 
@@ -81,7 +107,7 @@ const EditPopup: React.FC<EditPopupProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="custom-dialog-content"
+        className="bg-white"
         style={{ width: 'auto', maxWidth: '100vw', minWidth: '65vw' }}
       >
         <DialogHeader>
@@ -99,20 +125,48 @@ const EditPopup: React.FC<EditPopupProps> = ({
                   <Textarea
                     id={field.name}
                     name={field.name}
-                    value={formData[field.name] || ''}
+                    value={(formData[field.name] as string) || ''}
                     onChange={handleInputChange}
-                    className="flex-grow glassy-input"
+                    className="flex-grow input-form"
                     rows={3}
                     required={field.required}
+                  />
+                ) : field.type === 'select' ? (
+                  <Select
+                    onValueChange={(value) =>
+                      handleSelectChange(value, field.name)
+                    }
+                    value={formData[field.name] as string}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select an option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {field.options?.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : field.type === 'file' ? (
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    type="file"
+                    onChange={handleInputChange}
+                    className="flex-grow input-form"
+                    required={field.required}
+                    accept=".pdf"
                   />
                 ) : (
                   <Input
                     id={field.name}
                     name={field.name}
                     type={field.type || 'text'}
-                    value={formData[field.name] || ''}
+                    value={(formData[field.name] as string) || ''}
                     onChange={handleInputChange}
-                    className="flex-grow glassy-input"
+                    className="flex-grow input-form"
                     required={field.required}
                   />
                 )}
@@ -123,7 +177,9 @@ const EditPopup: React.FC<EditPopupProps> = ({
             ))}
           </div>
           <div className="flex justify-end mt-4">
-            <Button type="submit">Save changes</Button>
+            <Button className="bg-save" type="submit">
+              Save changes
+            </Button>
           </div>
         </form>
       </DialogContent>

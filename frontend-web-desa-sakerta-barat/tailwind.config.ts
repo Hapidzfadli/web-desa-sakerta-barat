@@ -25,7 +25,9 @@ const config = {
         },
         bankGradient: '#0179FE',
         edit: '#fe7701',
+        delete: '#EB5B00',
         save: '#F4F7FE',
+        view: '#3FA2F6',
         indigo: {
           500: '#6172F3',
           700: '#3538CD',
