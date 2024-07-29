@@ -10,7 +10,7 @@ import ListLetter from '../../../components/page/list-letter/ListLetter';
 import { cn } from '../../../lib/utils';
 import LoadingSpinner from '../../../components/shared/LoadingSpinner';
 import { Button } from '../../../components/ui/button';
-import {  ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import EditPopup from '../../../components/shared/EditPopup';
 import { useToast } from '../../../components/ui/use-toast';
 import {

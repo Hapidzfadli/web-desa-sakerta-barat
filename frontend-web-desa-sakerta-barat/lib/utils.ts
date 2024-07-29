@@ -122,7 +122,6 @@ export function decryptId(id: string) {
   return atob(id);
 }
 
-
 export const authFormSchema = (type: string) =>
   z.object({
     // sign up

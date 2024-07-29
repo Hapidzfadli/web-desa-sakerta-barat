@@ -1,4 +1,3 @@
-
 import React from 'react';
 import AuthForm from '../../../components/shared/AuthForm';
 
