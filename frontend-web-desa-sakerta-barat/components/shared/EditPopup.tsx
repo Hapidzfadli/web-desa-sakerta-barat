@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
@@ -45,7 +45,7 @@ const EditPopup: React.FC<EditPopupProps> = ({
   const [formData, setFormData] = useState<Record<string, string | File>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       setFormData(
         fields.reduce(

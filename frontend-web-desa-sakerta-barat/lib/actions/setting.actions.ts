@@ -294,7 +294,7 @@ export const addDocument = async (file: File, type: DocumentType) => {
     }
 
     const data = await response.json();
-    return data.data;
+    return data;
   } catch (error) {
     console.error('Add document error:', error);
     throw error;
