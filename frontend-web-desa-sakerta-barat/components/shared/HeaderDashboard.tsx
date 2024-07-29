@@ -1,20 +1,45 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
-import { Bell, ChevronDown, LogOut, Moon, Search, User } from 'lucide-react';
+import React, { useMemo, useState, useEffect } from 'react';
+import {
+  Bell,
+  ChevronDown,
+  Info,
+  LogOut,
+  Moon,
+  Search,
+  User,
+} from 'lucide-react';
 import { useUser } from '../../app/context/UserContext';
 import MobileNav from './MobileNav';
 import { usePathname, useRouter } from 'next/navigation';
+import { Button } from '../ui/button';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBell, faTrashCan, faEye } from '@fortawesome/free-solid-svg-icons';
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
+import { getAvatar } from '../../lib/actions/setting.actions';
 const HeaderDashboard = () => {
   const { user, logout } = useUser();
   const [showDropdown, setShowDropdown] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
+  console.log(user);
 
   const handleLogout = () => {
     logout();
     router.push('/login');
   };
+
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      if (user?.profilePicture) {
+        const url = await getAvatar(user.profilePicture);
+        setAvatarUrl(url);
+      }
+    };
+    fetchAvatar();
+  }, [user?.profilePicture]);
 
   const pageTitle = useMemo(() => {
     const routeTitleMap: { [key: string]: string } = {
@@ -45,7 +70,7 @@ const HeaderDashboard = () => {
     <header className="flex items-center justify-between p-4 bg-white border-b border-gray-200">
       {/* Left section */}
       <div className="flex items-center">
-        <h1 className="text-2xl font-bold text-black-2 hidden md:block">
+        <h1 className="text-2xl ml-6 font-bold text-[#2B3674] hidden md:block">
           {pageTitle}
         </h1>
       </div>
@@ -53,56 +78,46 @@ const HeaderDashboard = () => {
       {/* Center section - Search */}
       <div className="flex-grow max-w-xl mx-4 md:block">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#8F9BBA]" />
           <input
             type="text"
-            placeholder="Search here..."
-            className="w-full pl-10 pr-4 py-2 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Cari disini..."
+            className="w-full pl-10 pr-4 py-2 rounded-full text-[#8F9BBA] bg-[#F4F7FE] focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
 
       {/* Right section */}
-      <div className="flex items-center space-x-4">
-        <button className="p-2 rounded-full bg-gray-100 hidden md:block">
-          <Moon size={20} />
-        </button>
-
-        <button className="relative p-2 rounded-full bg-gray-100">
-          <Bell size={20} />
-          <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
-
-        <div className="relative">
-          <button
-            className="flex items-center space-x-2"
-            onMouseEnter={() => setShowDropdown(true)}
-            onMouseLeave={() => setShowDropdown(false)}
+      <div className=" rounded-full shadow-top">
+        <div className="flex items-center space-x-1 p-1">
+          <Button
+            className="bg-white h-8 w-8 rounded-full p-0"
+            title="Notifikasi"
+            onClick={() => {}}
           >
-            <div className="p-2 rounded-full bg-gray-100">
-              <User size={20} />
-            </div>
-          </button>
+            <FontAwesomeIcon className="h-4 w-4 text-[#A3AED0]" icon={faBell} />
+          </Button>
 
-          {showDropdown && (
-            <div
-              className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10"
-              onMouseEnter={() => setShowDropdown(true)}
-              onMouseLeave={() => setShowDropdown(false)}
-            >
-              <p className="px-4 py-2 text-sm text-gray-700">
-                {user?.username}
-              </p>
-              <p className="px-4 py-2 text-sm text-gray-500">{user?.role}</p>
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center"
-              >
-                <LogOut size={16} className="mr-2" />
-                Keluar
-              </button>
-            </div>
-          )}
+          <Button
+            className="bg-white h-8 w-8 rounded-full p-0"
+            title="Info"
+            onClick={() => {}}
+          >
+            <Info className="h-4 w-4 text-[#A3AED0]" />
+          </Button>
+          <Button
+            className="bg-white h-8 w-8 rounded-full p-0"
+            title="Profile"
+            onClick={() => {}}
+          >
+            <Avatar className="h-8 w-8">
+              <AvatarImage
+                src={avatarUrl || 'https://avatar.iran.liara.run/public'}
+                alt={user?.username || 'User Avatar'}
+              />
+              <AvatarFallback>{user?.username?.[0] || 'U'}</AvatarFallback>
+            </Avatar>
+          </Button>
         </div>
         <div className="md:hidden mr-4">
           <MobileNav />

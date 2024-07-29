@@ -84,6 +84,7 @@ const config = {
       boxShadow: {
         form: '0px 1px 2px 0px rgba(16, 24, 40, 0.05)',
         card: '0 18px 40px -10px rgba(112, 144, 176, 0.12)',
+        top: '14px 17px 40px 4px rgba(112,144,128,0.08)',
         chart:
           '0px 1px 3px 0px rgba(16, 24, 40, 0.10), 0px 1px 2px 0px rgba(16, 24, 40, 0.06)',
         profile:

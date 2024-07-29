@@ -5,6 +5,7 @@ declare type User = {
   firstName: string;
   lastName: string;
   role: string;
+  profilePicture?: string;
 };
 
 declare type BiodataType = {

@@ -367,7 +367,9 @@ const BiodataDiri = () => {
               onSave={handleSaveAvatar}
             />
             <div>
-              <h2 className="text-xl font-semibold">{profileData.username}</h2>
+              <h2 className="text-xl text-[#2B3674] font-semibold">
+                {profileData.username}
+              </h2>
               <p className="text-sm text-gray-500">
                 Last updated: {new Date(profileData.updatedAt).toLocaleString()}
               </p>
