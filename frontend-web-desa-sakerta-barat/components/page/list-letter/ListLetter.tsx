@@ -29,6 +29,8 @@ import LetterTypeForm from '../../shared/LetterTypeForm';
 import { useToast } from '@/components/ui/use-toast';
 import debounce from 'lodash/debounce';
 import { useUser } from '../../../app/context/UserContext';
+import CustomAlert from '../../shared/CustomAlert';
+import CustomAlertDialog from '../../shared/CustomAlertDialog';
 
 const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
   const { user } = useUser();
@@ -47,6 +49,11 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
   const [sortBy, setSortBy] = useState('name');
   const [viewMode, setViewMode] = useState(false);
   const { toast } = useToast();
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [alertData, setAlertData] = useState<{
+    title: string;
+    description: string;
+  } | null>(null);
 
   const loadLetterTypeData = useCallback(async () => {
     setIsContentLoading(true);
@@ -155,8 +162,20 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
   };
 
   const openViewForm = (letterType: LetterTypeProps) => {
-    setSelectedLetterTypeId(letterType.id);
-    setViewMode(true);
+    if (user?.role === 'WARGA') {
+      const requirements = letterType.requirements
+        ? JSON.parse(letterType.requirements)
+        : [];
+      const requirementsString = requirements.join(', ');
+      setAlertData({
+        title: 'Informasi Persyaratan',
+        description: `Untuk membuat ${letterType.name}, Anda perlu menyiapkan: ${requirementsString}.`,
+      });
+      setIsAlertOpen(true);
+    } else {
+      setSelectedLetterTypeId(letterType.id);
+      setViewMode(true);
+    }
   };
 
   const openAddForm = () => {
@@ -311,6 +330,14 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
               .map(renderLetterTypeCard)}
           </div>
         </div>
+      )}
+      {alertData && (
+        <CustomAlertDialog
+          isOpen={isAlertOpen}
+          onClose={() => setIsAlertOpen(false)}
+          title={alertData.title}
+          description={alertData.description}
+        />
       )}
       <LetterTypeForm
         key={currentLetterType ? currentLetterType.id : 'new'}

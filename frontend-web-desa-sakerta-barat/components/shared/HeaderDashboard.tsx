@@ -1,21 +1,13 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import {
-  Bell,
-  ChevronDown,
-  Info,
-  LogOut,
-  Moon,
-  Search,
-  User,
-} from 'lucide-react';
+import { Info, LogOut, Search } from 'lucide-react';
 import { useUser } from '../../app/context/UserContext';
 import MobileNav from './MobileNav';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '../ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faTrashCan, faEye } from '@fortawesome/free-solid-svg-icons';
+import { faBell } from '@fortawesome/free-solid-svg-icons';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { getAvatar } from '../../lib/actions/setting.actions';
 const HeaderDashboard = () => {
