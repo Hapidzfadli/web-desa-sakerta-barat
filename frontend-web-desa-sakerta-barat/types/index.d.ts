@@ -128,3 +128,35 @@ declare interface profileData {
   phoneNumber?: string;
   profilePicture?: string;
 }
+
+enum DocumentTipe {
+  ID_CARD = 'ID_CARD',
+  DRIVING_LICENSE = 'DRIVING_LICENSE',
+  FAMILY_CARD = 'FAMILY_CARD',
+}
+
+enum MaritalStatus {
+  BELUM_KAWIN = 'BELUM',
+  KAWIN = 'KAWIN',
+  JANDA = 'JANDA',
+  DUDA = 'DUDA',
+}
+
+enum Gender {
+  LAKI_LAKI = 'LAKI_LAKI',
+  PEREMPUAN = 'PEREMPUAN',
+}
+
+enum RequestStatus {
+  SUBMITTED = 'SUBMITTED',
+  PROCESSING = 'PROCESSING',
+  COMPLETED = 'COMPLETED',
+  REJECTED = 'REJECTED',
+}
+
+enum BloodType {
+  A = 'A',
+  B = 'B',
+  AB = 'AB',
+  O = 'O',
+}

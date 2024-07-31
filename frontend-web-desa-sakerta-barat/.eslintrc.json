@@ -33,5 +33,12 @@
     "react": {
       "version": "detect"
     }
+  },
+  "globals": {
+    "DocumentTipe": "readonly",
+    "MaritalStatus": "readonly",
+    "Gender": "readonly",
+    "RequestStatus": "readonly",
+    "BloodType": "readonly"
   }
 }

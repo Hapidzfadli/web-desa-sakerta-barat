@@ -122,7 +122,7 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
         style={{ width: 'auto', maxWidth: '100vw', minWidth: '65vw' }}
       >
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="head-form">
             {viewMode ? 'Lihat' : initialData ? 'Edit' : 'Tambah'} Tipe Surat
           </DialogTitle>
         </DialogHeader>

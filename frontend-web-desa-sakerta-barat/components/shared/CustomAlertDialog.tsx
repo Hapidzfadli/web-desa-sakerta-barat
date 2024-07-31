@@ -29,7 +29,7 @@ const CustomAlertDialog: React.FC<CustomAlertDialogProps> = ({
         style={{ width: 'auto', maxWidth: '100vw', minWidth: '40vw' }}
       >
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle className="head-form">{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
