@@ -48,35 +48,40 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="custom-dialog-content ">
+      <DialogContent
+        className="bg-white"
+        style={{ width: 'auto', maxWidth: '100vw', minWidth: '65vw' }}
+      >
         <DialogHeader>
-          <DialogTitle>{initialData ? 'Edit' : 'Add'} Letter Type</DialogTitle>
+          <DialogTitle>
+            {initialData ? 'Edit' : 'Tambah'} Tipe Surat
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="max-h-[80vh] overflow-y-auto">
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-left">
-                Name
+                Nama
               </Label>
               <Input
                 id="name"
                 name="name"
                 value={formData.name || ''}
                 onChange={handleChange}
-                className="col-span-3"
+                className="col-span-3 input-form"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="description" className="text-left">
-                Description
+                Deskripsi
               </Label>
               <Textarea
                 id="description"
                 name="description"
                 value={formData.description || ''}
                 onChange={handleChange}
-                className="col-span-3"
+                className="col-span-3 input-form"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -88,7 +93,7 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
                 name="icon"
                 type="file"
                 onChange={handleFileChange}
-                className="col-span-3 cursor-pointer"
+                className="col-span-3 cursor-pointer input-form"
               />
             </div>
             {iconPreview && (
@@ -112,12 +117,14 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
                 name="template"
                 type="file"
                 onChange={handleFileChange}
-                className="col-span-3 cursor-pointer"
+                className="col-span-3 cursor-pointer input-form"
               />
             </div>
           </div>
           <div className="flex justify-end">
-            <Button type="submit">Save</Button>
+            <Button className="bg-save" type="submit">
+              Simpan
+            </Button>
           </div>
         </form>
       </DialogContent>

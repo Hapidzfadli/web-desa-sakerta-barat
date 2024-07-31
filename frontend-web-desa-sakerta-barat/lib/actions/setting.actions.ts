@@ -136,11 +136,6 @@ export const saveProfilePicture = async (file: File) => {
     formData.append('profilePicture', file);
     if (!decodedToken) throw new Error('No valid token found');
 
-    // Debugging: Log file details before sending
-    console.log(
-      `Uploading file: ${file.name}, size: ${file.size}, type: ${file.type}`,
-    );
-
     const response = await fetch(`${API_URL}/api/users/profile`, {
       method: 'PUT',
       headers: {

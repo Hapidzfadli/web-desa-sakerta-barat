@@ -24,7 +24,6 @@ const HeaderDashboard = () => {
   const router = useRouter();
   const pathname = usePathname();
   const [avatarUrl, setAvatarUrl] = useState<string>('');
-  console.log(user);
 
   const handleLogout = () => {
     logout();

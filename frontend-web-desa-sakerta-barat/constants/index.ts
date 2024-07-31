@@ -1,4 +1,7 @@
 import { Home, FilePlus, FileCheck, Settings, LogOut } from 'lucide-react';
+import { TiInfoLarge } from 'react-icons/ti';
+import { LuFilePlus2 } from 'react-icons/lu';
+import { IoHomeOutline } from 'react-icons/io5';
 export const headerLinks = [
   {
     route: '/',
@@ -41,19 +44,24 @@ export const sidebarLinks = [
 ];
 export const sidebarLinksMember = [
   {
-    icon: Home,
+    icon: IoHomeOutline,
     route: '/member/dashboard',
     label: 'Dashboard',
   },
   {
-    icon: FilePlus,
+    icon: LuFilePlus2,
     route: '/member/permohonan',
     label: 'Ajukan Permohonan',
   },
   {
     icon: FileCheck,
-    route: '/member/status',
-    label: 'Status Permohonan',
+    route: '/member/daftar-permohonan',
+    label: 'Daftar Permohonan',
+  },
+  {
+    icon: TiInfoLarge,
+    route: '/member/panduan-aplikasi',
+    label: 'Panduan Aplikasi',
   },
   {
     icon: Settings,
