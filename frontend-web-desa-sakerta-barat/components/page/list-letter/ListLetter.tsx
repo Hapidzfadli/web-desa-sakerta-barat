@@ -45,6 +45,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('name');
+  const [viewMode, setViewMode] = useState(false);
   const { toast } = useToast();
 
   const loadLetterTypeData = useCallback(async () => {
@@ -89,6 +90,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
       const selectedType = letterTypeData.find(
         (lt) => lt.id === selectedLetterTypeId,
       );
+
       setCurrentLetterType(selectedType || null);
       setIsFormOpen(true);
     }
@@ -141,6 +143,12 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
 
   const openEditForm = (letterType: LetterTypeProps) => {
     setSelectedLetterTypeId(letterType.id);
+    setViewMode(false);
+  };
+
+  const openViewForm = (letterType: LetterTypeProps) => {
+    setSelectedLetterTypeId(letterType.id);
+    setViewMode(true);
   };
 
   const openAddForm = () => {
@@ -205,6 +213,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
             <Button
               className="bg-view hover:bg-blue-500 h-8 w-8 rounded-full p-0"
               title="Lihat"
+              onClick={() => openViewForm(letterType)}
             >
               <FontAwesomeIcon className="h-4 w-4 text-white" icon={faEye} />
             </Button>
@@ -213,7 +222,8 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
           <>
             <Button
               className="bg-view hover:bg-blue-500 h-8 w-8 rounded-full p-0"
-              title="Ajukan"
+              title="Lihat"
+              onClick={() => openViewForm(letterType)}
             >
               <FontAwesomeIcon className="h-4 w-4 text-white" icon={faEye} />
             </Button>
@@ -293,9 +303,11 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
           setIsFormOpen(false);
           setSelectedLetterTypeId(null);
           setCurrentLetterType(null);
+          setViewMode(false);
         }}
         onSubmit={handleAddEdit}
         initialData={currentLetterType}
+        viewMode={viewMode}
       />
     </div>
   );

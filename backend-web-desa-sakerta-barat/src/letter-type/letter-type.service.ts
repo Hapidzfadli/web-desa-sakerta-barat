@@ -170,6 +170,7 @@ export class LetterTypeService {
     );
 
     try {
+      const updateData: any = { ...validatedData };
       let iconUrl: string | undefined;
       if (iconFile) {
         iconUrl = await uploadFileAndGetUrl(
@@ -177,6 +178,7 @@ export class LetterTypeService {
           'uploads/letter-type-icons',
           '/api/letter-type/icon',
         );
+        updateData.icon = iconUrl;
       }
 
       let templateUrl: string | undefined;
@@ -186,15 +188,12 @@ export class LetterTypeService {
           'uploads/letter-type-templates',
           '/api/letter-type/template',
         );
+        updateData.template = templateUrl;
       }
 
       const updatedLetterType = await this.prismaService.letterType.update({
         where: { id },
-        data: {
-          ...validatedData,
-          icon: iconUrl || '',
-          template: templateUrl || '',
-        },
+        data: updateData,
       });
       return this.mapToResponseLetterType(updatedLetterType);
     } catch (error) {

@@ -220,7 +220,7 @@ export class LetterTypeController {
     const filePath = path.join(
       process.cwd(),
       'uploads',
-      'letter-type-template',
+      'letter-type-templates',
       fileName,
     );
 
