@@ -17,7 +17,13 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { CirclePlus, Search, ArrowUpAZ, ArrowDownAZ } from 'lucide-react';
+import {
+  CirclePlus,
+  Search,
+  ArrowUpAZ,
+  ArrowDownAZ,
+  FileIcon,
+} from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPenToSquare,
@@ -31,6 +37,14 @@ import debounce from 'lodash/debounce';
 import { useUser } from '../../../app/context/UserContext';
 import CustomAlert from '../../shared/CustomAlert';
 import CustomAlertDialog from '../../shared/CustomAlertDialog';
+import { fetchResidentData } from '../../../lib/actions/setting.actions';
+import EditPopup from '../../shared/EditPopup';
+import { applicationValidationSchema } from '../../../lib/letterRequestUtils';
+import {
+  DocumentType,
+  getDocumentTypeIndonesian,
+} from '../../../lib/documentTypeUtils';
+import { applyLetter } from '../../../lib/actions/letterRequest.action';
 
 const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
   const { user } = useUser();
@@ -42,6 +56,10 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
   const [selectedLetterTypeId, setSelectedLetterTypeId] = useState<
     number | null
   >(null);
+  const [isApplicationFormOpen, setIsApplicationFormOpen] = useState(false);
+  const [residentData, setResidentData] = useState<any>(null);
+  const [residentDocuments, setResidentDocuments] = useState<any[]>([]);
+  const [newAttachments, setNewAttachments] = useState<File[]>([]);
   const [currentLetterType, setCurrentLetterType] =
     useState<LetterTypeProps | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -161,6 +179,222 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
     setViewMode(false);
   };
 
+  const handleApplyLetter = async (letterType: LetterTypeProps) => {
+    setCurrentLetterType(letterType);
+    try {
+      const data = await fetchResidentData();
+      setResidentData(data.resident);
+      setResidentDocuments(data.resident.documents || []);
+      setIsApplicationFormOpen(true);
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load resident data',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSubmitApplication = async (
+    data: Record<string, string | File | FileList>,
+  ) => {
+    if (!currentLetterType) {
+      toast({
+        title: 'Error',
+        description: 'No letter type selected',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const letterTypeId = currentLetterType.id;
+      const notes = (data.notes as string) || '';
+
+      // Use the state for newAttachments instead of parsing from form data
+      await applyLetter(letterTypeId, notes, newAttachments);
+
+      toast({
+        title: 'Berhasil',
+        description: 'Pengajuan surat berhasil dikirim',
+      });
+      setIsApplicationFormOpen(false);
+      setNewAttachments([]);
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      toast({
+        title: 'Gagal',
+        description: 'Pengajuan surat gagal. Silakan coba lagi.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleNewAttachment = (files: FileList | null) => {
+    if (files) {
+      const validFiles = Array.from(files).filter(
+        (file) => file.type === 'application/pdf',
+      );
+      if (validFiles.length !== files.length) {
+        toast({
+          title: 'Peringatan',
+          description: 'Hanya file PDF yang diperbolehkan.',
+          variant: 'warning',
+        });
+      }
+      setNewAttachments((prev) => [...prev, ...validFiles]);
+    }
+  };
+
+  const applicationFormFields = [
+    {
+      label: 'Nama',
+      name: 'name',
+      value: residentData?.name || '',
+      required: true,
+    },
+    {
+      label: 'NIK',
+      name: 'nationalId',
+      value: residentData?.nationalId || '',
+      required: true,
+    },
+    {
+      label: 'Alamat',
+      name: 'address',
+      value: residentData?.residentialAddress || '',
+      required: true,
+    },
+    {
+      label: 'Agama',
+      name: 'religion',
+      value: residentData?.religion,
+      required: true,
+    },
+    {
+      label: 'Status Pernikahan',
+      name: 'maritalStatus',
+      value: residentData?.maritalStatus,
+      required: true,
+    },
+    {
+      label: 'Pekerjaan',
+      name: 'occupation',
+      value: residentData?.occupation,
+      required: true,
+    },
+    {
+      label: 'Kewarganegaraan',
+      name: 'nationality',
+      value: residentData?.nationality,
+      required: true,
+    },
+    {
+      label: 'Tempat Lahir',
+      name: 'placeOfBirth',
+      value: residentData?.placeOfBirth,
+      required: true,
+    },
+    {
+      label: 'Jenis Kelamin',
+      name: 'gender',
+      value: residentData?.gender,
+      required: true,
+    },
+    {
+      label: 'Nomor Kartu Keluarga',
+      name: 'familyCardNumber',
+      value: residentData?.familyCardNumber,
+      required: true,
+    },
+    {
+      label: 'Kecamatan',
+      name: 'district',
+      value: residentData?.district,
+      required: true,
+    },
+    {
+      label: 'Kabupaten',
+      name: 'regency',
+      value: residentData?.regency,
+      required: true,
+    },
+    {
+      label: 'Provinsi',
+      name: 'province',
+      value: residentData?.province,
+      required: true,
+    },
+    {
+      label: 'Kode Pos',
+      name: 'postalCode',
+      value: residentData?.postalCode,
+      required: true,
+    },
+    {
+      label: 'RT',
+      name: 'rt',
+      value: residentData?.rt,
+      required: true,
+    },
+    {
+      label: 'RW',
+      name: 'rw',
+      value: residentData?.rw,
+      required: true,
+    },
+    {
+      label: 'Alamat KTP',
+      name: 'idCardAddress',
+      value: residentData?.idCardAddress,
+      type: 'textarea',
+      required: true,
+    },
+    {
+      label: 'Alamat Domisili',
+      name: 'residentialAddress',
+      value: residentData?.residentialAddress,
+      type: 'textarea',
+      required: true,
+    },
+    {
+      label: 'Catatan',
+      name: 'notes',
+      value: '',
+      type: 'textarea',
+    },
+    {
+      label: 'Dokumen Penduduk',
+      name: 'residentDocuments',
+      value: '',
+      type: 'custom',
+      render: () => (
+        <div className="grid grid-cols-2 gap-2 w-full">
+          {residentDocuments.map((doc) => (
+            <div
+              key={doc.id}
+              className="flex items-center  p-2 input-form rounded-md w-full"
+            >
+              <FileIcon className="mr-2 h-5 w-5 text-blue-500" />{' '}
+              <span className="flex-grow">
+                {getDocumentTypeIndonesian(doc.type as DocumentType)}
+              </span>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      label: 'Lampiran Tambahan',
+      name: 'newAttachments',
+      value: '',
+      type: 'file',
+      required: false,
+      multiple: true,
+      accept: '.pdf',
+    },
+  ];
+
   const openViewForm = (letterType: LetterTypeProps) => {
     if (user?.role === 'WARGA') {
       const requirements = letterType.requirements
@@ -257,6 +491,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
             <Button
               className="bg-edit hover:bg-yellow-500 h-8 w-8 rounded-full p-0"
               title="Ajukan"
+              onClick={() => handleApplyLetter(letterType)}
             >
               <FontAwesomeIcon
                 className="h-4 w-4 text-white"
@@ -351,6 +586,32 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
         onSubmit={handleAddEdit}
         initialData={currentLetterType}
         viewMode={viewMode}
+      />
+
+      <EditPopup
+        title={`Pengajuan Surat ${currentLetterType?.name || ''}`}
+        fields={applicationFormFields}
+        onSave={handleSubmitApplication}
+        validationSchema={applicationValidationSchema}
+        isOpen={isApplicationFormOpen}
+        onClose={() => {
+          setIsApplicationFormOpen(false);
+          setNewAttachments([]);
+        }}
+        viewMode={false}
+        onFileChange={handleNewAttachment}
+        additionalContent={
+          newAttachments.length > 0 && (
+            <div className="mt-4">
+              <h4 className="font-semibold">Lampiran Baru:</h4>
+              <ul className="list-disc list-inside">
+                {newAttachments.map((file, index) => (
+                  <li key={index}>{file.name}</li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
       />
     </div>
   );
