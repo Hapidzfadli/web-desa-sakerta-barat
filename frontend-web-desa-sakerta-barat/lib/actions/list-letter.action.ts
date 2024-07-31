@@ -219,3 +219,24 @@ export const deleteLetterType = async (id: number) => {
     throw error;
   }
 };
+
+export const getTemplateFile = async (url: string): Promise<Blob> => {
+  try {
+    const token = Cookies.get('session');
+    const response = await fetch(`${API_URL}/api/letter-type/template/${url}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch template file');
+    }
+
+    return await response.blob();
+  } catch (error) {
+    console.error('Get template file error:', error);
+    throw error;
+  }
+};

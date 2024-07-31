@@ -76,7 +76,6 @@ export class LetterTypeController {
     }
 
     if (templateFile) {
-      console.log(templateFile.mimetype);
       if (!maxSize.isValid(templateFile)) {
         throw new BadRequestException('Template file is too large');
       }
@@ -167,7 +166,6 @@ export class LetterTypeController {
     }
 
     if (templateFile) {
-      console.log(templateFile.mimetype);
       if (!maxSize.isValid(templateFile)) {
         throw new BadRequestException('Template file is too large');
       }
@@ -222,7 +220,7 @@ export class LetterTypeController {
     const filePath = path.join(
       process.cwd(),
       'uploads',
-      'letter-type-template',
+      'letter-type-templates',
       fileName,
     );
 

@@ -47,7 +47,7 @@ const EditAvatarDialog: React.FC<EditAvatarDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Avatar className="h-12 w-12 cursor-pointer">
+        <Avatar className="h-16 w-16 cursor-pointer">
           <AvatarImage src={currentAvatar} alt={username} />
           <AvatarFallback>{username[0]}</AvatarFallback>
         </Avatar>

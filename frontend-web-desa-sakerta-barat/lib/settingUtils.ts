@@ -155,5 +155,7 @@ export const verifyLetterRequestSchema = z.object({
 
 export const addDocumentSchema = z.object({
   type: z.nativeEnum(DocumentType),
-  file: z.instanceof(File),
+  file: z.instanceof(File).refine((file) => file.size <= 5000000, {
+    message: 'File size should be less than 5MB',
+  }),
 });

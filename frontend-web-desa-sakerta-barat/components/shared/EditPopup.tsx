@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
@@ -28,10 +28,12 @@ interface EditPopupProps {
   onSave: (
     data: Record<string, string | File>,
     errors?: Record<string, string>,
-  ) => void;
+  ) => void | Promise<void>;
   validationSchema: z.ZodSchema<any>;
   isOpen: boolean;
   onClose: () => void;
+  onDelete?: () => void;
+  viewMode?: boolean;
 }
 
 const EditPopup: React.FC<EditPopupProps> = ({
@@ -41,11 +43,13 @@ const EditPopup: React.FC<EditPopupProps> = ({
   validationSchema,
   isOpen,
   onClose,
+  onDelete,
+  viewMode = false,
 }) => {
   const [formData, setFormData] = useState<Record<string, string | File>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       setFormData(
         fields.reduce(
@@ -62,6 +66,7 @@ const EditPopup: React.FC<EditPopupProps> = ({
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >,
   ) => {
+    if (viewMode) return;
     const { name, value, type } = e.target;
     if (type === 'file') {
       const fileInput = e.target as HTMLInputElement;
@@ -78,6 +83,7 @@ const EditPopup: React.FC<EditPopupProps> = ({
   };
 
   const handleSelectChange = (value: string, name: string) => {
+    if (viewMode) return;
     setFormData({ ...formData, [name]: value });
     if (errors[name]) {
       setErrors({ ...errors, [name]: '' });
@@ -86,6 +92,7 @@ const EditPopup: React.FC<EditPopupProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (viewMode) return;
     try {
       validationSchema.parse(formData);
       onSave(formData);
@@ -101,6 +108,77 @@ const EditPopup: React.FC<EditPopupProps> = ({
         setErrors(errorMessages);
         onSave(formData, errorMessages);
       }
+    }
+  };
+
+  const renderField = (field: Field) => {
+    switch (field.type) {
+      case 'textarea':
+        return (
+          <Textarea
+            id={field.name}
+            name={field.name}
+            value={(formData[field.name] as string) || ''}
+            onChange={handleInputChange}
+            className="flex-grow input-form"
+            rows={3}
+            required={field.required}
+            disabled={viewMode}
+          />
+        );
+      case 'select':
+        return (
+          <Select
+            onValueChange={(value) => handleSelectChange(value, field.name)}
+            value={formData[field.name] as string}
+            disabled={viewMode}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select an option" />
+            </SelectTrigger>
+            <SelectContent>
+              {field.options?.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      case 'file':
+        return viewMode ? (
+          <Input
+            id={field.name}
+            name={field.name}
+            type="text"
+            value={(formData[field.name] as string) || ''}
+            className="flex-grow input-form"
+            disabled
+          />
+        ) : (
+          <Input
+            id={field.name}
+            name={field.name}
+            type="file"
+            onChange={handleInputChange}
+            className="flex-grow input-form"
+            required={field.required}
+            accept=".pdf"
+          />
+        );
+      default:
+        return (
+          <Input
+            id={field.name}
+            name={field.name}
+            type={field.type || 'text'}
+            value={(formData[field.name] as string) || ''}
+            onChange={handleInputChange}
+            className="flex-grow input-form"
+            required={field.required}
+            disabled={viewMode}
+          />
+        );
     }
   };
 
@@ -121,66 +199,29 @@ const EditPopup: React.FC<EditPopupProps> = ({
                   {field.label}
                   {field.required && <span className="text-red-500">*</span>}
                 </Label>
-                {field.type === 'textarea' ? (
-                  <Textarea
-                    id={field.name}
-                    name={field.name}
-                    value={(formData[field.name] as string) || ''}
-                    onChange={handleInputChange}
-                    className="flex-grow input-form"
-                    rows={3}
-                    required={field.required}
-                  />
-                ) : field.type === 'select' ? (
-                  <Select
-                    onValueChange={(value) =>
-                      handleSelectChange(value, field.name)
-                    }
-                    value={formData[field.name] as string}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select an option" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {field.options?.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : field.type === 'file' ? (
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    type="file"
-                    onChange={handleInputChange}
-                    className="flex-grow input-form"
-                    required={field.required}
-                    accept=".pdf"
-                  />
-                ) : (
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    type={field.type || 'text'}
-                    value={(formData[field.name] as string) || ''}
-                    onChange={handleInputChange}
-                    className="flex-grow input-form"
-                    required={field.required}
-                  />
-                )}
+                {renderField(field)}
                 {errors[field.name] && (
                   <p className="text-red-500 text-sm">{errors[field.name]}</p>
                 )}
               </div>
             ))}
           </div>
-          <div className="flex justify-end mt-4">
-            <Button className="bg-save" type="submit">
-              Save changes
-            </Button>
-          </div>
+          {!viewMode && (
+            <div className="flex justify-end mt-4 space-x-2">
+              {onDelete && (
+                <Button
+                  className="bg-red-500 text-white"
+                  onClick={onDelete}
+                  type="button"
+                >
+                  Delete
+                </Button>
+              )}
+              <Button className="bg-save" type="submit">
+                Save changes
+              </Button>
+            </div>
+          )}
         </form>
       </DialogContent>
     </Dialog>

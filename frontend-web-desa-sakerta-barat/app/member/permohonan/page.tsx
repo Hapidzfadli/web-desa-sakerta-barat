@@ -1,7 +1,8 @@
 import React from 'react';
+import DaftarSurat from '../../admin/daftar-surat/page';
 
 const Permohonan = () => {
-  return <div>Permohonan</div>;
+  return <DaftarSurat />;
 };
 
 export default Permohonan;

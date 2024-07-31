@@ -1,13 +1,28 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtDecode, JwtPayload as DefaultJwtPayload } from 'jwt-decode';
+import { API_URL } from './constants';
 
 export interface CustomJwtPayload extends DefaultJwtPayload {
   role: string;
   username: string;
 }
 
-export function middleware(request: NextRequest) {
+export const validateToken = async (token: string) => {
+  try {
+    const response = await fetch(`${API_URL}/api/users/profile`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.status === 200;
+  } catch (error) {
+    console.error('Error validating token:', error);
+    return false;
+  }
+};
+
+export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   const isPrivatePath = path.startsWith('/member') || path.startsWith('/admin');
@@ -19,6 +34,11 @@ export function middleware(request: NextRequest) {
 
   if (token) {
     try {
+      const isValid = await validateToken(token);
+      if (!isValid) {
+        return NextResponse.redirect(new URL('/login', request.url));
+      }
+
       const decodedToken = jwtDecode<CustomJwtPayload>(token);
       const userRole = decodedToken.role || 'WARGA';
 
@@ -30,7 +50,7 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/unauthorized', request.url));
       }
     } catch (error) {
-      console.error('Error decoding token:', error);
+      console.error('Error processing token:', error);
       return NextResponse.redirect(new URL('/login', request.url));
     }
   }

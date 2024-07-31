@@ -1,7 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-
 import {
   fetchResidentData,
   saveResidentData,
@@ -35,6 +40,7 @@ import {
   DocumentType,
   getDocumentTypeIndonesian,
 } from '../../lib/documentTypeUtils';
+
 const BiodataDiri = () => {
   const [profileData, setProfileData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,17 +57,20 @@ const BiodataDiri = () => {
   );
   const { toast } = useToast();
 
-  const documentTypeOptions = Object.values(DocumentType).map((type) => ({
-    value: type,
-    label: getDocumentTypeIndonesian(type),
-  }));
+  const documentTypeOptions = useMemo(
+    () =>
+      Object.values(DocumentType).map((type) => ({
+        value: type,
+        label: getDocumentTypeIndonesian(type),
+      })),
+    [],
+  );
 
   useEffect(() => {
     const loadProfileData = async () => {
       try {
         const data = await fetchResidentData();
         setProfileData(data);
-        // Load avatar
         if (data.profilePicture) {
           const avatarUrl = await getAvatar(data.profilePicture);
           setAvatarUrl(avatarUrl);
@@ -78,7 +87,7 @@ const BiodataDiri = () => {
 
   if (isLoading) return <LoadingSpinner />;
   if (error) return <div>Error: {error}</div>;
-  if (!profileData) return <div>No profile data available</div>;
+  if (!profileData) return <div>Tidak ada data profile</div>;
 
   const handleSaveProfile = async (
     data: Record<string, string>,
@@ -88,7 +97,7 @@ const BiodataDiri = () => {
       const errorMessage = Object.values(errors).join(', ');
       toast({
         variant: 'destructive',
-        title: 'Validation Error',
+        title: 'Kesalahan Validasi',
         description: errorMessage,
       });
       return;
@@ -103,16 +112,15 @@ const BiodataDiri = () => {
       }));
       setIsProfilePopupOpen(false);
       toast({
-        title: 'Success',
-        description: 'Profile data saved successfully',
+        title: 'Berhasil',
+        description: 'Profil berhasil diperbarui',
       });
     } catch (error) {
-      console.error('Save profile error:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: 'Kesalahan',
         description:
-          'Failed to save profile data. Please check your input and try again.',
+          'Gagal menyimpan data profil. Silakan periksa input Anda dan coba lagi.',
       });
     }
   };
@@ -125,7 +133,7 @@ const BiodataDiri = () => {
       const errorMessage = Object.values(errors).join(', ');
       toast({
         variant: 'destructive',
-        title: 'Validation Error',
+        title: 'Kesalahan Validasi',
         description: errorMessage,
       });
       return;
@@ -145,16 +153,15 @@ const BiodataDiri = () => {
       }));
       setIsResidentPopupOpen(false);
       toast({
-        title: 'Success',
-        description: 'Resident data saved successfully',
+        title: 'Berhasil',
+        description: 'Data penduduk berhasil disimpan',
       });
     } catch (error) {
-      console.error('Save resident error:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: 'Kesalahan',
         description:
-          'Failed to save resident data. Please check your input and try again.',
+          'Gagal menyimpan data penduduk. Silakan periksa input Anda dan coba lagi.',
       });
     }
   };
@@ -167,25 +174,24 @@ const BiodataDiri = () => {
         profilePicture: data?.profilePicture,
       }));
 
-      // Update avatar URL
       if (data?.profilePicture) {
         const newAvatarUrl = await getAvatar(data.profilePicture);
         setAvatarUrl(newAvatarUrl);
       }
 
       toast({
-        title: 'Success',
-        description: 'Avatar updated successfully',
+        title: 'Berhasil',
+        description: 'Avatar berhasil diperbarui',
       });
     } catch (error) {
       console.error('Update avatar error:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: 'Kesalahan',
         description:
           error instanceof Error
             ? error.message
-            : 'Failed to update avatar. Please try again.',
+            : 'Gagal memperbarui avatar. Silakan coba lagi.',
       });
     }
   };
@@ -257,7 +263,7 @@ const BiodataDiri = () => {
       const errorMessage = Object.values(errors).join(', ');
       toast({
         variant: 'destructive',
-        title: 'Validation Error',
+        title: 'Kesalahan Validasi',
         description: errorMessage,
       });
       return;
@@ -269,8 +275,8 @@ const BiodataDiri = () => {
     if (!file || !(file instanceof File)) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Please select a file to upload.',
+        title: 'Kesalahan',
+        description: 'Silakan pilih file untuk diunggah.',
       });
       return;
     }
@@ -282,31 +288,22 @@ const BiodataDiri = () => {
           ...prevData,
           resident: {
             ...prevData.resident,
-            documents: [
-              ...(prevData.resident?.documents || []),
-              {
-                id: newDocument.id,
-                type: newDocument.type,
-                fileUrl: newDocument.fileUrl,
-                // tambahkan properti lain yang diperlukan
-              },
-            ],
+            documents: [...(prevData.resident?.documents || []), newDocument],
           },
         }));
         setIsAddDocumentPopupOpen(false);
         toast({
-          title: 'Success',
-          description: 'Document added successfully',
+          title: 'Berhasil',
+          description: 'Dokumen berhasil ditambahkan',
         });
       } else {
         throw new Error('Invalid response from server');
       }
     } catch (error) {
-      console.error('Add document error:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to add document. Please try again.',
+        title: 'Kesalahan',
+        description: 'Gagal menambahkan dokumen. Silakan coba lagi.',
       });
     }
   };
@@ -325,15 +322,14 @@ const BiodataDiri = () => {
           },
         }));
         toast({
-          title: 'Success',
-          description: 'Document deleted successfully',
+          title: 'Berhasil',
+          description: 'Dokumen berhasil dihapus',
         });
       } catch (error) {
-        console.error('Error deleting document:', error);
         toast({
           variant: 'destructive',
-          title: 'Error',
-          description: 'Failed to delete document. Please try again.',
+          title: 'Kesalahan',
+          description: 'Gagal menghapus dokumen. Silakan coba lagi.',
         });
       } finally {
         setIsDeleteDialogOpen(false);
@@ -348,11 +344,10 @@ const BiodataDiri = () => {
       const url = URL.createObjectURL(blob);
       window.open(url, '_blank');
     } catch (error) {
-      console.error('Error viewing document:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to view document. Please try again.',
+        title: 'Kesalahan',
+        description: 'Gagal melihat dokumen. Silakan coba lagi.',
       });
     }
   };
@@ -372,7 +367,9 @@ const BiodataDiri = () => {
               onSave={handleSaveAvatar}
             />
             <div>
-              <h2 className="text-xl font-semibold">{profileData.username}</h2>
+              <h2 className="text-xl text-[#2B3674] font-semibold">
+                {profileData.username}
+              </h2>
               <p className="text-sm text-gray-500">
                 Last updated: {new Date(profileData.updatedAt).toLocaleString()}
               </p>
@@ -723,7 +720,7 @@ const BiodataDiri = () => {
           },
         ]}
         onSave={handleAddDocument}
-        validationSchema={addDocumentSchema} // You need to define this schema
+        validationSchema={addDocumentSchema}
         isOpen={isAddDocumentPopupOpen}
         onClose={() => setIsAddDocumentPopupOpen(false)}
       />

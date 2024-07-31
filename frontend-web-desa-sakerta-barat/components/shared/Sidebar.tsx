@@ -59,7 +59,7 @@ const Sidebar = ({ sidebar }: SidebarProps) => {
                 )}
               >
                 <Icon
-                  className={cn('h-6 w-6 text-gray-600', {
+                  className={cn('h-6 w-6 text-black-2', {
                     'text-white': isActive,
                   })}
                 />
