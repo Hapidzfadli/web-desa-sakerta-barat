@@ -30,7 +30,7 @@ export class LetterRequestValidation {
   });
 
   static readonly VERIFY = z.object({
-    status: z.enum([RequestStatus.COMPLETED, RequestStatus.REJECTED]),
+    status: z.enum([RequestStatus.APPROVED, RequestStatus.REJECTED]),
     notes: z.string().optional(),
   });
 }

@@ -12,6 +12,9 @@ import {
   HttpStatus,
   UseInterceptors,
   UploadedFiles,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
 } from '@nestjs/common';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -37,13 +40,29 @@ export class LetterRequestController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @Roles(Role.WARGA)
+  @UseInterceptors(FilesInterceptor('attachments'))
   async createLetterRequest(
     @Auth() user: any,
     @Body() createDto: CreateLetterRequestDto,
+    @UploadedFiles(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
+          new FileTypeValidator({ fileType: 'application/pdf' }),
+        ],
+        fileIsRequired: false,
+      }),
+    )
+    attachments: Express.Multer.File[],
   ): Promise<WebResponse<ResponseLetterRequest>> {
+    const parsedDto = {
+      ...createDto,
+      letterTypeId: Number(createDto.letterTypeId),
+    };
     const result = await this.letterRequestService.createLetterRequest(
       user.id,
-      createDto,
+      parsedDto,
+      attachments,
     );
     return {
       data: result,
@@ -58,7 +77,16 @@ export class LetterRequestController {
     @Auth() user: any,
     @Param('id') id: string,
     @Body() updateDto: UpdateLetterRequestDto,
-    @UploadedFiles() attachments?: Express.Multer.File[],
+    @UploadedFiles(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
+          new FileTypeValidator({ fileType: 'application/pdf' }),
+        ],
+        fileIsRequired: false,
+      }),
+    )
+    attachments?: Express.Multer.File[],
   ): Promise<WebResponse<ResponseLetterRequest>> {
     const result = await this.letterRequestService.updateLetterRequest(
       user.id,

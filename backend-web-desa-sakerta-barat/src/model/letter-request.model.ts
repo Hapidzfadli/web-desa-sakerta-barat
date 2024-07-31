@@ -16,7 +16,7 @@ export class UpdateLetterRequestDto {
 }
 
 export class VerifyLetterRequestDto {
-  status: Extract<RequestStatus, 'COMPLETED' | 'REJECTED'>;
+  status: Extract<RequestStatus, 'APPROVED' | 'REJECTED'>;
   notes?: string;
 }
 

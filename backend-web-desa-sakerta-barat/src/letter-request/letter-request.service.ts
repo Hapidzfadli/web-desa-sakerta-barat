@@ -41,6 +41,7 @@ export class LetterRequestService {
     this.logger.debug(
       `Create new letter request for user ${userId}: ${JSON.stringify(dto)}`,
     );
+    dto.letterTypeId = Number(dto.letterTypeId);
     const validatedData = this.validationService.validate(
       LetterRequestValidation.CREATE,
       dto,
@@ -193,7 +194,7 @@ export class LetterRequestService {
         status: validatedData.status,
         notes: validatedData.notes,
         letterNumber:
-          validatedData.status === RequestStatus.COMPLETED
+          validatedData.status === RequestStatus.APPROVED
             ? this.generateLetterNumber()
             : undefined,
       },
@@ -248,11 +249,12 @@ export class LetterRequestService {
   private mapToResponseLetterRequest(
     letterRequest: any,
   ): ResponseLetterRequest {
-    const residentDocuments = letterRequest.resident.documents.map((doc) => ({
-      fileName: path.basename(doc.fileUrl),
-      fileUrl: doc.fileUrl,
-      documentId: doc.id,
-    }));
+    const residentDocuments =
+      letterRequest.resident?.documents?.map((doc) => ({
+        fileName: path.basename(doc.fileUrl),
+        fileUrl: doc.fileUrl,
+        documentId: doc.id,
+      })) || [];
 
     const allAttachments = [...letterRequest.attachments, ...residentDocuments];
 
