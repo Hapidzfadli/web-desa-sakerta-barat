@@ -28,7 +28,7 @@ interface EditPopupProps {
   onSave: (
     data: Record<string, string | File>,
     errors?: Record<string, string>,
-  ) => void;
+  ) => void | Promise<void>;
   validationSchema: z.ZodSchema<any>;
   isOpen: boolean;
   onClose: () => void;
@@ -209,7 +209,11 @@ const EditPopup: React.FC<EditPopupProps> = ({
           {!viewMode && (
             <div className="flex justify-end mt-4 space-x-2">
               {onDelete && (
-                <Button className="bg-red-500" onClick={onDelete} type="button">
+                <Button
+                  className="bg-red-500 text-white"
+                  onClick={onDelete}
+                  type="button"
+                >
                   Delete
                 </Button>
               )}

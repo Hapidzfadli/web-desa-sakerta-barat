@@ -28,7 +28,8 @@ const DaftarSurat = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tabs, setTabs] = useState<Tab[]>([]);
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isAddEditPopupOpen, setIsAddEditPopupOpen] = useState(false);
+  const [isSettingsPopupOpen, setIsSettingsPopupOpen] = useState(false);
   const [currentCategory, setCurrentCategory] =
     useState<LetterCategoryProps | null>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
@@ -96,6 +97,7 @@ const DaftarSurat = () => {
         description: 'Category deleted successfully',
       });
       loadCategoryData();
+      setIsSettingsPopupOpen(false);
     } catch (err) {
       toast({
         title: 'Error',
@@ -105,21 +107,21 @@ const DaftarSurat = () => {
     }
   };
 
-  const handleEdit = () => {
+  const handleSettingsClick = () => {
     const category = letterCategoryData.find((c) => c.id === activeTab);
     if (category) {
       setCurrentCategory(category);
-      setIsPopupOpen(true);
+      setIsSettingsPopupOpen(true);
     }
   };
 
   const handleAdd = () => {
     setCurrentCategory(null);
-    setIsPopupOpen(true);
+    setIsAddEditPopupOpen(true);
   };
 
   const handleSave = async (
-    data: Record<string, string>,
+    data: Record<string, string | File>,
     errors?: Record<string, string>,
   ) => {
     if (errors) {
@@ -140,7 +142,8 @@ const DaftarSurat = () => {
           description: 'Category created successfully',
         });
       }
-      setIsPopupOpen(false);
+      setIsAddEditPopupOpen(false);
+      setIsSettingsPopupOpen(false);
       loadCategoryData();
     } catch (err) {
       toast({
@@ -188,11 +191,11 @@ const DaftarSurat = () => {
           </div>
 
           <div className="flex gap-2 text-gray-500">
-            {user?.role != 'WARGA' && (
+            {user?.role !== 'WARGA' && (
               <Button
                 className="bg-save hover:bg-gray-100 h-8 w-10 p-0 rounded-lg"
                 title="Tambah"
-                onClick={() => handleAdd()}
+                onClick={handleAdd}
               >
                 <Plus className="h-4 w-4 " />
               </Button>
@@ -205,10 +208,11 @@ const DaftarSurat = () => {
               <Filter className="h-4 w-4  mr-2" />
               Filter
             </Button>
-            {user?.role != 'WARGA' && (
+            {user?.role !== 'WARGA' && (
               <Button
                 className="bg-save hover:bg-gray-100 h-8 w-10 p-0 rounded-lg"
                 title="Setting"
+                onClick={handleSettingsClick}
               >
                 <Settings className="h-4 w-4 " />
               </Button>
@@ -245,8 +249,31 @@ const DaftarSurat = () => {
             ? updateLetterCategorySchema
             : createLetterCategorySchema
         }
-        isOpen={isPopupOpen}
-        onClose={() => setIsPopupOpen(false)}
+        isOpen={isAddEditPopupOpen}
+        onClose={() => setIsAddEditPopupOpen(false)}
+      />
+
+      <EditPopup
+        title={'Pengaturan Kategori Surat'}
+        fields={[
+          {
+            label: 'Name',
+            name: 'name',
+            value: currentCategory?.name || '',
+            required: true,
+          },
+          {
+            label: 'Description',
+            name: 'description',
+            value: currentCategory?.description || '',
+            type: 'textarea',
+          },
+        ]}
+        onSave={handleSave}
+        onDelete={handleDelete}
+        validationSchema={updateLetterCategorySchema}
+        isOpen={isSettingsPopupOpen}
+        onClose={() => setIsSettingsPopupOpen(false)}
       />
     </div>
   );

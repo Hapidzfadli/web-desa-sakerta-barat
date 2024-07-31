@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { CirclePlus, Search, ArrowUpAZ } from 'lucide-react';
+import { CirclePlus, Search, ArrowUpAZ, ArrowDownAZ } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPenToSquare,
@@ -139,6 +139,14 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
         variant: 'destructive',
       });
     }
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
+
+  const handleSort = () => {
+    setSortOrder((prevOrder) => (prevOrder === 'asc' ? 'desc' : 'asc'));
   };
 
   const openEditForm = (letterType: LetterTypeProps) => {
@@ -266,12 +274,20 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
                 <input
                   type="text"
                   placeholder="Cari disini..."
+                  value={search}
+                  onChange={handleSearchChange}
                   className="w-full pl-10 pr-4 py-2 rounded-full h-8 text-[#8F9BBA] bg-[#F4F7FE] focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
             <div className="mr-4">
-              <ArrowUpAZ className="text-[#8F9BBA] cursor-pointer h-6" />
+              <Button onClick={handleSort} className="focus:outline-none">
+                {sortOrder === 'asc' ? (
+                  <ArrowUpAZ className="text-[#8F9BBA] cursor-pointer h-6" />
+                ) : (
+                  <ArrowDownAZ className="text-[#8F9BBA] cursor-pointer h-6" />
+                )}
+              </Button>
             </div>
           </div>
         </div>
