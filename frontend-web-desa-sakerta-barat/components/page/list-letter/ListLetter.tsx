@@ -598,17 +598,24 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
           setIsApplicationFormOpen(false);
           setNewAttachments([]);
         }}
+        labelSubmit={'Ajukan'}
         viewMode={false}
         onFileChange={handleNewAttachment}
         additionalContent={
           newAttachments.length > 0 && (
             <div className="mt-4">
-              <h4 className="font-semibold">Lampiran Baru:</h4>
-              <ul className="list-disc list-inside">
+              <h4 className="glassy-label">Lampiran Baru</h4>
+              <div className="space-y-2">
                 {newAttachments.map((file, index) => (
-                  <li key={index}>{file.name}</li>
+                  <div
+                    key={index}
+                    className="flex items-center p-2 input-form rounded-md"
+                  >
+                    <FileIcon className="mr-2 h-5 w-5 text-blue-500" />
+                    <span className="flex-grow">{file.name}</span>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )
         }

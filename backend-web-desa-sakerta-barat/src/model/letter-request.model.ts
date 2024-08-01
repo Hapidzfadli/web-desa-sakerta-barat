@@ -29,6 +29,8 @@ export class AttachmentDto {
 export class ResponseLetterRequest {
   id: number;
   residentId: number;
+  residentName?: string;
+  letterName?: string;
   letterTypeId: number;
   letterNumber?: string;
   requestDate: Date;

@@ -27,6 +27,7 @@ interface Field {
 
 interface EditPopupProps {
   title: string;
+  labelSubmit?: string;
   fields: Field[];
   onSave: (
     data: Record<string, string | File>,
@@ -52,6 +53,7 @@ const EditPopup: React.FC<EditPopupProps> = ({
   viewMode = false,
   onFileChange,
   additionalContent,
+  labelSubmit,
 }) => {
   const [formData, setFormData] = useState<Record<string, string | File>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -225,7 +227,7 @@ const EditPopup: React.FC<EditPopupProps> = ({
                 </Button>
               )}
               <Button className="bg-save" type="submit">
-                Save changes
+                {labelSubmit ?? 'Simpan'}
               </Button>
             </div>
           )}

@@ -129,6 +129,51 @@ declare interface profileData {
   profilePicture?: string;
 }
 
+declare interface Column<T> {
+  header: string;
+  accessor: keyof T | ((data: T) => React.ReactNode);
+  cell?: (value: any, row: T) => React.ReactNode;
+}
+
+declare interface TableProps<T> {
+  data: T[];
+  columns: Column<T>[];
+  itemsPerPageOptions?: number[];
+  onSearch?: (query: string) => void;
+  onFilter?: () => void;
+  searchPlaceholder?: string;
+}
+
+declare interface LetterRequest {
+  id: number;
+  residentId: number;
+  residentName: string;
+  letterTypeId: number;
+  letterNumber: string | null;
+  requestDate: string;
+  status: string;
+  notes: string;
+  attachments: {
+    fileName: string;
+    fileUrl: string;
+    documentId: number | null;
+  }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+declare interface PaginationInfo {
+  size: number;
+  total_page: number;
+  current_page: number;
+  total: number;
+}
+
+declare interface LetterRequestsResponse {
+  data: LetterRequest[];
+  paging: PaginationInfo;
+}
+
 enum DocumentTipe {
   ID_CARD = 'ID_CARD',
   DRIVING_LICENSE = 'DRIVING_LICENSE',

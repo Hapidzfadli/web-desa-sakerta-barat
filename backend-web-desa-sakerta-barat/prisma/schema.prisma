@@ -13,7 +13,6 @@ enum Role {
   ADMIN
   WARGA
   KADES
-  PETUGAS
 }
 
 enum DocumentType {

@@ -214,7 +214,7 @@ export class LetterRequestService {
       'letterRequest',
       {
         ...options,
-        include: { attachments: true },
+        include: { attachments: true, resident: true, letterType: true },
       },
     );
 
@@ -261,6 +261,8 @@ export class LetterRequestService {
     return {
       id: letterRequest.id,
       residentId: letterRequest.residentId,
+      residentName: letterRequest.resident?.name,
+      letterName: letterRequest.letterType?.name,
       letterTypeId: letterRequest.letterTypeId,
       letterNumber: letterRequest.letterNumber,
       requestDate: letterRequest.requestDate,

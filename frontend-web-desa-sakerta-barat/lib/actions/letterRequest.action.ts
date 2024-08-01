@@ -40,3 +40,37 @@ export const applyLetter = async (
     throw error;
   }
 };
+
+export const fetchLetterRequests = async (
+  page: number = 1,
+  limit: number = 10,
+): Promise<LetterRequestsResponse> => {
+  try {
+    const token = Cookies.get('session');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(
+      `${API_URL}/api/letter-requests?page=${page}&limit=${limit}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to fetch letter requests: ${errorText}`);
+    }
+
+    const data: LetterRequestsResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error in fetchLetterRequests:', error);
+    throw error;
+  }
+};
