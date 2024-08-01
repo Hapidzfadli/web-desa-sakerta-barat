@@ -4,6 +4,8 @@ import {
   ConflictException,
   NotFoundException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
 import { ValidationService } from '../common/validation.service';
@@ -11,7 +13,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import * as path from 'path';
 import { LetterRequestValidation } from './letter-request.validation';
-import { RequestStatus, Role } from '@prisma/client';
+import { LetterRequest, RequestStatus, Role } from '@prisma/client';
 import {
   PaginateOptions,
   PaginatedResult,
@@ -41,6 +43,7 @@ export class LetterRequestService {
     this.logger.debug(
       `Create new letter request for user ${userId}: ${JSON.stringify(dto)}`,
     );
+    dto.letterTypeId = Number(dto.letterTypeId);
     const validatedData = this.validationService.validate(
       LetterRequestValidation.CREATE,
       dto,
@@ -193,7 +196,7 @@ export class LetterRequestService {
         status: validatedData.status,
         notes: validatedData.notes,
         letterNumber:
-          validatedData.status === RequestStatus.COMPLETED
+          validatedData.status === RequestStatus.APPROVED
             ? this.generateLetterNumber()
             : undefined,
       },
@@ -208,21 +211,40 @@ export class LetterRequestService {
   async getLetterRequests(
     options: PaginateOptions,
   ): Promise<PaginatedResult<ResponseLetterRequest[]>> {
-    const result = await prismaPaginate<ResponseLetterRequest[]>(
-      this.prismaService,
-      'letterRequest',
-      {
-        ...options,
-        include: { attachments: true },
-      },
-    );
+    try {
+      const searchFields = ['resident.name', 'letterType.name', 'letterNumber'];
+      const result = await prismaPaginate<LetterRequest>(
+        this.prismaService,
+        'letterRequest',
+        {
+          ...options,
+          searchFields,
+          include: {
+            resident: true,
+            letterType: true,
+            attachments: true,
+          },
+        },
+      );
 
-    return {
-      ...result,
-      data: Array.isArray(result.data)
+      const mappedData = Array.isArray(result.data)
         ? result.data.map(this.mapToResponseLetterRequest)
-        : [this.mapToResponseLetterRequest(result.data as any)],
-    };
+        : [this.mapToResponseLetterRequest(result.data as LetterRequest)];
+
+      return {
+        data: mappedData,
+        meta: result.meta,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error fetching letter requests: ${error.message}`,
+        error.stack,
+      );
+      throw new HttpException(
+        'Failed to fetch letter requests',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   async getLetterRequestById(id: number): Promise<ResponseLetterRequest> {
@@ -248,17 +270,20 @@ export class LetterRequestService {
   private mapToResponseLetterRequest(
     letterRequest: any,
   ): ResponseLetterRequest {
-    const residentDocuments = letterRequest.resident.documents.map((doc) => ({
-      fileName: path.basename(doc.fileUrl),
-      fileUrl: doc.fileUrl,
-      documentId: doc.id,
-    }));
+    const residentDocuments =
+      letterRequest.resident?.documents?.map((doc) => ({
+        fileName: path.basename(doc.fileUrl),
+        fileUrl: doc.fileUrl,
+        documentId: doc.id,
+      })) || [];
 
     const allAttachments = [...letterRequest.attachments, ...residentDocuments];
 
     return {
       id: letterRequest.id,
       residentId: letterRequest.residentId,
+      residentName: letterRequest.resident?.name,
+      letterName: letterRequest.letterType?.name,
       letterTypeId: letterRequest.letterTypeId,
       letterNumber: letterRequest.letterNumber,
       requestDate: letterRequest.requestDate,

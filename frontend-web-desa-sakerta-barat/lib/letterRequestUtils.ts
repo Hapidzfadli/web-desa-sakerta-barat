@@ -94,3 +94,15 @@ export const verifyLetterRequestSchema = z.object({
   ]),
   notes: z.string().optional(),
 });
+
+export const translateStatus = (status: string): string => {
+  const statusMap: { [key: string]: string } = {
+    SUBMITTED: 'Diajukan',
+    APPROVED: 'Disetujui',
+    REJECTED: 'Ditolak',
+    SIGNED: 'Ditandatangani',
+    COMPLETED: 'Selesai',
+    ARCHIVED: 'Diarsipkan',
+  };
+  return statusMap[status] || status;
+};

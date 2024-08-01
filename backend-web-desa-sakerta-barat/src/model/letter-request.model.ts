@@ -16,7 +16,7 @@ export class UpdateLetterRequestDto {
 }
 
 export class VerifyLetterRequestDto {
-  status: Extract<RequestStatus, 'COMPLETED' | 'REJECTED'>;
+  status: Extract<RequestStatus, 'APPROVED' | 'REJECTED'>;
   notes?: string;
 }
 
@@ -29,6 +29,8 @@ export class AttachmentDto {
 export class ResponseLetterRequest {
   id: number;
   residentId: number;
+  residentName?: string;
+  letterName?: string;
   letterTypeId: number;
   letterNumber?: string;
   requestDate: Date;
