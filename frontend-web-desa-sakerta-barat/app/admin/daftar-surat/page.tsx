@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, Suspense } from 'react';
 import {
   useInfiniteQuery,
   useMutation,
@@ -16,7 +16,6 @@ import { cn } from '../../../lib/utils';
 import LoadingSpinner from '../../../components/shared/LoadingSpinner';
 import { Button } from '../../../components/ui/button';
 import { ChevronRight, Filter, Plus, Settings } from 'lucide-react';
-import EditPopup from '../../../components/shared/EditPopup';
 import { useToast } from '../../../components/ui/use-toast';
 import {
   createLetterCategorySchema,
@@ -25,6 +24,11 @@ import {
 import { useUser } from '../../context/UserContext';
 
 const ITEMS_PER_PAGE = 10;
+
+// Lazy load EditPopup component
+const EditPopup = React.lazy(
+  () => import('../../../components/shared/EditPopup'),
+);
 
 const DaftarSurat = () => {
   const { user } = useUser();
@@ -52,8 +56,8 @@ const DaftarSurat = () => {
       if (lastPage.data.length < ITEMS_PER_PAGE) return undefined;
       return pages.length + 1;
     },
-    staleTime: 60000, // 1 minute
-    cacheTime: 300000, // 5 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
   });
 
   useEffect(() => {
@@ -246,56 +250,58 @@ const DaftarSurat = () => {
         {tabs.find((tab) => tab.id === activeTab)?.component}
       </div>
 
-      <EditPopup
-        title={
-          currentCategory ? 'Edit Kategori Surat' : 'Tambah Kategori Surat'
-        }
-        fields={[
-          {
-            label: 'Name',
-            name: 'name',
-            value: currentCategory?.name || '',
-            required: true,
-          },
-          {
-            label: 'Description',
-            name: 'description',
-            value: currentCategory?.description || '',
-            type: 'textarea',
-          },
-        ]}
-        onSave={handleSave}
-        validationSchema={
-          currentCategory
-            ? updateLetterCategorySchema
-            : createLetterCategorySchema
-        }
-        isOpen={isAddEditPopupOpen}
-        onClose={() => setIsAddEditPopupOpen(false)}
-      />
+      <Suspense fallback={<LoadingSpinner />}>
+        <EditPopup
+          title={
+            currentCategory ? 'Edit Kategori Surat' : 'Tambah Kategori Surat'
+          }
+          fields={[
+            {
+              label: 'Name',
+              name: 'name',
+              value: currentCategory?.name || '',
+              required: true,
+            },
+            {
+              label: 'Description',
+              name: 'description',
+              value: currentCategory?.description || '',
+              type: 'textarea',
+            },
+          ]}
+          onSave={handleSave}
+          validationSchema={
+            currentCategory
+              ? updateLetterCategorySchema
+              : createLetterCategorySchema
+          }
+          isOpen={isAddEditPopupOpen}
+          onClose={() => setIsAddEditPopupOpen(false)}
+        />
 
-      <EditPopup
-        title={'Pengaturan Kategori Surat'}
-        fields={[
-          {
-            label: 'Name',
-            name: 'name',
-            value: currentCategory?.name || '',
-            required: true,
-          },
-          {
-            label: 'Description',
-            name: 'description',
-            value: currentCategory?.description || '',
-            type: 'textarea',
-          },
-        ]}
-        onSave={handleSave}
-        onDelete={handleDelete}
-        validationSchema={updateLetterCategorySchema}
-        isOpen={isSettingsPopupOpen}
-        onClose={() => setIsSettingsPopupOpen(false)}
-      />
+        <EditPopup
+          title={'Pengaturan Kategori Surat'}
+          fields={[
+            {
+              label: 'Name',
+              name: 'name',
+              value: currentCategory?.name || '',
+              required: true,
+            },
+            {
+              label: 'Description',
+              name: 'description',
+              value: currentCategory?.description || '',
+              type: 'textarea',
+            },
+          ]}
+          onSave={handleSave}
+          onDelete={handleDelete}
+          validationSchema={updateLetterCategorySchema}
+          isOpen={isSettingsPopupOpen}
+          onClose={() => setIsSettingsPopupOpen(false)}
+        />
+      </Suspense>
     </div>
   );
 };

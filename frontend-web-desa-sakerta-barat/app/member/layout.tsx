@@ -3,7 +3,7 @@ import Sidebar from '@/components/shared/Sidebar';
 import { UserProvider } from '../context/UserContext';
 import HeaderDashboard from '../../components/shared/HeaderDashboard';
 import { Toaster } from '../../components/ui/toaster';
-import { sidebarLinksAdmin, sidebarLinksMember } from '../../constants';
+import { sidebarLinksMember } from '../../constants';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '../../lib/reactQuery';
 export default function RootLayout({

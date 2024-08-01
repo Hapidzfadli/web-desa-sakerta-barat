@@ -71,7 +71,7 @@ export const sidebarLinksMember = [
 ];
 export const sidebarLinksAdmin = [
   {
-    icon: Home,
+    icon: IoHomeOutline,
     route: '/admin/dashboard',
     label: 'Dashboard',
   },
@@ -84,6 +84,11 @@ export const sidebarLinksAdmin = [
     icon: FileCheck,
     route: '/admin/daftar-permohonan',
     label: 'Daftar Permohonan',
+  },
+  {
+    icon: TiInfoLarge,
+    route: '/admin/panduan-aplikasi',
+    label: 'Panduan Aplikasi',
   },
   {
     icon: Settings,

@@ -1,5 +1,11 @@
 'use client';
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  Suspense,
+} from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   fetchLetterType,
@@ -32,19 +38,20 @@ import {
   faEye,
   faPaperPlane,
 } from '@fortawesome/free-solid-svg-icons';
-import LetterTypeForm from '../../shared/LetterTypeForm';
 import { useToast } from '@/components/ui/use-toast';
 import debounce from 'lodash/debounce';
 import { useUser } from '../../../app/context/UserContext';
 import CustomAlertDialog from '../../shared/CustomAlertDialog';
 import { fetchResidentData } from '../../../lib/actions/setting.actions';
-import EditPopup from '../../shared/EditPopup';
 import { applicationValidationSchema } from '../../../lib/letterRequestUtils';
 import {
   DocumentType,
   getDocumentTypeIndonesian,
 } from '../../../lib/documentTypeUtils';
 import { applyLetter } from '../../../lib/actions/letterRequest.action';
+
+const LetterTypeForm = React.lazy(() => import('../../shared/LetterTypeForm'));
+const EditPopup = React.lazy(() => import('../../shared/EditPopup'));
 
 const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
   const { user } = useUser();
@@ -83,13 +90,13 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
     queryKey: ['letterTypes', categoryId, search, sortBy, sortOrder],
     queryFn: () => fetchLetterType({ categoryId, search, sortBy, sortOrder }),
     staleTime: 60000, // 1 minute
-    enabled: !isInitialRender.current, // Disable auto-fetching on initial render
+    enabled: !isInitialRender.current,
   });
 
   useEffect(() => {
     if (isInitialRender.current) {
       isInitialRender.current = false;
-      refetch(); // Manually trigger the first fetch
+      refetch();
     }
   }, [refetch]);
 
@@ -165,16 +172,12 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
     debounce((e: React.ChangeEvent<HTMLInputElement>) => {
       const newSearchValue = e.target.value;
       setSearch(newSearchValue);
-      if (newSearchValue !== '') {
-        setIsContentLoading(true);
-      }
     }, 300),
     [],
   );
 
   const handleSort = () => {
     setSortOrder((prevOrder) => (prevOrder === 'asc' ? 'desc' : 'asc'));
-    setIsContentLoading(true);
   };
 
   const handleAddEdit = async (data: any) => {
@@ -593,52 +596,55 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
           description={alertData.description}
         />
       )}
-      <LetterTypeForm
-        key={currentLetterType ? currentLetterType.id : 'new'}
-        isOpen={isFormOpen}
-        onClose={() => {
-          setIsFormOpen(false);
-          setSelectedLetterTypeId(null);
-          setCurrentLetterType(null);
-          setViewMode(false);
-        }}
-        onSubmit={handleAddEdit}
-        initialData={currentLetterType}
-        viewMode={viewMode}
-      />
 
-      <EditPopup
-        title={`Pengajuan Surat ${currentLetterType?.name || ''}`}
-        fields={applicationFormFields}
-        onSave={handleSubmitApplication}
-        validationSchema={applicationValidationSchema}
-        isOpen={isApplicationFormOpen}
-        onClose={() => {
-          setIsApplicationFormOpen(false);
-          setNewAttachments([]);
-        }}
-        labelSubmit={'Ajukan'}
-        viewMode={false}
-        onFileChange={handleNewAttachment}
-        additionalContent={
-          newAttachments.length > 0 && (
-            <div className="mt-4">
-              <h4 className="glassy-label">Lampiran Baru</h4>
-              <div className="space-y-2">
-                {newAttachments.map((file, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center p-2 input-form rounded-md"
-                  >
-                    <FileIcon className="mr-2 h-5 w-5 text-blue-500" />
-                    <span className="flex-grow">{file.name}</span>
-                  </div>
-                ))}
+      <Suspense fallback={<LoadingSpinner />}>
+        <LetterTypeForm
+          key={currentLetterType ? currentLetterType.id : 'new'}
+          isOpen={isFormOpen}
+          onClose={() => {
+            setIsFormOpen(false);
+            setSelectedLetterTypeId(null);
+            setCurrentLetterType(null);
+            setViewMode(false);
+          }}
+          onSubmit={handleAddEdit}
+          initialData={currentLetterType}
+          viewMode={viewMode}
+        />
+
+        <EditPopup
+          title={`Pengajuan Surat ${currentLetterType?.name || ''}`}
+          fields={applicationFormFields}
+          onSave={handleSubmitApplication}
+          validationSchema={applicationValidationSchema}
+          isOpen={isApplicationFormOpen}
+          onClose={() => {
+            setIsApplicationFormOpen(false);
+            setNewAttachments([]);
+          }}
+          labelSubmit={'Ajukan'}
+          viewMode={false}
+          onFileChange={handleNewAttachment}
+          additionalContent={
+            newAttachments.length > 0 && (
+              <div className="mt-4">
+                <h4 className="glassy-label">Lampiran Baru</h4>
+                <div className="space-y-2">
+                  {newAttachments.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center p-2 input-form rounded-md"
+                    >
+                      <FileIcon className="mr-2 h-5 w-5 text-blue-500" />
+                      <span className="flex-grow">{file.name}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )
-        }
-      />
+            )
+          }
+        />
+      </Suspense>
     </div>
   );
 };
