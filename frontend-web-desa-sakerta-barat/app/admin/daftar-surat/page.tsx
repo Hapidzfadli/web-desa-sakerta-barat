@@ -1,5 +1,10 @@
 'use client';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import {
   fetchLetterCategory,
   createLetterCategory,
@@ -19,96 +24,120 @@ import {
 } from '../../../lib/settingUtils';
 import { useUser } from '../../context/UserContext';
 
+const ITEMS_PER_PAGE = 10;
+
 const DaftarSurat = () => {
   const { user } = useUser();
   const [activeTab, setActiveTab] = useState<number | null>(null);
-  const [letterCategoryData, setLetterCategoryData] = useState<
-    LetterCategoryProps[]
-  >([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [tabs, setTabs] = useState<Tab[]>([]);
   const [isAddEditPopupOpen, setIsAddEditPopupOpen] = useState(false);
   const [isSettingsPopupOpen, setIsSettingsPopupOpen] = useState(false);
   const [currentCategory, setCurrentCategory] =
     useState<LetterCategoryProps | null>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const ITEMS_PER_PAGE = 10;
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status,
+    error,
+  } = useInfiniteQuery({
+    queryKey: ['letterCategories'],
+    queryFn: ({ pageParam = 1 }) =>
+      fetchLetterCategory({ limit: ITEMS_PER_PAGE, page: pageParam }),
+    getNextPageParam: (lastPage, pages) => {
+      if (lastPage.data.length < ITEMS_PER_PAGE) return undefined;
+      return pages.length + 1;
+    },
+    staleTime: 60000, // 1 minute
+    cacheTime: 300000, // 5 minutes
+  });
 
   useEffect(() => {
-    loadCategoryData();
-  }, []);
-
-  const loadCategoryData = async (loadMore = false) => {
-    try {
-      setIsLoading(true);
-      const newPage = loadMore ? page + 1 : 1;
-      const { data, pagination } = await fetchLetterCategory({
-        limit: ITEMS_PER_PAGE,
-        page: newPage,
-      });
-
-      if (loadMore) {
-        setLetterCategoryData((prev) => [...prev, ...data]);
-      } else {
-        setLetterCategoryData(data);
-      }
-
-      setPage(newPage);
-      setHasMore(data.length === ITEMS_PER_PAGE);
-
-      if (data.length > 0) {
-        const newTabs = data.map((category) => ({
-          id: category.id,
-          label: category.name,
-          component: <ListLetter categoryId={category.id} />,
-        }));
-        setTabs(loadMore ? [...tabs, ...newTabs] : newTabs);
-        if (!loadMore) setActiveTab(newTabs[0].id);
-      }
-    } catch (err) {
-      setError('Failed to load category data');
-      toast({
-        title: 'Error',
-        description: 'Failed to load categories',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
+    if (
+      data &&
+      data.pages.length > 0 &&
+      data.pages[0].data.length > 0 &&
+      activeTab === null
+    ) {
+      setActiveTab(data.pages[0].data[0].id);
     }
-  };
+  }, [data, activeTab]);
 
-  const handleLoadMore = () => {
-    if (hasMore) {
-      loadCategoryData(true);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!activeTab) return;
-    try {
-      await deleteLetterCategory(activeTab);
+  const createMutation = useMutation({
+    mutationFn: createLetterCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['letterCategories'] });
       toast({
         title: 'Success',
-        description: 'Category deleted successfully',
+        description: 'Kategori surat berhasil ditambahkan',
       });
-      loadCategoryData();
+      setIsAddEditPopupOpen(false);
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to create category',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: updateLetterCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['letterCategories'] });
+      toast({
+        title: 'Success',
+        description: 'Kategori surat berhasil diperbaharui',
+      });
+      setIsAddEditPopupOpen(false);
       setIsSettingsPopupOpen(false);
-    } catch (err) {
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to update category',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteLetterCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['letterCategories'] });
+      toast({
+        title: 'Success',
+        description: 'Kategori surat berhasil dihapus',
+      });
+      setIsSettingsPopupOpen(false);
+    },
+    onError: () => {
       toast({
         title: 'Error',
         description: 'Failed to delete category',
         variant: 'destructive',
       });
-    }
+    },
+  });
+
+  const handleLoadMore = () => {
+    if (hasNextPage) fetchNextPage();
+  };
+
+  const handleDelete = async () => {
+    if (!activeTab) return;
+    deleteMutation.mutate(activeTab);
   };
 
   const handleSettingsClick = () => {
-    const category = letterCategoryData.find((c) => c.id === activeTab);
+    const category = data?.pages
+      .flatMap((page) => page.data)
+      .find((c) => c.id === activeTab);
     if (category) {
       setCurrentCategory(category);
       setIsSettingsPopupOpen(true);
@@ -124,38 +153,29 @@ const DaftarSurat = () => {
     data: Record<string, string | File>,
     errors?: Record<string, string>,
   ) => {
-    if (errors) {
-      // Handle validation errors if needed
-      return;
-    }
-    try {
-      if (currentCategory) {
-        await updateLetterCategory({ ...data, id: currentCategory.id });
-        toast({
-          title: 'Success',
-          description: 'Category updated successfully',
-        });
-      } else {
-        await createLetterCategory(data);
-        toast({
-          title: 'Success',
-          description: 'Category created successfully',
-        });
-      }
-      setIsAddEditPopupOpen(false);
-      setIsSettingsPopupOpen(false);
-      loadCategoryData();
-    } catch (err) {
-      toast({
-        title: 'Error',
-        description: 'Failed to save category',
-        variant: 'destructive',
-      });
+    if (errors) return;
+    if (currentCategory) {
+      updateMutation.mutate({ ...data, id: currentCategory.id });
+    } else {
+      createMutation.mutate(data);
     }
   };
 
-  if (isLoading && page === 1) return <LoadingSpinner />;
-  if (error) return <div>Error: {error}</div>;
+  if (status === 'loading') return <LoadingSpinner />;
+  if (status === 'error')
+    return (
+      <div>
+        Error loading categories:{' '}
+        {error instanceof Error ? error.message : 'Unknown error'}
+      </div>
+    );
+
+  const allCategories = data?.pages.flatMap((page) => page.data) || [];
+  const tabs = allCategories.map((category) => ({
+    id: category.id,
+    label: category.name,
+    component: <ListLetter categoryId={category.id} />,
+  }));
 
   return (
     <div className="container mx-auto p-4">
@@ -179,11 +199,12 @@ const DaftarSurat = () => {
                 {tab.label}
               </button>
             ))}
-            {hasMore && (
+            {hasNextPage && (
               <Button
                 onClick={handleLoadMore}
                 className="ml-2 p-2 rounded-full"
                 variant="ghost"
+                disabled={isFetchingNextPage}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>

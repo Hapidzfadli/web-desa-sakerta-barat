@@ -45,9 +45,18 @@ export async function prismaPaginate<T>(
   const whereClause: any = { ...filter };
 
   if (search && searchFields.length > 0) {
-    whereClause.OR = searchFields.map((field) => ({
-      [field]: { contains: search },
-    }));
+    whereClause.OR = searchFields.map((field) => {
+      const fieldParts = field.split('.');
+      if (fieldParts.length > 1) {
+        return fieldParts.reduceRight((prev, current, index) => {
+          return index === fieldParts.length - 1
+            ? { [current]: { contains: search } }
+            : { [current]: prev };
+        }, {});
+      } else {
+        return { [field]: { contains: search } };
+      }
+    });
   }
 
   const [data, totalItems] = await Promise.all([

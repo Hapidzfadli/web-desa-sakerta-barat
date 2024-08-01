@@ -21,13 +21,32 @@ import {
   PaginationEllipsis,
   PaginationItem,
   PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Search, ArrowUpDown, Filter } from 'lucide-react';
+import { Search, ArrowUpDown, Filter, Loader2 } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import CustomPaginationButton from './CustomPaginationButtonProps';
+
+interface TableProps<T> {
+  data: T[];
+  columns: {
+    header: string;
+    accessor: keyof T | ((data: T) => React.ReactNode);
+    cell?: (value: any, row: T) => React.ReactNode;
+    className?: string;
+  }[];
+  itemsPerPageOptions?: number[];
+  onSearch?: (query: string) => void;
+  onFilter?: () => void;
+  searchPlaceholder?: string;
+  isLoading?: boolean;
+  onPageChange?: (page: number) => void;
+  onItemsPerPageChange?: (itemsPerPage: number) => void;
+  totalItems?: number;
+  currentPage?: number;
+  itemsPerPage?: number;
+}
+
 function DataTable<T extends { id: string | number }>({
   data,
   columns,
@@ -35,16 +54,41 @@ function DataTable<T extends { id: string | number }>({
   onSearch,
   onFilter,
   searchPlaceholder = 'Cari...',
+  isLoading = false,
+  onPageChange,
+  onItemsPerPageChange,
+  totalItems,
+  currentPage: controlledCurrentPage,
+  itemsPerPage: controlledItemsPerPage,
 }: TableProps<T>) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(itemsPerPageOptions[0]);
+  const [internalCurrentPage, setInternalCurrentPage] = useState(1);
+  const [internalItemsPerPage, setInternalItemsPerPage] = useState(
+    itemsPerPageOptions[0],
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [sortColumn, setSortColumn] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const totalPages = Math.ceil(data.length / itemsPerPage);
+
+  const currentPage = controlledCurrentPage ?? internalCurrentPage;
+  const itemsPerPage = controlledItemsPerPage ?? internalItemsPerPage;
+
+  const totalPages = Math.ceil((totalItems ?? data.length) / itemsPerPage);
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    if (onPageChange) {
+      onPageChange(page);
+    } else {
+      setInternalCurrentPage(page);
+    }
+  };
+
+  const handleItemsPerPageChange = (value: number) => {
+    if (onItemsPerPageChange) {
+      onItemsPerPageChange(value);
+    } else {
+      setInternalItemsPerPage(value);
+    }
+    handlePageChange(1); // Reset to first page when changing items per page
   };
 
   const handleSearch = (query: string) => {
@@ -74,6 +118,11 @@ function DataTable<T extends { id: string | number }>({
     return 0;
   });
 
+  const displayData = sortedData.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
   return (
     <div className="space-y-4 text-black-2">
       <div className="flex justify-between items-center">
@@ -81,7 +130,7 @@ function DataTable<T extends { id: string | number }>({
           <span>Tampilkan</span>
           <Select
             value={itemsPerPage.toString()}
-            onValueChange={(value) => setItemsPerPage(Number(value))}
+            onValueChange={(value) => handleItemsPerPageChange(Number(value))}
           >
             <SelectTrigger className="w-[70px] bg-red-50">
               <SelectValue placeholder={itemsPerPage} />
@@ -121,63 +170,83 @@ function DataTable<T extends { id: string | number }>({
         </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {columns.map((column, index) => (
-              <TableHead key={index}>
-                {column.header !== 'Action' ? (
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort(column.accessor as string)}
-                    className="hover:bg-transparent p-0"
-                  >
-                    {column.header}
-                    <FontAwesomeIcon
-                      icon={faSort}
-                      className="ml-2 h-4 w-4 text-[#9E9E9E]"
-                    />
-                  </Button>
-                ) : (
-                  column.header
-                )}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedData
-            .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-            .map((row, rowIndex) => (
-              <TableRow
-                key={row.id}
-                className={rowIndex % 2 === 0 ? 'bg-[#F7F6FE]' : 'bg-white'}
-              >
-                {columns.map((column, index) => (
-                  <TableCell key={index}>
-                    {column.cell
-                      ? column.cell(
-                          typeof column.accessor === 'function'
-                            ? column.accessor(row)
-                            : row[column.accessor],
-                          row,
-                        )
-                      : typeof column.accessor === 'function'
-                        ? column.accessor(row)
-                        : row[column.accessor]}
-                  </TableCell>
-                ))}
+      <div className="relative">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {columns.map((column, index) => (
+                <TableHead key={index} className={column.className}>
+                  {column.header !== 'Action' ? (
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort(column.accessor as string)}
+                      className="hover:bg-transparent p-0"
+                    >
+                      {column.header}
+                      <FontAwesomeIcon
+                        icon={faSort}
+                        className="ml-2 h-4 w-4 text-[#9E9E9E]"
+                      />
+                    </Button>
+                  ) : (
+                    column.header
+                  )}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                </TableCell>
               </TableRow>
-            ))}
-        </TableBody>
-      </Table>
+            ) : displayData.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  Tidak ada data
+                </TableCell>
+              </TableRow>
+            ) : (
+              displayData.map((row, rowIndex) => (
+                <TableRow
+                  key={row.id}
+                  className={rowIndex % 2 === 0 ? 'bg-[#F7F6FE]' : 'bg-white'}
+                >
+                  {columns.map((column, index) => (
+                    <TableCell key={index} className={column.className}>
+                      {column.cell
+                        ? column.cell(
+                            typeof column.accessor === 'function'
+                              ? column.accessor(row)
+                              : row[column.accessor],
+                            row,
+                          )
+                        : typeof column.accessor === 'function'
+                          ? column.accessor(row)
+                          : row[column.accessor]}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       <div className="flex items-center justify-between text-sm">
         {/* <div className="w-fit">
           <p>
             Menampilkan {(currentPage - 1) * itemsPerPage + 1} hingga{' '}
-            {Math.min(currentPage * itemsPerPage, data.length)} dari{' '}
-            {data.length} entri
+            {Math.min(currentPage * itemsPerPage, totalItems ?? data.length)}{' '}
+            dari {totalItems ?? data.length} entri
           </p>
         </div> */}
         <Pagination>

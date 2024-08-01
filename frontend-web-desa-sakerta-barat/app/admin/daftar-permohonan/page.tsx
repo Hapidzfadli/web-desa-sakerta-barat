@@ -1,41 +1,38 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import DataTable from '../../../components/shared/Table';
 import { Button } from '../../../components/ui/button';
 import { Printer, MoreVertical, Trash } from 'lucide-react';
 import { fetchLetterRequests } from '../../../lib/actions/letterRequest.action';
 import { formatDate } from '../../../lib/utils';
 import { translateStatus } from '../../../lib/letterRequestUtils';
+import LoadingSpinner from '../../../components/shared/LoadingSpinner';
+import { useToast } from '@/components/ui/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 
-const DaftarSurat = () => {
-  const [letterRequests, setLetterRequests] = useState<LetterRequest[]>([]);
-  const [paging, setPaging] = useState<PaginationInfo>({
-    size: 10,
-    total_page: 1,
-    current_page: 1,
-    total: 0,
+const DaftarPermohonan = () => {
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  const { toast } = useToast();
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['letterRequests', page, limit, searchQuery],
+    queryFn: () => fetchLetterRequests(page, limit, searchQuery),
+    staleTime: 60000,
+    cacheTime: 300000,
+    refetchOnWindowFocus: false,
+    keepPreviousData: true,
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Gagal memuat data permohonan surat. Silakan coba lagi.',
+        variant: 'destructive',
+        duration: 5000,
+      });
+    },
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadLetterRequests();
-  }, []);
-
-  const loadLetterRequests = async (page: number = 1, limit: number = 10) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetchLetterRequests(page, limit);
-      setLetterRequests(response.data);
-      setPaging(response.paging);
-    } catch (error) {
-      console.error('Error fetching letter requests:', error);
-      setError('Failed to load letter requests. Please try again later.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const statusColors: { [key: string]: string } = {
     SUBMITTED: 'bg-yellow-100 text-yellow-800',
@@ -47,13 +44,18 @@ const DaftarSurat = () => {
   };
 
   const columns = [
-    { header: 'ID', accessor: 'id' },
-    { header: 'Pemohon', accessor: 'residentName' },
-    { header: 'Surat', accessor: 'letterName' },
+    { header: 'ID', accessor: 'id', className: 'w-16 text-center' },
+    {
+      header: 'Pemohon',
+      accessor: 'residentName',
+      className: 'w-1/6 text-left',
+    },
+    { header: 'Surat', accessor: 'letterName', className: 'w-1/4 text-left' },
     {
       header: 'Tanggal',
       accessor: 'requestDate',
       cell: (value: string) => formatDate(value),
+      className: 'w-32 text-left',
     },
     {
       header: 'Status',
@@ -65,11 +67,12 @@ const DaftarSurat = () => {
           {translateStatus(value)}
         </span>
       ),
+      className: 'w-32 text-center',
     },
     {
       header: 'Action',
       accessor: (row: LetterRequest) => (
-        <div className="flex space-x-1">
+        <div className="flex space-x-1 justify-center">
           <Button size="sm" variant="ghost">
             <Printer className="h-4 w-4" />
           </Button>
@@ -81,49 +84,42 @@ const DaftarSurat = () => {
           </Button>
         </div>
       ),
+      className: 'w-32 text-center',
     },
   ];
 
   const handleSearch = (query: string) => {
-    // Implement search logic here
-    console.log('Searching for:', query);
-    // You might want to call loadLetterRequests with search params
+    setSearchQuery(query);
+    setPage(1);
   };
 
-  const handleFilter = () => {
-    // Implement filter logic here
-    console.log('Filter button clicked');
-    // You might want to call loadLetterRequests with filter params
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
   };
 
-  const handlePageChange = (page: number) => {
-    loadLetterRequests(page, paging.size);
+  const handleItemsPerPageChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
   };
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
 
   return (
     <div className="container mx-auto p-4">
       <DataTable
-        data={letterRequests}
+        data={data?.data || []}
         columns={columns}
         onSearch={handleSearch}
-        onFilter={handleFilter}
         searchPlaceholder="Cari surat..."
         itemsPerPageOptions={[10, 20, 50, 100]}
         onPageChange={handlePageChange}
-        totalItems={paging.total}
-        currentPage={paging.current_page}
-        itemsPerPage={paging.size}
+        onItemsPerPageChange={handleItemsPerPageChange}
+        totalItems={data?.paging.total || 0}
+        currentPage={page}
+        itemsPerPage={limit}
+        isLoading={isLoading}
       />
+      <Toaster />
     </div>
   );
 };
 
-export default DaftarSurat;
+export default DaftarPermohonan;

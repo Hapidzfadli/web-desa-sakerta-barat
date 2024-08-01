@@ -1,5 +1,6 @@
 'use client';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   fetchLetterType,
   createLetterType,
@@ -35,7 +36,6 @@ import LetterTypeForm from '../../shared/LetterTypeForm';
 import { useToast } from '@/components/ui/use-toast';
 import debounce from 'lodash/debounce';
 import { useUser } from '../../../app/context/UserContext';
-import CustomAlert from '../../shared/CustomAlert';
 import CustomAlertDialog from '../../shared/CustomAlertDialog';
 import { fetchResidentData } from '../../../lib/actions/setting.actions';
 import EditPopup from '../../shared/EditPopup';
@@ -48,10 +48,6 @@ import { applyLetter } from '../../../lib/actions/letterRequest.action';
 
 const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
   const { user } = useUser();
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [isContentLoading, setIsContentLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [letterTypeData, setLetterTypeData] = useState<LetterTypeProps[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedLetterTypeId, setSelectedLetterTypeId] = useState<
     number | null
@@ -60,6 +56,8 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
   const [residentData, setResidentData] = useState<any>(null);
   const [residentDocuments, setResidentDocuments] = useState<any[]>([]);
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isContentLoading, setIsContentLoading] = useState(false);
   const [currentLetterType, setCurrentLetterType] =
     useState<LetterTypeProps | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -72,111 +70,131 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
     title: string;
     description: string;
   } | null>(null);
+  const queryClient = useQueryClient();
+  const isInitialRender = useRef(true);
 
-  const loadLetterTypeData = useCallback(async () => {
-    setIsContentLoading(true);
-    setError(null);
-    try {
-      const data = await fetchLetterType({
-        categoryId,
-        search,
-        sortBy,
-        sortOrder,
-      });
-      setLetterTypeData(data);
-    } catch (err) {
-      setError('Failed to load letter type data');
-      toast({
-        title: 'Error',
-        description: 'Failed to load letter types',
-        variant: 'destructive',
-      });
-    } finally {
+  const {
+    data: letterTypeData,
+    isLoading,
+    isError,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: ['letterTypes', categoryId, search, sortBy, sortOrder],
+    queryFn: () => fetchLetterType({ categoryId, search, sortBy, sortOrder }),
+    staleTime: 60000, // 1 minute
+    enabled: !isInitialRender.current, // Disable auto-fetching on initial render
+  });
+
+  useEffect(() => {
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+      refetch(); // Manually trigger the first fetch
+    }
+  }, [refetch]);
+
+  useEffect(() => {
+    if (!isInitialLoading && isFetching) {
+      setIsContentLoading(true);
+    } else {
       setIsContentLoading(false);
+    }
+  }, [isInitialLoading, isFetching]);
+
+  useEffect(() => {
+    if (!isLoading && !isFetching) {
       setIsInitialLoading(false);
     }
-  }, [categoryId, search, sortBy, sortOrder, toast]);
+  }, [isLoading, isFetching]);
 
-  const debouncedLoadLetterTypeData = useCallback(
-    debounce(loadLetterTypeData, 300),
-    [loadLetterTypeData],
-  );
-
-  useEffect(() => {
-    loadLetterTypeData();
-  }, [categoryId, sortBy, sortOrder]);
-
-  useEffect(() => {
-    debouncedLoadLetterTypeData();
-  }, [search]);
-
-  useEffect(() => {
-    if (selectedLetterTypeId !== null) {
-      const selectedType = letterTypeData.find(
-        (lt) => lt.id === selectedLetterTypeId,
-      );
-
-      setCurrentLetterType(selectedType || null);
-      setIsFormOpen(true);
-    }
-  }, [selectedLetterTypeId, letterTypeData]);
-
-  const handleAddEdit = async (data: any) => {
-    data.categoryId = Number(categoryId);
-    try {
-      if (currentLetterType) {
-        await updateLetterType(currentLetterType.id, data);
-        toast({
-          title: 'Berhasil',
-          description: 'Tipe surat berhasil diperbaharui',
-        });
-      } else {
-        await createLetterType(data);
-        toast({
-          title: 'Berhasil',
-          description: 'Tipe surat berhasil ditambahkan',
-        });
-      }
+  const createMutation = useMutation({
+    mutationFn: createLetterType,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['letterTypes', categoryId] });
+      toast({
+        title: 'Berhasil',
+        description: 'Tipe surat berhasil ditambahkan',
+      });
       setIsFormOpen(false);
-      setSelectedLetterTypeId(null);
-      loadLetterTypeData();
-    } catch (err) {
+    },
+    onError: () => {
       toast({
         title: 'Gagal',
         description: 'Tipe surat gagal disimpan',
         variant: 'destructive',
       });
-    }
-  };
+    },
+  });
 
-  const handleDelete = async (id: number) => {
-    try {
-      await deleteLetterType(id);
+  const updateMutation = useMutation({
+    mutationFn: (data: { id: number; [key: string]: any }) =>
+      updateLetterType(data.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['letterTypes', categoryId] });
       toast({
         title: 'Berhasil',
-        description: 'Tipe surat berhasil dihapus',
+        description: 'Tipe surat berhasil diperbaharui',
       });
-      loadLetterTypeData();
-    } catch (err) {
+      setIsFormOpen(false);
+    },
+    onError: () => {
+      toast({
+        title: 'Gagal',
+        description: 'Tipe surat gagal disimpan',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteLetterType,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['letterTypes', categoryId] });
+      toast({ title: 'Berhasil', description: 'Tipe surat berhasil dihapus' });
+    },
+    onError: () => {
       toast({
         title: 'Gagal',
         description: 'Tipe surat gagal dihapus',
         variant: 'destructive',
       });
-    }
-  };
+    },
+  });
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-  };
+  const handleSearchChange = useCallback(
+    debounce((e: React.ChangeEvent<HTMLInputElement>) => {
+      const newSearchValue = e.target.value;
+      setSearch(newSearchValue);
+      if (newSearchValue !== '') {
+        setIsContentLoading(true);
+      }
+    }, 300),
+    [],
+  );
 
   const handleSort = () => {
     setSortOrder((prevOrder) => (prevOrder === 'asc' ? 'desc' : 'asc'));
+    setIsContentLoading(true);
+  };
+
+  const handleAddEdit = async (data: any) => {
+    data.categoryId = Number(categoryId);
+    if (currentLetterType) {
+      updateMutation.mutate({ id: currentLetterType.id, ...data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    deleteMutation.mutate(id);
   };
 
   const openEditForm = (letterType: LetterTypeProps) => {
     setSelectedLetterTypeId(letterType.id);
+    setCurrentLetterType(letterType);
     setViewMode(false);
+    setIsFormOpen(true);
   };
 
   const handleApplyLetter = async (letterType: LetterTypeProps) => {
@@ -210,10 +228,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
     try {
       const letterTypeId = currentLetterType.id;
       const notes = (data.notes as string) || '';
-
-      // Use the state for newAttachments instead of parsing from form data
       await applyLetter(letterTypeId, notes, newAttachments);
-
       toast({
         title: 'Berhasil',
         description: 'Pengajuan surat berhasil dikirim',
@@ -408,7 +423,9 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
       setIsAlertOpen(true);
     } else {
       setSelectedLetterTypeId(letterType.id);
+      setCurrentLetterType(letterType);
       setViewMode(true);
+      setIsFormOpen(true);
     }
   };
 
@@ -421,7 +438,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
   const renderLetterTypeCard = (letterType: LetterTypeProps) => (
     <Card
       key={letterType.id}
-      className={`flex flex-col  relative  ${letterType.icon ? 'h-96' : 'h-44'}`}
+      className={`flex flex-col relative ${letterType.icon ? 'h-96' : 'h-44'}`}
     >
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-sm text-black-2">
@@ -429,7 +446,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
         </CardTitle>
       </CardHeader>
       <CardContent
-        className={`relative ${letterType.icon ? 'grow ' : 'flex-none'}`}
+        className={`relative ${letterType.icon ? 'grow' : 'flex-none'}`}
       >
         {letterType.icon && (
           <div className="h-40 mb-4 rounded-lg overflow-hidden">
@@ -505,13 +522,16 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
   );
 
   if (isInitialLoading) return <LoadingSpinner />;
+  if (isError) return <div>Error loading letter types</div>;
 
   return (
     <div>
       <div
-        className={`flex items-center mb-4 ${user?.role !== 'WARGA' ? 'justify-between' : 'justify-end'}`}
+        className={`flex items-center mb-4 ${
+          user?.role !== 'WARGA' ? 'justify-between' : 'justify-end'
+        }`}
       >
-        {user?.role != 'WARGA' && (
+        {user?.role !== 'WARGA' && (
           <Button
             className="bg-bank-gradient h-8 shadow-sm text-white"
             onClick={openAddForm}
@@ -520,15 +540,14 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
           </Button>
         )}
 
-        <div className=" shadow-card rounded-full">
-          <div className="flex gap-2 items-center ">
+        <div className="shadow-card rounded-full">
+          <div className="flex gap-2 items-center">
             <div className="flex-grow max-w-md mx-2 md:block py-2 px-0 text-sm">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#8F9BBA] h-5" />
                 <input
                   type="text"
                   placeholder="Cari disini..."
-                  value={search}
                   onChange={handleSearchChange}
                   className="w-full pl-10 pr-4 py-2 rounded-full h-8 text-[#8F9BBA] bg-[#F4F7FE] focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -546,26 +565,26 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
           </div>
         </div>
       </div>
+
       {isContentLoading ? (
-        <div className="flex justify-center items-center h-64 relative">
+        <div className="flex justify-center items-center h-64">
           <LoadingSpinner />
         </div>
-      ) : error ? (
-        <div>Error: {error}</div>
       ) : (
         <div className="grid grid-cols-2 gap-6">
           <div className="grid grid-cols-1 gap-6">
             {letterTypeData
-              .slice(0, Math.ceil(letterTypeData.length / 2))
+              ?.slice(0, Math.ceil(letterTypeData.length / 2))
               .map(renderLetterTypeCard)}
           </div>
           <div className="grid grid-cols-1 gap-6">
             {letterTypeData
-              .slice(Math.ceil(letterTypeData.length / 2))
+              ?.slice(Math.ceil(letterTypeData.length / 2))
               .map(renderLetterTypeCard)}
           </div>
         </div>
       )}
+
       {alertData && (
         <CustomAlertDialog
           isOpen={isAlertOpen}

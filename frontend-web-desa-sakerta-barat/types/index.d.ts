@@ -133,6 +133,7 @@ declare interface Column<T> {
   header: string;
   accessor: keyof T | ((data: T) => React.ReactNode);
   cell?: (value: any, row: T) => React.ReactNode;
+  className?: string;
 }
 
 declare interface TableProps<T> {
@@ -174,32 +175,32 @@ declare interface LetterRequestsResponse {
   paging: PaginationInfo;
 }
 
-enum DocumentTipe {
+declare enum DocumentTipe {
   ID_CARD = 'ID_CARD',
   DRIVING_LICENSE = 'DRIVING_LICENSE',
   FAMILY_CARD = 'FAMILY_CARD',
 }
 
-enum MaritalStatus {
+declare enum MaritalStatus {
   BELUM_KAWIN = 'BELUM',
   KAWIN = 'KAWIN',
   JANDA = 'JANDA',
   DUDA = 'DUDA',
 }
 
-enum Gender {
+declare enum Gender {
   LAKI_LAKI = 'LAKI_LAKI',
   PEREMPUAN = 'PEREMPUAN',
 }
 
-enum RequestStatus {
+declare enum RequestStatus {
   SUBMITTED = 'SUBMITTED',
   PROCESSING = 'PROCESSING',
   COMPLETED = 'COMPLETED',
   REJECTED = 'REJECTED',
 }
 
-enum BloodType {
+declare enum BloodType {
   A = 'A',
   B = 'B',
   AB = 'AB',

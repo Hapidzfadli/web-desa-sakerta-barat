@@ -44,6 +44,7 @@ export const applyLetter = async (
 export const fetchLetterRequests = async (
   page: number = 1,
   limit: number = 10,
+  search?: string,
 ): Promise<LetterRequestsResponse> => {
   try {
     const token = Cookies.get('session');
@@ -51,20 +52,21 @@ export const fetchLetterRequests = async (
       throw new Error('No authentication token found');
     }
 
-    const response = await fetch(
-      `${API_URL}/api/letter-requests?page=${page}&limit=${limit}`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+    let url = `${API_URL}/api/letter-requests?page=${page}&limit=${limit}`;
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`;
+    }
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
-    );
+    });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to fetch letter requests: ${errorText}`);
+      throw new Error('Failed to fetch letter requests');
     }
 
     const data: LetterRequestsResponse = await response.json();

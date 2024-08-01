@@ -4,6 +4,8 @@ import {
   ConflictException,
   NotFoundException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
 import { ValidationService } from '../common/validation.service';
@@ -11,7 +13,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import * as path from 'path';
 import { LetterRequestValidation } from './letter-request.validation';
-import { RequestStatus, Role } from '@prisma/client';
+import { LetterRequest, RequestStatus, Role } from '@prisma/client';
 import {
   PaginateOptions,
   PaginatedResult,
@@ -209,21 +211,40 @@ export class LetterRequestService {
   async getLetterRequests(
     options: PaginateOptions,
   ): Promise<PaginatedResult<ResponseLetterRequest[]>> {
-    const result = await prismaPaginate<ResponseLetterRequest[]>(
-      this.prismaService,
-      'letterRequest',
-      {
-        ...options,
-        include: { attachments: true, resident: true, letterType: true },
-      },
-    );
+    try {
+      const searchFields = ['resident.name', 'letterType.name', 'letterNumber'];
+      const result = await prismaPaginate<LetterRequest>(
+        this.prismaService,
+        'letterRequest',
+        {
+          ...options,
+          searchFields,
+          include: {
+            resident: true,
+            letterType: true,
+            attachments: true,
+          },
+        },
+      );
 
-    return {
-      ...result,
-      data: Array.isArray(result.data)
+      const mappedData = Array.isArray(result.data)
         ? result.data.map(this.mapToResponseLetterRequest)
-        : [this.mapToResponseLetterRequest(result.data as any)],
-    };
+        : [this.mapToResponseLetterRequest(result.data as LetterRequest)];
+
+      return {
+        data: mappedData,
+        meta: result.meta,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error fetching letter requests: ${error.message}`,
+        error.stack,
+      );
+      throw new HttpException(
+        'Failed to fetch letter requests',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   async getLetterRequestById(id: number): Promise<ResponseLetterRequest> {
