@@ -72,7 +72,7 @@ export class ResidentResponse {
   rt?: number;
   rw?: number;
   bloodType?: BloodType;
-  documents: DocumentResponse[];
+  documents?: DocumentResponse[];
 }
 
 export class DocumentResponse {

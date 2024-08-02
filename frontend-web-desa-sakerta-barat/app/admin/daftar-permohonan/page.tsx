@@ -1,10 +1,14 @@
 'use client';
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useEffect, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DataTable from '../../../components/shared/Table';
 import { Button } from '../../../components/ui/button';
-import { Printer, MoreVertical, Trash } from 'lucide-react';
-import { fetchLetterRequests } from '../../../lib/actions/letterRequest.action';
+import { Printer, FileIcon, User } from 'lucide-react';
+import {
+  fetchLetterRequests,
+  fetchLetterRequestById,
+  verifyLetterRequest,
+} from '../../../lib/actions/letterRequest.action';
 import { formatDate } from '../../../lib/utils';
 import { translateStatus } from '../../../lib/letterRequestUtils';
 import LoadingSpinner from '../../../components/shared/LoadingSpinner';
@@ -18,6 +22,7 @@ import {
   faTrashCan,
 } from '@fortawesome/free-solid-svg-icons';
 import { useUser } from '../../context/UserContext';
+import EditPopup from '../../../components/shared/EditPopup';
 
 const DaftarPermohonan = () => {
   const { user } = useUser();
@@ -25,6 +30,13 @@ const DaftarPermohonan = () => {
   const [limit, setLimit] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
+  const [selectedRequestId, setSelectedRequestId] = useState<number | null>(
+    null,
+  );
+  const [showApplicantDetails, setShowApplicantDetails] = useState(false);
+  const [showRejectionPopup, setShowRejectionPopup] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['letterRequests', page, limit, searchQuery],
@@ -39,6 +51,42 @@ const DaftarPermohonan = () => {
         description: 'Gagal memuat data permohonan surat. Silakan coba lagi.',
         variant: 'destructive',
         duration: 5000,
+      });
+    },
+  });
+
+  const { data: selectedRequest, isLoading: isLoadingDetails } = useQuery({
+    queryKey: ['letterRequest', selectedRequestId],
+    queryFn: () => fetchLetterRequestById(selectedRequestId!),
+    enabled: !!selectedRequestId,
+  });
+
+  const verifyMutation = useMutation({
+    mutationFn: ({
+      id,
+      status,
+      rejectionReason,
+    }: {
+      id: number;
+      status: 'APPROVED' | 'REJECTED';
+      rejectionReason?: string;
+    }) => verifyLetterRequest(id, status, rejectionReason),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['letterRequests']);
+      queryClient.invalidateQueries(['letterRequest', selectedRequestId]);
+      toast({
+        title: 'Sukses',
+        description: 'Status permohonan berhasil diperbarui',
+      });
+      setSelectedRequestId(null);
+      setShowRejectionPopup(false);
+      setRejectionReason('');
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Gagal memperbarui status permohonan',
+        variant: 'destructive',
       });
     },
   });
@@ -60,12 +108,12 @@ const DaftarPermohonan = () => {
       accessor: 'residentName',
       className: 'w-1/6 text-left',
     },
-    { header: 'Surat', accessor: 'letterName', className: 'w-1/4 text-left' },
+    { header: 'Surat', accessor: 'letterName', className: 'w-1/3 text-left' },
     {
       header: 'Tanggal',
       accessor: 'requestDate',
       cell: (value: string) => formatDate(value),
-      className: 'w-32 text-left',
+      className: 'w-1/5 text-left',
     },
     {
       header: 'Status',
@@ -112,9 +160,7 @@ const DaftarPermohonan = () => {
           <Button
             size="sm"
             title="Lihat"
-            onClick={() => {
-              console.log('KLIK');
-            }}
+            onClick={() => setSelectedRequestId(row.id)}
           >
             <FontAwesomeIcon className="h-4 w-4 text-view" icon={faEye} />
           </Button>
@@ -145,6 +191,164 @@ const DaftarPermohonan = () => {
     setPage(1);
   };
 
+  const handleVerify = (status: 'APPROVED' | 'REJECTED') => {
+    if (selectedRequestId) {
+      if (status === 'REJECTED') {
+        setShowRejectionPopup(true);
+      } else {
+        verifyMutation.mutate({ id: selectedRequestId, status });
+      }
+    }
+  };
+
+  const handleRejectConfirm = () => {
+    if (selectedRequestId) {
+      verifyMutation.mutate({
+        id: selectedRequestId,
+        status: 'REJECTED',
+        rejectionReason,
+      });
+    }
+  };
+
+  const renderDetailsFields = () => {
+    if (!selectedRequest) return [];
+
+    return [
+      {
+        label: 'Pemohon',
+        name: 'resident.name',
+        value: selectedRequest.resident.name,
+      },
+      {
+        label: 'Surat',
+        name: 'letterName',
+        value: selectedRequest.letterName,
+      },
+      {
+        label: 'Tanggal Pengajuan',
+        name: 'requestDate',
+        value: formatDate(selectedRequest.requestDate),
+      },
+      {
+        label: 'Status',
+        name: 'status',
+        value: translateStatus(selectedRequest.status),
+      },
+      {
+        label: 'Catatan',
+        name: 'notes',
+        value: selectedRequest.notes,
+        type: 'textarea',
+      },
+      {
+        label: 'Detail Pemohon',
+        name: 'applicantDetails',
+        value: '',
+        type: 'custom',
+        render: () => (
+          <Button
+            onClick={() => setShowApplicantDetails(true)}
+            className="bg-blue-500 text-white"
+          >
+            <User className="mr-2 h-4 w-4" />
+            Lihat Detail Pemohon
+          </Button>
+        ),
+      },
+    ];
+  };
+
+  const renderResidentFields = () => {
+    if (!selectedRequest || !selectedRequest.resident) return [];
+
+    return [
+      { label: 'Nama', name: 'name', value: selectedRequest.resident.name },
+      {
+        label: 'NIK',
+        name: 'nationalId',
+        value: selectedRequest.resident.nationalId,
+      },
+      {
+        label: 'Tanggal Lahir',
+        name: 'dateOfBirth',
+        value: formatDate(selectedRequest.resident.dateOfBirth),
+      },
+      {
+        label: 'Alamat KTP',
+        name: 'idCardAddress',
+        value: selectedRequest.resident.idCardAddress,
+      },
+      {
+        label: 'Alamat Domisili',
+        name: 'residentialAddress',
+        value: selectedRequest.resident.residentialAddress,
+      },
+      {
+        label: 'Agama',
+        name: 'religion',
+        value: selectedRequest.resident.religion,
+      },
+      {
+        label: 'Status Pernikahan',
+        name: 'maritalStatus',
+        value: selectedRequest.resident.maritalStatus,
+      },
+      {
+        label: 'Pekerjaan',
+        name: 'occupation',
+        value: selectedRequest.resident.occupation,
+      },
+      {
+        label: 'Kewarganegaraan',
+        name: 'nationality',
+        value: selectedRequest.resident.nationality,
+      },
+      {
+        label: 'Tempat Lahir',
+        name: 'placeOfBirth',
+        value: selectedRequest.resident.placeOfBirth,
+      },
+      {
+        label: 'Jenis Kelamin',
+        name: 'gender',
+        value: selectedRequest.resident.gender,
+      },
+      {
+        label: 'No. Kartu Keluarga',
+        name: 'familyCardNumber',
+        value: selectedRequest.resident.familyCardNumber,
+      },
+      {
+        label: 'Kecamatan',
+        name: 'district',
+        value: selectedRequest.resident.district,
+      },
+      {
+        label: 'Kabupaten',
+        name: 'regency',
+        value: selectedRequest.resident.regency,
+      },
+      {
+        label: 'Provinsi',
+        name: 'province',
+        value: selectedRequest.resident.province,
+      },
+      {
+        label: 'Kode Pos',
+        name: 'postalCode',
+        value: selectedRequest.resident.postalCode,
+      },
+      { label: 'RT', name: 'rt', value: selectedRequest.resident.rt },
+      { label: 'RW', name: 'rw', value: selectedRequest.resident.rw },
+      {
+        label: 'Golongan Darah',
+        name: 'bloodType',
+        value: selectedRequest.resident.bloodType,
+      },
+    ];
+  };
+
   return (
     <div className="container mx-auto p-4 ">
       <DataTable
@@ -160,6 +364,106 @@ const DaftarPermohonan = () => {
         itemsPerPage={limit}
         isLoading={isLoading}
       />
+      {selectedRequestId && (
+        <EditPopup
+          title="Detail Permohonan"
+          fields={renderDetailsFields()}
+          isOpen={!!selectedRequestId}
+          onClose={() => setSelectedRequestId(null)}
+          viewMode={true}
+          additionalContent={
+            selectedRequest?.attachments &&
+            selectedRequest?.attachments.length > 0 && (
+              <div className="space-y-2">
+                {selectedRequest?.attachments?.map((attachment, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center input-form p-2 rounded-lg"
+                  >
+                    <a
+                      href={attachment.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className=" flex"
+                    >
+                      <FileIcon className="mr-2 h-5 w-5 text-blue-500" />
+                      {attachment.fileName}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )
+          }
+          customButtons={
+            user?.role === 'ADMIN' &&
+            selectedRequest?.status === 'SUBMITTED' ? (
+              <>
+                <Button
+                  onClick={() => handleVerify('REJECTED')}
+                  className="bg-red-500 text-white"
+                >
+                  Tolak
+                </Button>
+                <Button
+                  onClick={() => handleVerify('APPROVED')}
+                  className="bg-green-500 text-white"
+                >
+                  Terima
+                </Button>
+              </>
+            ) : null
+          }
+        />
+      )}
+      {showApplicantDetails && (
+        <EditPopup
+          title="Detail Pemohon"
+          fields={renderResidentFields()}
+          isOpen={showApplicantDetails}
+          onClose={() => setShowApplicantDetails(false)}
+          viewMode={true}
+        />
+      )}
+      {showRejectionPopup && (
+        <EditPopup
+          title="Alasan Penolakan"
+          fields={[
+            {
+              label: 'Alasan Penolakan',
+              name: 'rejectionReason',
+              value: rejectionReason,
+              type: 'textarea',
+              onChange: (value: string) => setRejectionReason(value),
+            },
+          ]}
+          grid={'1'}
+          isOpen={showRejectionPopup}
+          onClose={() => {
+            setShowRejectionPopup(false);
+            setRejectionReason('');
+          }}
+          viewMode={false}
+          customButtons={
+            <>
+              <Button
+                onClick={() => {
+                  setShowRejectionPopup(false);
+                  setRejectionReason('');
+                }}
+                className="bg-gray-500 text-white"
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={handleRejectConfirm}
+                className="bg-red-500 text-white"
+              >
+                Konfirmasi Penolakan
+              </Button>
+            </>
+          }
+        />
+      )}
       <Toaster />
     </div>
   );

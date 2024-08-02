@@ -15,6 +15,7 @@ import { z } from 'zod';
 
 interface Field {
   label: string;
+  grid?: string;
   name: string;
   value: string;
   type?: 'text' | 'textarea' | 'date' | 'file' | 'select' | 'custom';
@@ -23,27 +24,32 @@ interface Field {
   multiple?: boolean;
   accept?: string;
   render?: () => React.ReactNode;
+  onChange?: (value: string) => void;
 }
 
 interface EditPopupProps {
   title: string;
+  grid?: string;
   labelSubmit?: string;
   fields: Field[];
-  onSave: (
+  onSave?: (
     data: Record<string, string | File>,
     errors?: Record<string, string>,
   ) => void | Promise<void>;
-  validationSchema: z.ZodSchema<any>;
+  validationSchema?: z.ZodSchema<any>;
   isOpen: boolean;
   onClose: () => void;
   onDelete?: () => void;
+  onChange?: () => void;
   viewMode?: boolean;
   onFileChange?: (files: FileList | null) => void;
   additionalContent?: React.ReactNode;
+  customButtons?: React.ReactNode;
 }
 
 const EditPopup: React.FC<EditPopupProps> = ({
   title,
+  grid,
   fields,
   onSave,
   validationSchema,
@@ -54,6 +60,8 @@ const EditPopup: React.FC<EditPopupProps> = ({
   onFileChange,
   additionalContent,
   labelSubmit,
+  customButtons,
+  onChange,
 }) => {
   const [formData, setFormData] = useState<Record<string, string | File>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -93,6 +101,11 @@ const EditPopup: React.FC<EditPopupProps> = ({
     if (errors[name]) {
       setErrors({ ...errors, [name]: '' });
     }
+
+    const field = fields.find((f) => f.name === name);
+    if (field && field.onChange) {
+      field.onChange(value);
+    }
   };
 
   const handleSelectChange = (value: string, name: string) => {
@@ -101,13 +114,19 @@ const EditPopup: React.FC<EditPopupProps> = ({
     if (errors[name]) {
       setErrors({ ...errors, [name]: '' });
     }
+    const field = fields.find((f) => f.name === name);
+    if (field && field.onChange) {
+      field.onChange(value);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (viewMode) return;
+    if (viewMode || !onSave) return;
     try {
-      validationSchema.parse(formData);
+      if (validationSchema) {
+        validationSchema.parse(formData);
+      }
       onSave(formData);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -200,7 +219,7 @@ const EditPopup: React.FC<EditPopupProps> = ({
           <DialogTitle className="head-form">{title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="max-h-[80vh] overflow-y-auto">
-          <div className="grid grid-cols-2 gap-4 py-4">
+          <div className={`grid grid-cols-${grid ? '1' : '2'} gap-4 py-4`}>
             {fields.map((field) => (
               <div key={field.name} className="flex flex-col items-start gap-2">
                 <Label htmlFor={field.name} className="glassy-label text-left">
@@ -215,7 +234,7 @@ const EditPopup: React.FC<EditPopupProps> = ({
             ))}
           </div>
           {additionalContent}
-          {!viewMode && (
+          {!viewMode && onSave && (
             <div className="flex justify-end mt-4 space-x-2">
               {onDelete && (
                 <Button
@@ -229,6 +248,11 @@ const EditPopup: React.FC<EditPopupProps> = ({
               <Button className="bg-save" type="submit">
                 {labelSubmit ?? 'Simpan'}
               </Button>
+            </div>
+          )}
+          {customButtons && (
+            <div className="flex justify-end mt-4 space-x-2">
+              {customButtons}
             </div>
           )}
         </form>

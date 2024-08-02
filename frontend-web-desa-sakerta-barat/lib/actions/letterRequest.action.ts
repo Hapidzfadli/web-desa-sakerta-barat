@@ -24,7 +24,6 @@ export const applyLetter = async (
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
-        // Remove 'Content-Type' header, let the browser set it automatically for FormData
       },
       body: formData,
     });
@@ -73,6 +72,70 @@ export const fetchLetterRequests = async (
     return data;
   } catch (error) {
     console.error('Error in fetchLetterRequests:', error);
+    throw error;
+  }
+};
+
+export const fetchLetterRequestById = async (
+  id: number,
+): Promise<LetterRequest> => {
+  try {
+    const token = Cookies.get('session');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_URL}/api/letter-requests/${id}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch letter request');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Error in fetchLetterRequestById:', error);
+    throw error;
+  }
+};
+
+export const verifyLetterRequest = async (
+  id: number,
+  status: 'APPROVED' | 'REJECTED',
+  rejectionReason: string,
+): Promise<LetterRequest> => {
+  try {
+    const token = Cookies.get('session');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(
+      `${API_URL}/api/letter-requests/${id}/verify`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status, rejectionReason }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to verify letter request');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Error in verifyLetterRequest:', error);
     throw error;
   }
 };

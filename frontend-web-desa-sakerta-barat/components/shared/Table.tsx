@@ -108,20 +108,7 @@ function DataTable<T extends { id: string | number }>({
     // Here you would typically sort your data based on the column and order
   };
 
-  const sortedData = [...data].sort((a, b) => {
-    if (sortColumn) {
-      const aValue = a[sortColumn];
-      const bValue = b[sortColumn];
-      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
-    }
-    return 0;
-  });
-
-  const displayData = sortedData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
+  const displayData = data;
 
   return (
     <div className="space-y-4 text-black-2">

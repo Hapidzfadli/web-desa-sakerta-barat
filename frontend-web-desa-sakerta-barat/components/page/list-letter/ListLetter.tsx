@@ -121,6 +121,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
       toast({
         title: 'Berhasil',
         description: 'Tipe surat berhasil ditambahkan',
+        duration: 5000,
       });
       setIsFormOpen(false);
     },
@@ -129,6 +130,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
         title: 'Gagal',
         description: 'Tipe surat gagal disimpan',
         variant: 'destructive',
+        duration: 5000,
       });
     },
   });
@@ -141,6 +143,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
       toast({
         title: 'Berhasil',
         description: 'Tipe surat berhasil diperbaharui',
+        duration: 5000,
       });
       setIsFormOpen(false);
     },
@@ -149,6 +152,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
         title: 'Gagal',
         description: 'Tipe surat gagal disimpan',
         variant: 'destructive',
+        duration: 5000,
       });
     },
   });
@@ -157,13 +161,18 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
     mutationFn: deleteLetterType,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['letterTypes', categoryId] });
-      toast({ title: 'Berhasil', description: 'Tipe surat berhasil dihapus' });
+      toast({
+        title: 'Berhasil',
+        description: 'Tipe surat berhasil dihapus',
+        duration: 5000,
+      });
     },
     onError: () => {
       toast({
         title: 'Gagal',
         description: 'Tipe surat gagal dihapus',
         variant: 'destructive',
+        duration: 5000,
       });
     },
   });
@@ -212,6 +221,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
         title: 'Error',
         description: 'Failed to load resident data',
         variant: 'destructive',
+        duration: 5000,
       });
     }
   };
@@ -224,6 +234,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
         title: 'Error',
         description: 'No letter type selected',
         variant: 'destructive',
+        duration: 5000,
       });
       return;
     }
@@ -235,6 +246,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
       toast({
         title: 'Berhasil',
         description: 'Pengajuan surat berhasil dikirim',
+        duration: 5000,
       });
       setIsApplicationFormOpen(false);
       setNewAttachments([]);
@@ -244,6 +256,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
         title: 'Gagal',
         description: 'Pengajuan surat gagal. Silakan coba lagi.',
         variant: 'destructive',
+        duration: 5000,
       });
     }
   };
@@ -258,6 +271,7 @@ const ListLetter: React.FC<ListLetterProps> = ({ categoryId }) => {
           title: 'Peringatan',
           description: 'Hanya file PDF yang diperbolehkan.',
           variant: 'warning',
+          duration: 5000,
         });
       }
       setNewAttachments((prev) => [...prev, ...validFiles]);
