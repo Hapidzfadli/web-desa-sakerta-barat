@@ -40,6 +40,7 @@ enum RequestStatus {
   SIGNED
   COMPLETED
   ARCHIVED
+  REJECTED_BY_KADES
 }
 
 enum BloodType {
