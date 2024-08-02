@@ -26,6 +26,7 @@ import {
   UpdateLetterRequestDto,
   VerifyLetterRequestDto,
   ResponseLetterRequest,
+  SignLetterRequestDto,
 } from '../model/letter-request.model';
 import { WebResponse } from '../model/web.model';
 import { PaginateOptions } from '../common/utils/paginator';
@@ -108,9 +109,61 @@ export class LetterRequestController {
     @Body() verifyDto: VerifyLetterRequestDto,
   ): Promise<WebResponse<ResponseLetterRequest>> {
     const result = await this.letterRequestService.verifyLetterRequest(
-      user.id,
+      user,
       parseInt(id),
       verifyDto,
+    );
+    return {
+      data: result,
+    };
+  }
+
+  @Put(':id/sign')
+  @HttpCode(HttpStatus.OK)
+  @Roles(Role.KADES)
+  async signLetterRequest(
+    @Auth() user: any,
+    @Param('id') id: string,
+    @Body() signDto: SignLetterRequestDto,
+  ): Promise<WebResponse<ResponseLetterRequest>> {
+    const result = await this.letterRequestService.signLetterRequest(
+      user,
+      parseInt(id),
+      signDto,
+    );
+    return {
+      data: result,
+    };
+  }
+
+  @Put(':id/resubmit')
+  @HttpCode(HttpStatus.OK)
+  @Roles(Role.WARGA)
+  async resubmitLetterRequest(
+    @Auth() user: any,
+    @Param('id') id: string,
+    @Body() updateDto: UpdateLetterRequestDto,
+  ): Promise<WebResponse<ResponseLetterRequest>> {
+    const result = await this.letterRequestService.resubmitLetterRequest(
+      user,
+      parseInt(id),
+      updateDto,
+    );
+    return {
+      data: result,
+    };
+  }
+
+  @Put(':id/archive')
+  @HttpCode(HttpStatus.OK)
+  @Roles(Role.ADMIN, Role.KADES)
+  async archiveLetterRequest(
+    @Auth() user: any,
+    @Param('id') id: string,
+  ): Promise<WebResponse<ResponseLetterRequest>> {
+    const result = await this.letterRequestService.archiveLetterRequest(
+      user,
+      parseInt(id),
     );
     return {
       data: result,

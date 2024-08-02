@@ -18,6 +18,12 @@ export class UpdateLetterRequestDto {
 export class VerifyLetterRequestDto {
   status: Extract<RequestStatus, 'APPROVED' | 'REJECTED'>;
   notes?: string;
+  rejectionReason?: string;
+}
+export class SignLetterRequestDto {
+  status: Extract<RequestStatus, 'SIGNED' | 'REJECTED_BY_KADES'>;
+  notes?: string;
+  rejectionReason?: string;
 }
 
 export class AttachmentDto {
@@ -36,6 +42,7 @@ export class ResponseLetterRequest {
   requestDate: Date;
   status: RequestStatus;
   notes?: string;
+  rejectionReason?: string;
   attachments: AttachmentDto[];
   createdAt: Date;
   updatedAt: Date;

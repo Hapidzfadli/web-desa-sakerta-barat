@@ -32,5 +32,12 @@ export class LetterRequestValidation {
   static readonly VERIFY = z.object({
     status: z.enum([RequestStatus.APPROVED, RequestStatus.REJECTED]),
     notes: z.string().optional(),
+    rejectionReason: z.string().optional().nullable(),
+  });
+
+  static readonly SIGN = z.object({
+    status: z.enum([RequestStatus.SIGNED, RequestStatus.REJECTED_BY_KADES]),
+    notes: z.string().optional(),
+    rejectionReason: z.string().optional().nullable(),
   });
 }
