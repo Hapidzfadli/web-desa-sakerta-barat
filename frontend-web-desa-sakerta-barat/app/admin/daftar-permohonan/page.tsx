@@ -109,7 +109,13 @@ const DaftarPermohonan = () => {
             </>
           )}
 
-          <Button size="sm" title="Lihat" onClick={() => {}}>
+          <Button
+            size="sm"
+            title="Lihat"
+            onClick={() => {
+              console.log('KLIK');
+            }}
+          >
             <FontAwesomeIcon className="h-4 w-4 text-view" icon={faEye} />
           </Button>
 
