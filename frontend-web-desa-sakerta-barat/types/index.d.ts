@@ -150,6 +150,7 @@ declare interface LetterRequest {
   residentId: number;
   residentName: string;
   letterName: string;
+  rejectionReason: string;
   letterTypeId: number;
   letterNumber: string | null;
   requestDate: string;

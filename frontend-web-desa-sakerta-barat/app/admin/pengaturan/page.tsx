@@ -1,8 +1,8 @@
 'use client';
 import React, { useState } from 'react';
-import BiodataDiri from '../../../components/page/BiodataDiri';
 import Keamanan from '../../../components/page/Keamanan';
 import { cn } from '../../../lib/utils';
+import BiodataDiri from '../../../components/BiodataDiri/BiodataDiri';
 
 const Pengaturan = () => {
   const [activeTab, setActiveTab] = useState('biodata');

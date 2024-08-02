@@ -139,3 +139,64 @@ export const verifyLetterRequest = async (
     throw error;
   }
 };
+
+export const updateLetterRequest = async (
+  id: number,
+  data: any,
+): Promise<LetterRequest> => {
+  try {
+    const token = Cookies.get('session');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_URL}/api/letter-requests/${id}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update letter request');
+    }
+
+    const responseData = await response.json();
+    return responseData.data;
+  } catch (error) {
+    console.error('Error in updateLetterRequest:', error);
+    throw error;
+  }
+};
+
+export const resubmitLetterRequest = async (id: number): Promise<any> => {
+  try {
+    const token = Cookies.get('session');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(
+      `${API_URL}/api/letter-requests/${id}/resubmit`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to resubmit letter request');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Error in resubmitLetterRequest:', error);
+    throw error;
+  }
+};

@@ -1,13 +1,15 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DataTable from '../../../components/shared/Table';
 import { Button } from '../../../components/ui/button';
-import { Printer, FileIcon, User } from 'lucide-react';
+import { Printer, FileIcon, User, Edit, Save } from 'lucide-react';
 import {
   fetchLetterRequests,
   fetchLetterRequestById,
   verifyLetterRequest,
+  resubmitLetterRequest,
+  updateLetterRequest,
 } from '../../../lib/actions/letterRequest.action';
 import { formatDate } from '../../../lib/utils';
 import { translateStatus } from '../../../lib/letterRequestUtils';
@@ -23,6 +25,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { useUser } from '../../context/UserContext';
 import EditPopup from '../../../components/shared/EditPopup';
+import { updateResidentData } from '../../../lib/actions/setting.actions';
 
 const DaftarPermohonan = () => {
   const { user } = useUser();
@@ -36,6 +39,8 @@ const DaftarPermohonan = () => {
   const [showApplicantDetails, setShowApplicantDetails] = useState(false);
   const [showRejectionPopup, setShowRejectionPopup] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [isEditingResident, setIsEditingResident] = useState(false);
+  const [editedResidentData, setEditedResidentData] = useState({});
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
@@ -50,7 +55,7 @@ const DaftarPermohonan = () => {
         title: 'Error',
         description: 'Gagal memuat data permohonan surat. Silakan coba lagi.',
         variant: 'destructive',
-        duration: 5000,
+        duration: 3000,
       });
     },
   });
@@ -77,6 +82,7 @@ const DaftarPermohonan = () => {
       toast({
         title: 'Sukses',
         description: 'Status permohonan berhasil diperbarui',
+        duration: 3000,
       });
       setSelectedRequestId(null);
       setShowRejectionPopup(false);
@@ -87,6 +93,49 @@ const DaftarPermohonan = () => {
         title: 'Error',
         description: 'Gagal memperbarui status permohonan',
         variant: 'destructive',
+        duration: 3000,
+      });
+    },
+  });
+
+  const resubmitMutation = useMutation({
+    mutationFn: (id: number) => resubmitLetterRequest(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['letterRequests']);
+      toast({
+        title: 'Sukses',
+        description: 'Permohonan berhasil diajukan kembali',
+        duration: 3000,
+      });
+      setSelectedRequestId(null);
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Gagal mengajukan kembali permohonan',
+        variant: 'destructive',
+        duration: 3000,
+      });
+    },
+  });
+
+  const updateResidentMutation = useMutation({
+    mutationFn: (data: any) => updateResidentData(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['letterRequest', selectedRequestId]);
+      toast({
+        title: 'Sukses',
+        description: 'Data penduduk berhasil diperbarui',
+        duration: 3000,
+      });
+      setIsEditingResident(false);
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Gagal memperbarui data penduduk',
+        variant: 'destructive',
+        duration: 3000,
       });
     },
   });
@@ -135,28 +184,21 @@ const DaftarPermohonan = () => {
             <>
               <Button size="sm" variant="ghost">
                 {printed.includes(row.status) ? (
-                  <>
-                    <FontAwesomeIcon icon={faPrint} className="h-4 w-4" />
-                  </>
+                  <FontAwesomeIcon icon={faPrint} className="h-4 w-4" />
                 ) : (
-                  <>
-                    <Printer className="h-4 w-4" />
-                  </>
+                  <Printer className="h-4 w-4" />
                 )}
               </Button>
               {user?.role === 'KADES' && (
-                <>
-                  <Button size="sm" variant="ghost" title="Tanda Tangan">
-                    <FontAwesomeIcon
-                      className="h-4 w-4 text-black-2"
-                      icon={faSignature}
-                    />
-                  </Button>
-                </>
+                <Button size="sm" variant="ghost" title="Tanda Tangan">
+                  <FontAwesomeIcon
+                    className="h-4 w-4 text-black-2"
+                    icon={faSignature}
+                  />
+                </Button>
               )}
             </>
           )}
-
           <Button
             size="sm"
             title="Lihat"
@@ -164,7 +206,6 @@ const DaftarPermohonan = () => {
           >
             <FontAwesomeIcon className="h-4 w-4 text-view" icon={faEye} />
           </Button>
-
           <Button size="sm" variant="ghost" title="Delete">
             <FontAwesomeIcon
               className="h-4 w-4 text-delete"
@@ -211,20 +252,30 @@ const DaftarPermohonan = () => {
     }
   };
 
+  const handleResubmit = () => {
+    if (selectedRequestId) {
+      resubmitMutation.mutate(selectedRequestId);
+    }
+  };
+
+  const handleSaveResident = () => {
+    updateResidentMutation.mutate(editedResidentData);
+  };
+
+  const handleResidentFieldChange = (name: string, value: string) => {
+    setEditedResidentData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const renderDetailsFields = () => {
     if (!selectedRequest) return [];
 
-    return [
+    const fields = [
       {
         label: 'Pemohon',
         name: 'resident.name',
         value: selectedRequest.resident.name,
       },
-      {
-        label: 'Surat',
-        name: 'letterName',
-        value: selectedRequest.letterName,
-      },
+      { label: 'Surat', name: 'letterName', value: selectedRequest.letterName },
       {
         label: 'Tanggal Pengajuan',
         name: 'requestDate',
@@ -241,22 +292,46 @@ const DaftarPermohonan = () => {
         value: selectedRequest.notes,
         type: 'textarea',
       },
-      {
-        label: 'Detail Pemohon',
-        name: 'applicantDetails',
-        value: '',
-        type: 'custom',
-        render: () => (
-          <Button
-            onClick={() => setShowApplicantDetails(true)}
-            className="bg-blue-500 text-white"
-          >
-            <User className="mr-2 h-4 w-4" />
-            Lihat Detail Pemohon
-          </Button>
-        ),
-      },
     ];
+
+    if (
+      selectedRequest.status === 'REJECTED' &&
+      selectedRequest.rejectionReason
+    ) {
+      fields.push({
+        label: 'Alasan Penolakan',
+        name: 'rejectionReason',
+        value: selectedRequest.rejectionReason,
+        type: 'textarea',
+      });
+    }
+
+    fields.push({
+      label: 'Detail Pemohon',
+      name: 'applicantDetails',
+      value: '',
+      type: 'custom',
+      render: () => (
+        <Button
+          onClick={() => {
+            setShowApplicantDetails(true);
+            if (
+              (selectedRequest.status === 'REJECTED' ||
+                selectedRequest.status === 'SUBMITTED') &&
+              user?.role == 'WARGA'
+            ) {
+              setIsEditingResident(true);
+            }
+          }}
+          className="bg-blue-500 text-white"
+        >
+          <User className="mr-2 h-4 w-4" />
+          Lihat Detail Pemohon
+        </Button>
+      ),
+    });
+
+    return fields;
   };
 
   const renderResidentFields = () => {
@@ -273,6 +348,7 @@ const DaftarPermohonan = () => {
         label: 'Tanggal Lahir',
         name: 'dateOfBirth',
         value: formatDate(selectedRequest.resident.dateOfBirth),
+        type: 'date',
       },
       {
         label: 'Alamat KTP',
@@ -346,7 +422,16 @@ const DaftarPermohonan = () => {
         name: 'bloodType',
         value: selectedRequest.resident.bloodType,
       },
-    ];
+    ].map((field) => ({
+      ...field,
+      value: isEditingResident
+        ? editedResidentData[field.name] || field.value
+        : field.value,
+      onChange: isEditingResident
+        ? (value) => handleResidentFieldChange(field.name, value)
+        : undefined,
+      disabled: !isEditingResident,
+    }));
   };
 
   return (
@@ -384,7 +469,7 @@ const DaftarPermohonan = () => {
                       href={attachment.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className=" flex"
+                      className="flex"
                     >
                       <FileIcon className="mr-2 h-5 w-5 text-blue-500" />
                       {attachment.fileName}
@@ -395,23 +480,34 @@ const DaftarPermohonan = () => {
             )
           }
           customButtons={
-            user?.role === 'ADMIN' &&
-            selectedRequest?.status === 'SUBMITTED' ? (
-              <>
-                <Button
-                  onClick={() => handleVerify('REJECTED')}
-                  className="bg-red-500 text-white"
-                >
-                  Tolak
-                </Button>
-                <Button
-                  onClick={() => handleVerify('APPROVED')}
-                  className="bg-green-500 text-white"
-                >
-                  Terima
-                </Button>
-              </>
-            ) : null
+            <>
+              {user?.role === 'ADMIN' &&
+                selectedRequest?.status === 'SUBMITTED' && (
+                  <>
+                    <Button
+                      onClick={() => handleVerify('REJECTED')}
+                      className="bg-red-500 text-white"
+                    >
+                      Tolak
+                    </Button>
+                    <Button
+                      onClick={() => handleVerify('APPROVED')}
+                      className="bg-green-500 text-white"
+                    >
+                      Terima
+                    </Button>
+                  </>
+                )}
+              {user?.role === 'WARGA' &&
+                selectedRequest?.status === 'REJECTED' && (
+                  <Button
+                    onClick={handleResubmit}
+                    className="bg-blue-500 text-white"
+                  >
+                    Ajukan Kembali
+                  </Button>
+                )}
+            </>
           }
         />
       )}
@@ -420,8 +516,13 @@ const DaftarPermohonan = () => {
           title="Detail Pemohon"
           fields={renderResidentFields()}
           isOpen={showApplicantDetails}
-          onClose={() => setShowApplicantDetails(false)}
-          viewMode={true}
+          onClose={() => {
+            setShowApplicantDetails(false);
+            setIsEditingResident(false);
+            setEditedResidentData({});
+          }}
+          viewMode={!isEditingResident}
+          onSave={handleSaveResident}
         />
       )}
       {showRejectionPopup && (

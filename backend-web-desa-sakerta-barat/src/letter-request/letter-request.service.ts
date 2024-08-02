@@ -328,7 +328,7 @@ export class LetterRequestService {
   }
 
   async resubmitLetterRequest(
-    userId: number,
+    user: any,
     requestId: number,
     dto: UpdateLetterRequestDto,
   ): Promise<ResponseLetterRequest> {
@@ -341,7 +341,7 @@ export class LetterRequestService {
       throw new NotFoundException('Letter request not found');
     }
 
-    if (letterRequest.resident.user.id !== userId) {
+    if (letterRequest.resident.user.id !== user.id) {
       throw new ForbiddenException(
         'You are not allowed to resubmit this letter request',
       );
@@ -505,6 +505,7 @@ export class LetterRequestService {
       letterTypeId: letterRequest.letterTypeId,
       letterNumber: letterRequest.letterNumber,
       requestDate: letterRequest.requestDate,
+      rejectionReason: letterRequest.rejectionReason,
       status: letterRequest.status,
       notes: letterRequest.notes,
       resident: letterRequest.resident
