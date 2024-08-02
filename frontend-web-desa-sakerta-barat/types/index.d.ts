@@ -149,6 +149,8 @@ declare interface LetterRequest {
   id: number;
   residentId: number;
   residentName: string;
+  letterName: string;
+  rejectionReason: string;
   letterTypeId: number;
   letterNumber: string | null;
   requestDate: string;
@@ -161,8 +163,38 @@ declare interface LetterRequest {
   }[];
   createdAt: string;
   updatedAt: string;
+  resident: Resident;
 }
 
+declare interface Resident {
+  id: number;
+  nationalId: string;
+  name: string;
+  dateOfBirth: string;
+  idCardAddress: string;
+  residentialAddress: string;
+  religion?: string;
+  maritalStatus?: MaritalStatus;
+  occupation?: string;
+  nationality?: string;
+  placeOfBirth?: string;
+  gender?: 'LAKI_LAKI' | 'PEREMPUAN';
+  familyCardNumber?: string;
+  district?: string;
+  regency?: string;
+  province?: string;
+  postalCode?: string;
+  rt?: number;
+  rw?: number;
+  bloodType?: BloodType;
+  documents?: Document[];
+}
+
+declare interface Document {
+  id: number;
+  type: DocumentType;
+  fileUrl: string;
+}
 declare interface PaginationInfo {
   size: number;
   total_page: number;

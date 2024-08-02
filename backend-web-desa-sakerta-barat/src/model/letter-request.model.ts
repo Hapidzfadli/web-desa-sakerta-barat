@@ -1,4 +1,5 @@
-import { RequestStatus } from '@prisma/client';
+import { RequestStatus, Resident } from '@prisma/client';
+import { ResidentResponse } from './resident.model';
 
 export class CreateLetterRequestDto {
   letterTypeId: number;
@@ -44,6 +45,7 @@ export class ResponseLetterRequest {
   notes?: string;
   rejectionReason?: string;
   attachments: AttachmentDto[];
+  resident?: ResidentResponse;
   createdAt: Date;
   updatedAt: Date;
 }

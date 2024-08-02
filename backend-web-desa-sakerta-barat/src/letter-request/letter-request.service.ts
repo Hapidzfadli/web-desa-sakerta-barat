@@ -328,7 +328,7 @@ export class LetterRequestService {
   }
 
   async resubmitLetterRequest(
-    userId: number,
+    user: any,
     requestId: number,
     dto: UpdateLetterRequestDto,
   ): Promise<ResponseLetterRequest> {
@@ -341,7 +341,7 @@ export class LetterRequestService {
       throw new NotFoundException('Letter request not found');
     }
 
-    if (letterRequest.resident.user.id !== userId) {
+    if (letterRequest.resident.user.id !== user.id) {
       throw new ForbiddenException(
         'You are not allowed to resubmit this letter request',
       );
@@ -435,6 +435,7 @@ export class LetterRequestService {
       where: { id },
       include: {
         attachments: true,
+        letterType: true,
         resident: {
           include: {
             documents: true,
@@ -447,7 +448,7 @@ export class LetterRequestService {
       throw new NotFoundException('Letter request not found');
     }
 
-    return this.mapToResponseLetterRequest(letterRequest);
+    return this.mapToResponseLetterRequestDetail(letterRequest);
   }
 
   private mapToResponseLetterRequest(
@@ -455,8 +456,8 @@ export class LetterRequestService {
   ): ResponseLetterRequest {
     const residentDocuments =
       letterRequest.resident?.documents?.map((doc) => ({
-        fileName: path.basename(doc.fileUrl),
-        fileUrl: doc.fileUrl,
+        fileName: doc.type,
+        fileUrl: `/api/resident/document/${doc.id}/file`,
         documentId: doc.id,
       })) || [];
 
@@ -473,6 +474,65 @@ export class LetterRequestService {
       status: letterRequest.status,
       notes: letterRequest.notes,
       attachments: allAttachments.map((att) => ({
+        fileName: att.fileName,
+        fileUrl: att.fileUrl,
+        documentId: att.documentId,
+      })),
+      createdAt: letterRequest.createdAt,
+      updatedAt: letterRequest.updatedAt,
+    };
+  }
+
+  private mapToResponseLetterRequestDetail(
+    letterRequest: any,
+  ): ResponseLetterRequest {
+    const residentDocuments =
+      letterRequest.resident?.documents?.map((doc: any) => ({
+        fileName: doc.type,
+        fileUrl: `/api/resident/document/${doc.id}/file`,
+        documentId: doc.id,
+      })) || [];
+
+    const allAttachments = [
+      ...(letterRequest.attachments || []),
+      ...residentDocuments,
+    ];
+
+    return {
+      id: letterRequest.id,
+      residentId: letterRequest.residentId,
+      letterName: letterRequest.letterType?.name,
+      letterTypeId: letterRequest.letterTypeId,
+      letterNumber: letterRequest.letterNumber,
+      requestDate: letterRequest.requestDate,
+      rejectionReason: letterRequest.rejectionReason,
+      status: letterRequest.status,
+      notes: letterRequest.notes,
+      resident: letterRequest.resident
+        ? {
+            id: letterRequest.resident.id,
+            nationalId: letterRequest.resident.nationalId,
+            name: letterRequest.resident.name,
+            dateOfBirth: letterRequest.resident.dateOfBirth,
+            idCardAddress: letterRequest.resident.idCardAddress,
+            residentialAddress: letterRequest.resident.residentialAddress,
+            religion: letterRequest.resident.religion,
+            maritalStatus: letterRequest.resident.maritalStatus,
+            occupation: letterRequest.resident.occupation,
+            nationality: letterRequest.resident.nationality,
+            placeOfBirth: letterRequest.resident.placeOfBirth,
+            gender: letterRequest.resident.gender,
+            familyCardNumber: letterRequest.resident.familyCardNumber,
+            district: letterRequest.resident.district,
+            regency: letterRequest.resident.regency,
+            province: letterRequest.resident.province,
+            postalCode: letterRequest.resident.postalCode,
+            rt: letterRequest.resident.rt,
+            rw: letterRequest.resident.rw,
+            bloodType: letterRequest.resident.bloodType,
+          }
+        : null,
+      attachments: allAttachments.map((att: any) => ({
         fileName: att.fileName,
         fileUrl: att.fileUrl,
         documentId: att.documentId,
