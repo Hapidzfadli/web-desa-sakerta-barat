@@ -172,10 +172,15 @@ export class LetterRequestController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard)
   async getLetterRequests(
+    @Auth() user: any,
     @Query() options: PaginateOptions,
   ): Promise<WebResponse<ResponseLetterRequest[]>> {
-    const result = await this.letterRequestService.getLetterRequests(options);
+    const result = await this.letterRequestService.getLetterRequests(
+      user,
+      options,
+    );
     return {
       data: result.data,
       paging: {

@@ -367,16 +367,41 @@ export class LetterRequestService {
   }
 
   async getLetterRequests(
+    user: any,
     options: PaginateOptions,
   ): Promise<PaginatedResult<ResponseLetterRequest[]>> {
     try {
       const searchFields = ['resident.name', 'letterType.name', 'letterNumber'];
+      let filter = options.filter || {};
+      const userResident = await this.prismaService.user.findUnique({
+        where: { id: user.id },
+        select: {
+          resident: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      });
+
+      if (user.role === Role.WARGA) {
+        filter = {
+          ...filter,
+          residentId: userResident.resident.id,
+        };
+      } else if (user.role !== Role.ADMIN && user.role !== Role.KADES) {
+        throw new ForbiddenException(
+          'You are not authorized to view letter requests',
+        );
+      }
+
       const result = await prismaPaginate<LetterRequest>(
         this.prismaService,
         'letterRequest',
         {
           ...options,
           searchFields,
+          filter,
           include: {
             resident: true,
             letterType: true,
