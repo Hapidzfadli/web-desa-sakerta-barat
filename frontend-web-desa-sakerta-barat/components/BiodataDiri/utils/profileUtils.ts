@@ -110,5 +110,8 @@ export const formatDate = (date: string) => {
 };
 
 export const toInputDateValue = (date: string) => {
-  return new Date(date).toISOString().split('T')[0];
+  const parsedDate = new Date(date);
+  return isNaN(parsedDate.getTime())
+    ? ''
+    : parsedDate.toISOString().split('T')[0];
 };

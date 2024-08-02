@@ -11,7 +11,7 @@ import {
   updateLetterCategory,
   deleteLetterCategory,
 } from '../../../lib/actions/list-letter.action';
-import ListLetter from '../../../components/page/list-letter/ListLetter';
+
 import { cn } from '../../../lib/utils';
 import LoadingSpinner from '../../../components/shared/LoadingSpinner';
 import { Button } from '../../../components/ui/button';
@@ -22,6 +22,7 @@ import {
   updateLetterCategorySchema,
 } from '../../../lib/settingUtils';
 import { useUser } from '../../context/UserContext';
+import ListLetter from '../../../components/ListLetter/components/ListLetter';
 
 const ITEMS_PER_PAGE = 10;
 
