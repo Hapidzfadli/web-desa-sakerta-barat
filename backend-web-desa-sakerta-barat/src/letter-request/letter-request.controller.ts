@@ -207,7 +207,7 @@ export class LetterRequestController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  @Roles(Role.WARGA, Role.ADMIN)
+  @Roles(Role.WARGA, Role.ADMIN, Role.KADES)
   async deleteLetterRequest(
     @Auth() user: any,
     @Param('id') id: string,

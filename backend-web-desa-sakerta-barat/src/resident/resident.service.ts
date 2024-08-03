@@ -27,6 +27,7 @@ import * as fss from 'fs';
 import * as path from 'path';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { DocumentType, Prisma, Role } from '@prisma/client';
+import { uploadFileAndGetUrl } from '../common/utils/utils';
 
 @Injectable()
 export class ResidentService {
@@ -471,12 +472,14 @@ export class ResidentService {
   }
 
   private async saveFile(file: Express.Multer.File): Promise<string> {
-    const uploadDir = path.join(process.cwd(), 'uploads');
-    await fs.mkdir(uploadDir, { recursive: true });
-    const filename = `${Date.now()}-${file.originalname}`;
-    const filepath = path.join(uploadDir, filename);
-    await fs.writeFile(filepath, file.buffer);
-    return `/uploads/${filename}`;
+    try {
+      const uploadDir = 'uploads/documents';
+      const urlPrefix = '/api/residents/documents';
+      return await uploadFileAndGetUrl(file, uploadDir, urlPrefix);
+    } catch (error) {
+      this.logger.error(`Error saving file: ${error.message}`, error.stack);
+      throw new InternalServerErrorException('Failed to save the file');
+    }
   }
 
   private mapToDocumentResponse(document: any): DocumentResponse {

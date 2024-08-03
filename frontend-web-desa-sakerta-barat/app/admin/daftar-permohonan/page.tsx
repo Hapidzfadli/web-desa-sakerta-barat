@@ -10,6 +10,7 @@ import {
   verifyLetterRequest,
   resubmitLetterRequest,
   updateLetterRequest,
+  deleteLetterRequest,
 } from '../../../lib/actions/letterRequest.action';
 import { formatDate } from '../../../lib/utils';
 import { translateStatus } from '../../../lib/letterRequestUtils';
@@ -140,6 +141,26 @@ const DaftarPermohonan = () => {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: deleteLetterRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['letterRequests']);
+      toast({
+        title: 'Sukses',
+        description: 'Permohonan surat berhasil dihapus',
+        duration: 3000,
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Gagal menghapus permohonan surat',
+        variant: 'destructive',
+        duration: 3000,
+      });
+    },
+  });
+
   const statusColors: { [key: string]: string } = {
     SUBMITTED: 'bg-[#EBF9F1] text-[#1F9254]',
     APPROVED: 'bg-[#D2F3F3] text-[#3F709D]',
@@ -206,7 +227,12 @@ const DaftarPermohonan = () => {
           >
             <FontAwesomeIcon className="h-4 w-4 text-view" icon={faEye} />
           </Button>
-          <Button size="sm" variant="ghost" title="Delete">
+          <Button
+            size="sm"
+            variant="ghost"
+            title="Delete"
+            onClick={() => handleDelete(row.id)}
+          >
             <FontAwesomeIcon
               className="h-4 w-4 text-delete"
               icon={faTrashCan}
@@ -260,6 +286,12 @@ const DaftarPermohonan = () => {
 
   const handleSaveResident = () => {
     updateResidentMutation.mutate(editedResidentData);
+  };
+
+  const handleDelete = (id: number) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus permohonan ini?')) {
+      deleteMutation.mutate(id);
+    }
   };
 
   const handleResidentFieldChange = (name: string, value: string) => {

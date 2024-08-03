@@ -45,7 +45,7 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
             title: 'Error',
             description: 'Failed to load resident data',
             variant: 'destructive',
-            duration: 5000,
+            duration: 1000,
           });
         });
     }
@@ -54,15 +54,23 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
   const handleSubmit = async (
     data: Record<string, string | File | FileList>,
   ) => {
-    if (!letterType) return;
+    if (!letterType) {
+      console.error('No letter type selected');
+      return;
+    }
 
     try {
       const notes = (data.notes as string) || '';
+      console.log('Submitting application:', {
+        letterTypeId: letterType.id,
+        notes,
+        attachments: newAttachments,
+      });
       await onApply(letterType.id, notes, newAttachments);
       toast({
         title: 'Berhasil',
         description: 'Pengajuan surat berhasil dikirim',
-        duration: 5000,
+        duration: 1000,
       });
       onClose();
       setNewAttachments([]);
@@ -72,7 +80,7 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
         title: 'Gagal',
         description: 'Pengajuan surat gagal. Silakan coba lagi.',
         variant: 'destructive',
-        duration: 5000,
+        duration: 1000,
       });
     }
   };
@@ -87,7 +95,7 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
           title: 'Peringatan',
           description: 'Hanya file PDF yang diperbolehkan.',
           variant: 'warning',
-          duration: 5000,
+          duration: 1000,
         });
       }
       setNewAttachments((prev) => [...prev, ...validFiles]);

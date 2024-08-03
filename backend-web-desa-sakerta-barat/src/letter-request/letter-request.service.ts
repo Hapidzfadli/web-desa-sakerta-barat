@@ -30,6 +30,7 @@ import * as PizZip from 'pizzip';
 import * as Docxtemplater from 'docxtemplater';
 import * as fs from 'fs';
 import * as path from 'path';
+import { promises as fsPromises } from 'fs';
 @Injectable()
 export class LetterRequestService {
   constructor(
@@ -545,7 +546,10 @@ export class LetterRequestService {
   async deleteLetterRequest(userId: number, requestId: number): Promise<void> {
     const letterRequest = await this.prismaService.letterRequest.findUnique({
       where: { id: requestId },
-      include: { resident: { include: { user: true } } },
+      include: {
+        resident: { include: { user: true } },
+        attachments: true,
+      },
     });
 
     if (!letterRequest) {
@@ -560,7 +564,11 @@ export class LetterRequestService {
       throw new NotFoundException('User not found');
     }
 
-    if (letterRequest.resident.user.id !== userId && user.role !== Role.ADMIN) {
+    if (
+      letterRequest.resident.user.id !== userId &&
+      user.role !== Role.ADMIN &&
+      user.role !== Role.KADES
+    ) {
       throw new ForbiddenException(
         'You are not allowed to delete this letter request',
       );
@@ -572,9 +580,35 @@ export class LetterRequestService {
       );
     }
 
-    await this.prismaService.letterRequest.delete({
-      where: { id: requestId },
-    });
+    for (const attachment of letterRequest.attachments) {
+      if (attachment.fileUrl) {
+        try {
+          const urlParts = attachment.fileUrl.split('/');
+          const fileName = urlParts[urlParts.length - 1];
+          const uploadDir = 'uploads/letter-request-attachments';
+          const filePath = path.join(process.cwd(), uploadDir, fileName);
+
+          await fsPromises.unlink(filePath);
+          this.logger.debug(`Deleted file: ${filePath}`);
+        } catch (error) {
+          this.logger.warn(
+            `Failed to delete file: ${attachment.fileUrl}`,
+            error,
+          );
+        }
+      }
+    }
+
+    await this.prismaService.$transaction([
+      this.prismaService.attachment.deleteMany({
+        where: { letterRequestId: requestId },
+      }),
+      this.prismaService.letterRequest.delete({
+        where: { id: requestId },
+      }),
+    ]);
+
+    this.logger.debug(`Letter request ${requestId} deleted by user ${userId}`);
   }
 
   private async generateSignedLetter(letterRequest: any): Promise<void> {
