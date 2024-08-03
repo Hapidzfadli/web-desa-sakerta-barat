@@ -144,7 +144,7 @@ model LetterType {
   description    String?         @db.Text
   requirements   String?         @db.Text
   icon           String?
-  template       String?         @db.Text
+  template       String          @db.Text
   letterRequests LetterRequest[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
