@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DataTable from '../../../components/shared/Table';
 import { Button } from '../../../components/ui/button';
@@ -12,6 +12,7 @@ import {
   updateLetterRequest,
   deleteLetterRequest,
   getAttachmentFile,
+  previewLetterRequest,
 } from '../../../lib/actions/letterRequest.action';
 import { formatDate } from '../../../lib/utils';
 import { translateStatus } from '../../../lib/letterRequestUtils';
@@ -28,6 +29,7 @@ import {
 import { useUser } from '../../context/UserContext';
 import EditPopup from '../../../components/shared/EditPopup';
 import { updateResidentData } from '../../../lib/actions/setting.actions';
+import PreviewPopup from '../../../components/shared/PreviewPopup';
 
 const DaftarPermohonan = () => {
   const { user } = useUser();
@@ -43,7 +45,10 @@ const DaftarPermohonan = () => {
   const [rejectionReason, setRejectionReason] = useState('');
   const [isEditingResident, setIsEditingResident] = useState(false);
   const [editedResidentData, setEditedResidentData] = useState({});
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const [previewRequestId, setPreviewRequestId] = useState<number | null>(null);
+  const [progress, setProgress] = useState(0);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['letterRequests', page, limit, searchQuery],
@@ -313,6 +318,51 @@ const DaftarPermohonan = () => {
     }
   };
 
+  const {
+    data: pdfBlob,
+    isLoading: isPdfLoading,
+    error: pdfError,
+    refetch: refetchPdf,
+  } = useQuery({
+    queryKey: ['letterPreview', previewRequestId],
+    queryFn: () => {
+      return previewLetterRequest(previewRequestId!);
+    },
+    enabled: false, // We'll manually trigger the query
+  });
+
+  useEffect(() => {
+    if (previewRequestId !== null) {
+      refetchPdf();
+    }
+  }, [previewRequestId, refetchPdf]);
+
+  useEffect(() => {
+    if (isPdfLoading) {
+      const interval = setInterval(() => {
+        setProgress((oldProgress) => {
+          const newProgress = Math.min(oldProgress + 10, 90);
+          return newProgress;
+        });
+      }, 500);
+
+      return () => clearInterval(interval);
+    } else {
+      setProgress(100);
+    }
+  }, [isPdfLoading]);
+
+  const pdfUrl = pdfBlob ? URL.createObjectURL(pdfBlob) : null;
+
+  const handlePreview = useCallback(
+    (id: number) => {
+      setPreviewRequestId(id);
+      setProgress(0);
+      // queryClient.removeQueries(['letterPreview', id]); // Remove any cached query
+    },
+    [queryClient],
+  );
+
   const renderDetailsFields = () => {
     if (!selectedRequest) return [];
 
@@ -377,6 +427,29 @@ const DaftarPermohonan = () => {
         </Button>
       ),
     });
+
+    if (
+      ['APPROVED', 'SIGNED', 'COMPLETED', 'ARCHIVED'].includes(
+        selectedRequest.status,
+      )
+    ) {
+      fields.push({
+        label: 'Preview Surat',
+        name: 'previewLetter',
+        value: '',
+        type: 'custom',
+        render: () => (
+          <Button
+            onClick={() => {
+              handlePreview(selectedRequest.id);
+            }}
+            className="bg-blue-500 text-white"
+          >
+            Preview Surat
+          </Button>
+        ),
+      });
+    }
 
     return fields;
   };
@@ -552,6 +625,18 @@ const DaftarPermohonan = () => {
                 )}
             </>
           }
+        />
+      )}
+      {previewRequestId !== null && (
+        <PreviewPopup
+          isOpen={true}
+          onClose={() => {
+            setPreviewRequestId(null);
+            if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+          }}
+          pdfUrl={pdfUrl}
+          isLoading={isPdfLoading}
+          progress={progress}
         />
       )}
       {showApplicantDetails && (

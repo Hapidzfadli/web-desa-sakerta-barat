@@ -14,6 +14,7 @@ import { API_URL } from '../../constants';
 import { getTemplateFile } from '../../lib/actions/list-letter.action';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { useToast } from '@/components/ui/use-toast';
 interface LetterTypeFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -38,6 +39,7 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
   const [requirements, setRequirements] = useState<string[]>([]);
   const [newRequirement, setNewRequirement] = useState('');
   const [templateFileName, setTemplateFileName] = useState('');
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isOpen) {
@@ -102,6 +104,27 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (viewMode) return;
+
+    if (!formData.name || !formData.name.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Nama tipe surat harus diisi.',
+        variant: 'destructive',
+        duration: 1000,
+      });
+      return;
+    }
+
+    if (!formData.template && !initialData?.template) {
+      toast({
+        title: 'Error',
+        description: 'Template surat harus diunggah.',
+        variant: 'destructive',
+        duration: 1000,
+      });
+      return;
+    }
+
     onSubmit({ ...formData, requirements: JSON.stringify(requirements) });
   };
 
@@ -131,7 +154,7 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-left">
-                Nama
+                Nama<span className="text-red-500">*</span>
               </Label>
               <Input
                 id="name"
@@ -140,6 +163,7 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
                 onChange={handleChange}
                 className="col-span-3 input-form"
                 disabled={viewMode}
+                required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -235,7 +259,7 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
             )}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="template" className="text-left">
-                Template
+                Template <span className="text-red-500">*</span>
               </Label>
               <div className="col-span-3 flex items-center space-x-2">
                 {viewMode ? (
@@ -264,6 +288,7 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
                       onChange={handleFileChange}
                       className="cursor-pointer input-form"
                       accept=".docx"
+                      required={!initialData?.template}
                     />
                     {templateFileName && (
                       <div className="flex items-center gap-4">

@@ -250,3 +250,31 @@ export const getAttachmentFile = async (url: string): Promise<Blob> => {
     throw error;
   }
 };
+
+export const previewLetterRequest = async (id: number): Promise<Blob> => {
+  try {
+    const token = Cookies.get('session');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(
+      `${API_URL}/api/printed-letters/preview/${id}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to preview letter request');
+    }
+
+    return await response.blob();
+  } catch (error) {
+    console.error('Error in previewLetterRequest:', error);
+    throw error;
+  }
+};
