@@ -229,3 +229,24 @@ export const deleteLetterRequest = async (id: number): Promise<void> => {
     throw error;
   }
 };
+
+export const getAttachmentFile = async (url: string): Promise<Blob> => {
+  try {
+    const token = Cookies.get('session');
+    const response = await fetch(`${API_URL}${url}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch document file');
+    }
+
+    return await response.blob();
+  } catch (error) {
+    console.error('Get document file error:', error);
+    throw error;
+  }
+};

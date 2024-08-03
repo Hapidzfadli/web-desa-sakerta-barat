@@ -15,12 +15,14 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
+  Res,
 } from '@nestjs/common';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { LetterRequestService } from './letter-request.service';
+import { Response } from 'express';
 import {
   CreateLetterRequestDto,
   UpdateLetterRequestDto,
@@ -216,5 +218,22 @@ export class LetterRequestController {
     return {
       data: 'Letter request deleted successfully',
     };
+  }
+
+  @Get('attachments/:filename')
+  @HttpCode(HttpStatus.OK)
+  @Roles(Role.WARGA, Role.ADMIN, Role.KADES)
+  async getAttachment(
+    @Param('filename') filename: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const { file, mimeType, fileName } =
+      await this.letterRequestService.getAttachmentFile(filename);
+
+    res.set({
+      'Content-Type': mimeType,
+      'Content-Disposition': `inline; filename="${fileName}"`,
+    });
+    res.send(file);
   }
 }

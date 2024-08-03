@@ -11,6 +11,7 @@ import {
   resubmitLetterRequest,
   updateLetterRequest,
   deleteLetterRequest,
+  getAttachmentFile,
 } from '../../../lib/actions/letterRequest.action';
 import { formatDate } from '../../../lib/utils';
 import { translateStatus } from '../../../lib/letterRequestUtils';
@@ -298,6 +299,20 @@ const DaftarPermohonan = () => {
     setEditedResidentData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleViewAttachment = async (api: string) => {
+    try {
+      const blob = await getAttachmentFile(api);
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Kesalahan',
+        description: 'Gagal melihat dokumen. Silakan coba lagi.',
+      });
+    }
+  };
+
   const renderDetailsFields = () => {
     if (!selectedRequest) return [];
 
@@ -493,20 +508,16 @@ const DaftarPermohonan = () => {
             selectedRequest?.attachments.length > 0 && (
               <div className="space-y-2">
                 {selectedRequest?.attachments?.map((attachment, index) => (
-                  <div
+                  <Button
                     key={index}
-                    className="flex items-center input-form p-2 rounded-lg"
+                    className="flex items-center input-form p-2 rounded-lg w-full justify-start"
+                    onClick={() => {
+                      handleViewAttachment(attachment.fileUrl);
+                    }}
                   >
-                    <a
-                      href={attachment.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex"
-                    >
-                      <FileIcon className="mr-2 h-5 w-5 text-blue-500" />
-                      {attachment.fileName}
-                    </a>
-                  </div>
+                    <FileIcon className="mr-2 h-5 w-5 text-blue-500" />
+                    {attachment.fileName}
+                  </Button>
                 ))}
               </div>
             )

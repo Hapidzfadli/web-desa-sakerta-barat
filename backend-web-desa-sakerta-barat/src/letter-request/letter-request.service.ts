@@ -31,6 +31,8 @@ import * as Docxtemplater from 'docxtemplater';
 import * as fs from 'fs';
 import * as path from 'path';
 import { promises as fsPromises } from 'fs';
+import * as fse from 'fs/promises';
+import * as mime from 'mime-types';
 @Injectable()
 export class LetterRequestService {
   constructor(
@@ -458,7 +460,7 @@ export class LetterRequestService {
     const residentDocuments =
       letterRequest.resident?.documents?.map((doc) => ({
         fileName: doc.type,
-        fileUrl: `/api/resident/document/${doc.id}/file`,
+        fileUrl: `/api/residents/documents/${doc.id}/file`,
         documentId: doc.id,
       })) || [];
 
@@ -490,7 +492,7 @@ export class LetterRequestService {
     const residentDocuments =
       letterRequest.resident?.documents?.map((doc: any) => ({
         fileName: doc.type,
-        fileUrl: `/api/resident/document/${doc.id}/file`,
+        fileUrl: `/api/residents/documents/${doc.id}/file`,
         documentId: doc.id,
       })) || [];
 
@@ -609,6 +611,24 @@ export class LetterRequestService {
     ]);
 
     this.logger.debug(`Letter request ${requestId} deleted by user ${userId}`);
+  }
+
+  async getAttachmentFile(filename: string): Promise<{
+    file: Buffer;
+    mimeType: string;
+    fileName: string;
+  }> {
+    const uploadDir = 'uploads/letter-request-attachments';
+    const filePath = path.join(process.cwd(), uploadDir, filename);
+
+    try {
+      const file = await fse.readFile(filePath);
+      const mimeType = mime.lookup(filePath) || 'application/octet-stream';
+      return { file, mimeType, fileName: filename };
+    } catch (error) {
+      this.logger.error(`Error reading file: ${error.message}`, error.stack);
+      throw new NotFoundException('Attachment file not found');
+    }
   }
 
   private async generateSignedLetter(letterRequest: any): Promise<void> {
