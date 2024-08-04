@@ -45,6 +45,9 @@ interface TableProps<T> {
   totalItems?: number;
   currentPage?: number;
   itemsPerPage?: number;
+  onSort?: (column: string) => void;
+  sortColumn?: string | null;
+  sortOrder?: 'asc' | 'desc';
 }
 
 function DataTable<T extends { id: string | number }>({
@@ -60,6 +63,9 @@ function DataTable<T extends { id: string | number }>({
   totalItems,
   currentPage: controlledCurrentPage,
   itemsPerPage: controlledItemsPerPage,
+  onSort,
+  sortColumn: controlledSortColumn,
+  sortOrder: controlledSortOrder,
 }: TableProps<T>) {
   const [internalCurrentPage, setInternalCurrentPage] = useState(1);
   const [internalItemsPerPage, setInternalItemsPerPage] = useState(
@@ -99,13 +105,11 @@ function DataTable<T extends { id: string | number }>({
   };
 
   const handleSort = (column: string) => {
-    if (sortColumn === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    if (onSort) {
+      onSort(column);
     } else {
-      setSortColumn(column);
-      setSortOrder('asc');
+      // Local sorting logic if needed
     }
-    // Here you would typically sort your data based on the column and order
   };
 
   const displayData = data;
@@ -163,21 +167,23 @@ function DataTable<T extends { id: string | number }>({
             <TableRow>
               {columns.map((column, index) => (
                 <TableHead key={index} className={column.className}>
-                  {column.header !== 'Action' ? (
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort(column.accessor as string)}
-                      className="hover:bg-transparent p-0"
-                    >
-                      {column.header}
-                      <FontAwesomeIcon
-                        icon={faSort}
-                        className="ml-2 h-4 w-4 text-[#9E9E9E]"
-                      />
-                    </Button>
-                  ) : (
-                    column.header
-                  )}
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort(column.accessor as string)}
+                    className="hover:bg-transparent p-0"
+                  >
+                    {column.header}
+                    <FontAwesomeIcon
+                      icon={faSort}
+                      className={`ml-2 h-4 w-4 ${
+                        controlledSortColumn === column.accessor
+                          ? controlledSortOrder === 'asc'
+                            ? 'text-blue-500'
+                            : 'text-blue-500 rotate-180'
+                          : 'text-[#9E9E9E]'
+                      }`}
+                    />
+                  </Button>
                 </TableHead>
               ))}
             </TableRow>

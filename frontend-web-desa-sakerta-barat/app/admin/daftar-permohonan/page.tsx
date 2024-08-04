@@ -49,10 +49,20 @@ const DaftarPermohonan = () => {
   const queryClient = useQueryClient();
   const [previewRequestId, setPreviewRequestId] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['letterRequests', page, limit, searchQuery],
-    queryFn: () => fetchLetterRequests(page, limit, searchQuery),
+    queryKey: [
+      'letterRequests',
+      page,
+      limit,
+      searchQuery,
+      sortColumn,
+      sortOrder,
+    ],
+    queryFn: () =>
+      fetchLetterRequests(page, limit, searchQuery, sortColumn, sortOrder),
     staleTime: 60000,
     cacheTime: 30000,
     refetchOnWindowFocus: false,
@@ -252,6 +262,15 @@ const DaftarPermohonan = () => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    setPage(1);
+  };
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortOrder('asc');
+    }
     setPage(1);
   };
 
@@ -568,6 +587,9 @@ const DaftarPermohonan = () => {
         currentPage={page}
         itemsPerPage={limit}
         isLoading={isLoading}
+        onSort={handleSort}
+        sortColumn={sortColumn}
+        sortOrder={sortOrder}
       />
       {selectedRequestId && (
         <EditPopup

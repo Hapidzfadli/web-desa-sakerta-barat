@@ -398,6 +398,20 @@ export class LetterRequestService {
         );
       }
 
+      let orderBy: any = {};
+      if (options.sortBy) {
+        switch (options.sortBy) {
+          case 'letterName':
+            orderBy = { letterType: { name: options.sortOrder } };
+            break;
+          case 'residentName':
+            orderBy = { resident: { name: options.sortOrder } };
+            break;
+          default:
+            orderBy = { [options.sortBy]: options.sortOrder };
+        }
+      }
+
       const result = await prismaPaginate<LetterRequest>(
         this.prismaService,
         'letterRequest',
@@ -410,6 +424,7 @@ export class LetterRequestService {
             letterType: true,
             attachments: true,
           },
+          orderBy,
         },
       );
 

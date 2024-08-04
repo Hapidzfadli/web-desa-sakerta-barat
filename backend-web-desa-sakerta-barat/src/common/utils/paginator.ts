@@ -10,6 +10,7 @@ export interface PaginateOptions {
   filter?: Record<string, any>;
   select?: Record<string, boolean>;
   include?: Record<string, boolean>;
+  orderBy?: any;
 }
 
 export interface PaginatedResult<T> {
@@ -64,7 +65,7 @@ export async function prismaPaginate<T>(
       where: whereClause,
       skip,
       take: limit,
-      orderBy: { [sortBy]: sortOrder },
+      orderBy: options.orderBy || { [sortBy]: sortOrder },
       ...(select ? { select } : {}),
       ...(include ? { include } : {}),
     }),

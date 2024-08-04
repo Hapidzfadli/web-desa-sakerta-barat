@@ -46,6 +46,8 @@ export const fetchLetterRequests = async (
   page: number = 1,
   limit: number = 10,
   search?: string,
+  sortColumn?: string,
+  sortOrder?: 'asc' | 'desc',
 ): Promise<LetterRequestsResponse> => {
   try {
     const token = Cookies.get('session');
@@ -56,6 +58,9 @@ export const fetchLetterRequests = async (
     let url = `${API_URL}/api/letter-requests?page=${page}&limit=${limit}`;
     if (search) {
       url += `&search=${encodeURIComponent(search)}`;
+    }
+    if (sortColumn) {
+      url += `&sortBy=${sortColumn}&sortOrder=${sortOrder}`;
     }
 
     const response = await fetch(url, {
