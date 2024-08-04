@@ -34,12 +34,14 @@ import { promises as fsPromises } from 'fs';
 import * as fse from 'fs/promises';
 import * as mime from 'mime-types';
 import ImageModule from 'docxtemplater-image-module-free';
+import { UserService } from '../user/user.service';
 @Injectable()
 export class LetterRequestService {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER) private logger: Logger,
     private prismaService: PrismaService,
     private validationService: ValidationService,
+    private userService: UserService,
   ) {}
 
   async createLetterRequest(
@@ -242,6 +244,11 @@ export class LetterRequestService {
       throw new ForbiddenException(
         'Only village head can sign letter requests',
       );
+    }
+
+    const isPinValid = await this.userService.verifyKadesPin(user.id, dto.pin);
+    if (!isPinValid) {
+      throw new ForbiddenException('Invalid PIN');
     }
 
     const letterRequest = await this.prismaService.letterRequest.findUnique({
