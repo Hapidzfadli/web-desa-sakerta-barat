@@ -4,7 +4,7 @@ import Cookies from 'js-cookie';
 export const applyLetter = async (
   letterTypeId: number,
   notes: string,
-  attachments: File[],
+  attachments: File[] = [],
 ) => {
   try {
     const token = Cookies.get('session');
@@ -16,9 +16,11 @@ export const applyLetter = async (
     formData.append('letterTypeId', letterTypeId.toString());
     formData.append('notes', notes);
 
-    attachments.forEach((file, index) => {
-      formData.append(`attachments`, file);
-    });
+    if (attachments && attachments.length > 0) {
+      attachments.forEach((file, index) => {
+        formData.append(`attachments`, file);
+      });
+    }
 
     const response = await fetch(`${API_URL}/api/letter-requests`, {
       method: 'POST',
@@ -197,6 +199,82 @@ export const resubmitLetterRequest = async (id: number): Promise<any> => {
     return data.data;
   } catch (error) {
     console.error('Error in resubmitLetterRequest:', error);
+    throw error;
+  }
+};
+
+export const deleteLetterRequest = async (id: number): Promise<void> => {
+  try {
+    const token = Cookies.get('session');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_URL}/api/letter-requests/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete letter request');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Error in deleteLetterRequest:', error);
+    throw error;
+  }
+};
+
+export const getAttachmentFile = async (url: string): Promise<Blob> => {
+  try {
+    const token = Cookies.get('session');
+    const response = await fetch(`${API_URL}${url}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch document file');
+    }
+
+    return await response.blob();
+  } catch (error) {
+    console.error('Get document file error:', error);
+    throw error;
+  }
+};
+
+export const previewLetterRequest = async (id: number): Promise<Blob> => {
+  try {
+    const token = Cookies.get('session');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(
+      `${API_URL}/api/printed-letters/preview/${id}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to preview letter request');
+    }
+
+    return await response.blob();
+  } catch (error) {
+    console.error('Error in previewLetterRequest:', error);
     throw error;
   }
 };

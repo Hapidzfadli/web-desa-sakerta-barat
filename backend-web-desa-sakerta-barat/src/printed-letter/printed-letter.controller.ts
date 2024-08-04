@@ -63,4 +63,22 @@ export class PrintedLetterController {
 
     res.send(buffer);
   }
+
+  @Get('preview/:letterRequestId')
+  @Roles(Role.ADMIN, Role.KADES, Role.WARGA)
+  async previewLetter(
+    @Param('letterRequestId') letterRequestId: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const buffer = await this.printedLetterService.previewLetter(
+      parseInt(letterRequestId),
+    );
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="preview-letter-${letterRequestId}.pdf"`,
+    });
+
+    res.send(buffer);
+  }
 }

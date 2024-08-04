@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DataTable from '../../../components/shared/Table';
 import { Button } from '../../../components/ui/button';
@@ -10,6 +10,9 @@ import {
   verifyLetterRequest,
   resubmitLetterRequest,
   updateLetterRequest,
+  deleteLetterRequest,
+  getAttachmentFile,
+  previewLetterRequest,
 } from '../../../lib/actions/letterRequest.action';
 import { formatDate } from '../../../lib/utils';
 import { translateStatus } from '../../../lib/letterRequestUtils';
@@ -26,6 +29,7 @@ import {
 import { useUser } from '../../context/UserContext';
 import EditPopup from '../../../components/shared/EditPopup';
 import { updateResidentData } from '../../../lib/actions/setting.actions';
+import PreviewPopup from '../../../components/shared/PreviewPopup';
 
 const DaftarPermohonan = () => {
   const { user } = useUser();
@@ -41,7 +45,10 @@ const DaftarPermohonan = () => {
   const [rejectionReason, setRejectionReason] = useState('');
   const [isEditingResident, setIsEditingResident] = useState(false);
   const [editedResidentData, setEditedResidentData] = useState({});
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const [previewRequestId, setPreviewRequestId] = useState<number | null>(null);
+  const [progress, setProgress] = useState(0);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['letterRequests', page, limit, searchQuery],
@@ -140,6 +147,26 @@ const DaftarPermohonan = () => {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: deleteLetterRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['letterRequests']);
+      toast({
+        title: 'Sukses',
+        description: 'Permohonan surat berhasil dihapus',
+        duration: 3000,
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Gagal menghapus permohonan surat',
+        variant: 'destructive',
+        duration: 3000,
+      });
+    },
+  });
+
   const statusColors: { [key: string]: string } = {
     SUBMITTED: 'bg-[#EBF9F1] text-[#1F9254]',
     APPROVED: 'bg-[#D2F3F3] text-[#3F709D]',
@@ -206,7 +233,12 @@ const DaftarPermohonan = () => {
           >
             <FontAwesomeIcon className="h-4 w-4 text-view" icon={faEye} />
           </Button>
-          <Button size="sm" variant="ghost" title="Delete">
+          <Button
+            size="sm"
+            variant="ghost"
+            title="Delete"
+            onClick={() => handleDelete(row.id)}
+          >
             <FontAwesomeIcon
               className="h-4 w-4 text-delete"
               icon={faTrashCan}
@@ -262,9 +294,74 @@ const DaftarPermohonan = () => {
     updateResidentMutation.mutate(editedResidentData);
   };
 
+  const handleDelete = (id: number) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus permohonan ini?')) {
+      deleteMutation.mutate(id);
+    }
+  };
+
   const handleResidentFieldChange = (name: string, value: string) => {
     setEditedResidentData((prev) => ({ ...prev, [name]: value }));
   };
+
+  const handleViewAttachment = async (api: string) => {
+    try {
+      const blob = await getAttachmentFile(api);
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Kesalahan',
+        description: 'Gagal melihat dokumen. Silakan coba lagi.',
+      });
+    }
+  };
+
+  const {
+    data: pdfBlob,
+    isLoading: isPdfLoading,
+    error: pdfError,
+    refetch: refetchPdf,
+  } = useQuery({
+    queryKey: ['letterPreview', previewRequestId],
+    queryFn: () => {
+      return previewLetterRequest(previewRequestId!);
+    },
+    enabled: false, // We'll manually trigger the query
+  });
+
+  useEffect(() => {
+    if (previewRequestId !== null) {
+      refetchPdf();
+    }
+  }, [previewRequestId, refetchPdf]);
+
+  useEffect(() => {
+    if (isPdfLoading) {
+      const interval = setInterval(() => {
+        setProgress((oldProgress) => {
+          const newProgress = Math.min(oldProgress + 10, 90);
+          return newProgress;
+        });
+      }, 500);
+
+      return () => clearInterval(interval);
+    } else {
+      setProgress(100);
+    }
+  }, [isPdfLoading]);
+
+  const pdfUrl = pdfBlob ? URL.createObjectURL(pdfBlob) : null;
+
+  const handlePreview = useCallback(
+    (id: number) => {
+      setPreviewRequestId(id);
+      setProgress(0);
+      // queryClient.removeQueries(['letterPreview', id]); // Remove any cached query
+    },
+    [queryClient],
+  );
 
   const renderDetailsFields = () => {
     if (!selectedRequest) return [];
@@ -330,6 +427,29 @@ const DaftarPermohonan = () => {
         </Button>
       ),
     });
+
+    if (
+      ['APPROVED', 'SIGNED', 'COMPLETED', 'ARCHIVED'].includes(
+        selectedRequest.status,
+      )
+    ) {
+      fields.push({
+        label: 'Preview Surat',
+        name: 'previewLetter',
+        value: '',
+        type: 'custom',
+        render: () => (
+          <Button
+            onClick={() => {
+              handlePreview(selectedRequest.id);
+            }}
+            className="bg-blue-500 text-white"
+          >
+            Preview Surat
+          </Button>
+        ),
+      });
+    }
 
     return fields;
   };
@@ -461,20 +581,16 @@ const DaftarPermohonan = () => {
             selectedRequest?.attachments.length > 0 && (
               <div className="space-y-2">
                 {selectedRequest?.attachments?.map((attachment, index) => (
-                  <div
+                  <Button
                     key={index}
-                    className="flex items-center input-form p-2 rounded-lg"
+                    className="flex items-center input-form p-2 rounded-lg w-full justify-start"
+                    onClick={() => {
+                      handleViewAttachment(attachment.fileUrl);
+                    }}
                   >
-                    <a
-                      href={attachment.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex"
-                    >
-                      <FileIcon className="mr-2 h-5 w-5 text-blue-500" />
-                      {attachment.fileName}
-                    </a>
-                  </div>
+                    <FileIcon className="mr-2 h-5 w-5 text-blue-500" />
+                    {attachment.fileName}
+                  </Button>
                 ))}
               </div>
             )
@@ -509,6 +625,18 @@ const DaftarPermohonan = () => {
                 )}
             </>
           }
+        />
+      )}
+      {previewRequestId !== null && (
+        <PreviewPopup
+          isOpen={true}
+          onClose={() => {
+            setPreviewRequestId(null);
+            if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+          }}
+          pdfUrl={pdfUrl}
+          isLoading={isPdfLoading}
+          progress={progress}
         />
       )}
       {showApplicantDetails && (

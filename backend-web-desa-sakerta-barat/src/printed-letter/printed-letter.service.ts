@@ -10,7 +10,9 @@ import {
 } from '../model/printed-letter.model';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
-
+import * as libre from 'libreoffice-convert';
+import { promisify } from 'util';
+const libreConvert = promisify(libre.convert);
 @Injectable()
 export class PrintedLetterService {
   constructor(
@@ -98,14 +100,6 @@ export class PrintedLetterService {
       data: createPrintedLetterDto,
     });
 
-    // Update the letterRequest status
-    await this.prismaService.letterRequest.update({
-      where: { id: letterRequestId },
-      data: {
-        status: 'COMPLETED',
-      },
-    });
-
     return buf;
   }
 
@@ -139,5 +133,60 @@ export class PrintedLetterService {
     }
 
     return fs.readFileSync(filePath);
+  }
+
+  async previewLetter(letterRequestId: number): Promise<Buffer> {
+    const letterRequest = await this.prismaService.letterRequest.findUnique({
+      where: { id: letterRequestId },
+      include: {
+        resident: true,
+        letterType: true,
+      },
+    });
+
+    if (!letterRequest) {
+      throw new NotFoundException('Letter request not found');
+    }
+
+    const templatePath = letterRequest.letterType.template.replace(
+      '/api/letter-type/template/',
+      '',
+    );
+    const basePath = path.join(
+      process.cwd(),
+      'uploads',
+      'letter-type-templates',
+    );
+    const filePath = path.join(basePath, templatePath);
+
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException('Template file not found');
+    }
+
+    const content = fs.readFileSync(filePath, 'binary');
+    const zip = new PizZip(content);
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+    });
+
+    // Render the document (replace placeholders)
+    doc.render({
+      nama_lengkap: letterRequest.resident.name,
+      tempat_lahir: letterRequest.resident.placeOfBirth,
+      tanggal_lahir:
+        letterRequest.resident.dateOfBirth.toLocaleDateString('id-ID'),
+      jenis_kelamin: letterRequest.resident.gender,
+      nik: letterRequest.resident.nationalId,
+      pekerjaan: letterRequest.resident.occupation,
+      alamat_lengkap: `${letterRequest.resident.residentialAddress}, RT ${letterRequest.resident.rt}, RW ${letterRequest.resident.rw}, ${letterRequest.resident.district}, ${letterRequest.resident.regency}, ${letterRequest.resident.province} ${letterRequest.resident.postalCode}`,
+    });
+
+    const buf = doc.getZip().generate({ type: 'nodebuffer' });
+
+    // Convert to PDF
+    const pdfBuf = await libreConvert(buf, '.pdf', undefined);
+
+    return pdfBuf;
   }
 }

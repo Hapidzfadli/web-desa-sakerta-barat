@@ -18,7 +18,7 @@ export const useLetterTypeActions = (categoryId: number) => {
       toast({
         title: 'Berhasil',
         description: 'Tipe surat berhasil ditambahkan',
-        duration: 5000,
+        duration: 1000,
       });
     },
     onError: () => {
@@ -26,7 +26,7 @@ export const useLetterTypeActions = (categoryId: number) => {
         title: 'Gagal',
         description: 'Tipe surat gagal disimpan',
         variant: 'destructive',
-        duration: 5000,
+        duration: 1000,
       });
     },
   });
@@ -39,7 +39,7 @@ export const useLetterTypeActions = (categoryId: number) => {
       toast({
         title: 'Berhasil',
         description: 'Tipe surat berhasil diperbaharui',
-        duration: 5000,
+        duration: 1000,
       });
     },
     onError: () => {
@@ -47,7 +47,7 @@ export const useLetterTypeActions = (categoryId: number) => {
         title: 'Gagal',
         description: 'Tipe surat gagal disimpan',
         variant: 'destructive',
-        duration: 5000,
+        duration: 1000,
       });
     },
   });
@@ -59,7 +59,7 @@ export const useLetterTypeActions = (categoryId: number) => {
       toast({
         title: 'Berhasil',
         description: 'Tipe surat berhasil dihapus',
-        duration: 5000,
+        duration: 1000,
       });
     },
     onError: () => {
@@ -67,30 +67,39 @@ export const useLetterTypeActions = (categoryId: number) => {
         title: 'Gagal',
         description: 'Tipe surat gagal dihapus',
         variant: 'destructive',
-        duration: 5000,
+        duration: 1000,
       });
     },
   });
 
   const applyMutation = useMutation({
-    mutationFn: applyLetter,
+    mutationFn: (data: {
+      letterTypeId: number;
+      notes: string;
+      attachments: File[];
+    }) => {
+      if (typeof data.letterTypeId !== 'number' || isNaN(data.letterTypeId)) {
+        throw new Error('Invalid letterTypeId');
+      }
+      return applyLetter(data.letterTypeId, data.notes, data.attachments);
+    },
     onSuccess: () => {
       toast({
         title: 'Berhasil',
         description: 'Pengajuan surat berhasil dikirim',
-        duration: 5000,
+        duration: 1000,
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error in applyMutation:', error);
       toast({
         title: 'Gagal',
         description: 'Pengajuan surat gagal. Silakan coba lagi.',
         variant: 'destructive',
-        duration: 5000,
+        duration: 1000,
       });
     },
   });
-
   const handleAddEdit = async (data: any) => {
     data.categoryId = Number(categoryId);
     if (data.id) {
@@ -109,7 +118,17 @@ export const useLetterTypeActions = (categoryId: number) => {
     notes: string,
     attachments: File[],
   ) => {
-    applyMutation.mutate({ letterTypeId, notes, attachments });
+    console.log('Applying letter with:', { letterTypeId, notes, attachments });
+    if (typeof letterTypeId !== 'number' || isNaN(letterTypeId)) {
+      console.error('Invalid letterTypeId:', letterTypeId);
+      throw new Error('Invalid letterTypeId');
+    }
+    try {
+      await applyMutation.mutateAsync({ letterTypeId, notes, attachments });
+    } catch (error) {
+      console.error('Error in handleApplyLetter:', error);
+      throw error;
+    }
   };
 
   return { handleAddEdit, handleDelete, handleApplyLetter };

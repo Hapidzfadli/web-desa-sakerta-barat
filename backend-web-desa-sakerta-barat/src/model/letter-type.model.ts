@@ -3,6 +3,7 @@ export class CreateLetterTypeRequest {
   name: string;
   description?: string;
   requirements?: string;
+  template: string;
 }
 
 export class UpdateLetterTypeRequest {
@@ -10,6 +11,7 @@ export class UpdateLetterTypeRequest {
   name?: string;
   description?: string;
   requirements?: string;
+  template?: string;
 }
 
 export class ResponseLetterType {
@@ -19,7 +21,7 @@ export class ResponseLetterType {
   description: string | null;
   requirements: string | null;
   icon: string | null;
-  template: string | null;
+  template: string;
   createdAt: Date;
   updatedAt: Date;
 }
