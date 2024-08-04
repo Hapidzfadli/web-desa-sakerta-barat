@@ -14,6 +14,8 @@ export class CreateLetterRequestDto {
 export class UpdateLetterRequestDto {
   notes?: string;
   attachments?: AttachmentDto[];
+  approvedLetterPath?: string;
+  signedLetterPath?: string;
 }
 
 export class VerifyLetterRequestDto {

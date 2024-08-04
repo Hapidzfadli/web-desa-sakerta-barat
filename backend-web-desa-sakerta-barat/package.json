@@ -34,6 +34,7 @@
     "bcrypt": "^5.1.1",
     "docx-pdf": "^0.0.1",
     "docxtemplater": "^3.48.0",
+    "docxtemplater-image-module-free": "^1.1.1",
     "libreoffice-convert": "^1.6.0",
     "nest-winston": "^1.10.0",
     "nestjs-paginate": "^8.6.3",

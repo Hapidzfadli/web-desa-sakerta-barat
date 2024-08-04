@@ -17,3 +17,4 @@ export async function uploadFileAndGetUrl(
   await fs.writeFile(filePath, file.buffer);
   return `${urlPrefix}/${fileName}`;
 }
+

@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
 import * as PizZip from 'pizzip';
 import * as Docxtemplater from 'docxtemplater';
@@ -12,6 +17,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import * as libre from 'libreoffice-convert';
 import { promisify } from 'util';
+import { RequestStatus } from '@prisma/client';
 const libreConvert = promisify(libre.convert);
 @Injectable()
 export class PrintedLetterService {
@@ -32,75 +38,36 @@ export class PrintedLetterService {
     if (!letterRequest) {
       throw new NotFoundException('Letter request not found');
     }
-    this.logger.debug(
-      `letter request template ${letterRequest.letterType.template}`,
-    );
 
-    const templatePath = letterRequest.letterType.template.replace(
-      '/api/letter-type/template/',
-      '',
-    );
-
-    const basePath = path.join(
-      process.cwd(),
-      'uploads',
-      'letter-type-templates',
-    );
-
-    const filePath = path.join(basePath, templatePath);
-    this.logger.debug(`file path :  ${filePath}`);
-
-    if (!fs.existsSync(filePath)) {
-      throw new NotFoundException('Template file not found');
+    let filePath;
+    if (letterRequest.status === RequestStatus.APPROVED) {
+      filePath = letterRequest.approvedLetterPath;
+    } else if (letterRequest.status === RequestStatus.SIGNED) {
+      filePath = letterRequest.signedLetterPath;
+    } else {
+      throw new ForbiddenException('This letter request cannot be printed');
     }
 
-    const content = fs.readFileSync(filePath, 'binary');
-
-    const zip = new PizZip(content);
-    const doc = new Docxtemplater(zip, {
-      paragraphLoop: true,
-      linebreaks: true,
-    });
-
-    // Render the document (replace placeholders)
-    doc.render({
-      nama_lengkap: letterRequest.resident.name,
-      tempat_lahir: letterRequest.resident.placeOfBirth,
-      tanggal_lahir:
-        letterRequest.resident.dateOfBirth.toLocaleDateString('id-ID'),
-      jenis_kelamin: letterRequest.resident.gender,
-      nik: letterRequest.resident.nationalId,
-      pekerjaan: letterRequest.resident.occupation,
-      alamat_lengkap: `${letterRequest.resident.residentialAddress}, RT ${letterRequest.resident.rt}, RW ${letterRequest.resident.rw}, ${letterRequest.resident.district}, ${letterRequest.resident.regency}, ${letterRequest.resident.province} ${letterRequest.resident.postalCode}`,
-    });
-
-    const buf = doc.getZip().generate({ type: 'nodebuffer' });
-
-    // Save the printed letter
-    const fileName = `letter_${letterRequestId}_${Date.now()}.docx`;
-    const printedLettersDir = path.join(basePath, 'printed_letters');
-
-    if (!fs.existsSync(printedLettersDir)) {
-      fs.mkdirSync(printedLettersDir, { recursive: true });
+    if (!filePath || !fs.existsSync(filePath)) {
+      throw new NotFoundException('Letter file not found');
     }
 
-    const savedFilePath = path.join(printedLettersDir, fileName);
+    const content = fs.readFileSync(filePath);
 
-    fs.writeFileSync(savedFilePath, buf);
-
+    const pdfBuf = await libreConvert(content, '.pdf', undefined);
     // Save the printed letter information
     const createPrintedLetterDto: CreatePrintedLetterDto = {
       letterRequestId: letterRequestId,
       printedBy: userId,
       printedAt: new Date(),
-      fileUrl: `/api/printed-letters/download/${fileName}`,
+      fileUrl: filePath,
     };
 
     await this.prismaService.printedLetter.create({
       data: createPrintedLetterDto,
     });
 
-    return buf;
+    return pdfBuf;
   }
 
   async getPrintedLettersByResident(
@@ -148,44 +115,23 @@ export class PrintedLetterService {
       throw new NotFoundException('Letter request not found');
     }
 
-    const templatePath = letterRequest.letterType.template.replace(
-      '/api/letter-type/template/',
-      '',
-    );
-    const basePath = path.join(
-      process.cwd(),
-      'uploads',
-      'letter-type-templates',
-    );
-    const filePath = path.join(basePath, templatePath);
-
-    if (!fs.existsSync(filePath)) {
-      throw new NotFoundException('Template file not found');
+    let filePath;
+    if (letterRequest.status === RequestStatus.APPROVED) {
+      filePath = letterRequest.approvedLetterPath;
+    } else if (letterRequest.status === RequestStatus.SIGNED) {
+      filePath = letterRequest.signedLetterPath;
+    } else {
+      throw new ForbiddenException('This letter request cannot be previewed');
     }
 
-    const content = fs.readFileSync(filePath, 'binary');
-    const zip = new PizZip(content);
-    const doc = new Docxtemplater(zip, {
-      paragraphLoop: true,
-      linebreaks: true,
-    });
+    if (!filePath || !fs.existsSync(filePath)) {
+      throw new NotFoundException('Letter file not found');
+    }
 
-    // Render the document (replace placeholders)
-    doc.render({
-      nama_lengkap: letterRequest.resident.name,
-      tempat_lahir: letterRequest.resident.placeOfBirth,
-      tanggal_lahir:
-        letterRequest.resident.dateOfBirth.toLocaleDateString('id-ID'),
-      jenis_kelamin: letterRequest.resident.gender,
-      nik: letterRequest.resident.nationalId,
-      pekerjaan: letterRequest.resident.occupation,
-      alamat_lengkap: `${letterRequest.resident.residentialAddress}, RT ${letterRequest.resident.rt}, RW ${letterRequest.resident.rw}, ${letterRequest.resident.district}, ${letterRequest.resident.regency}, ${letterRequest.resident.province} ${letterRequest.resident.postalCode}`,
-    });
-
-    const buf = doc.getZip().generate({ type: 'nodebuffer' });
+    const content = fs.readFileSync(filePath);
 
     // Convert to PDF
-    const pdfBuf = await libreConvert(buf, '.pdf', undefined);
+    const pdfBuf = await libreConvert(content, '.pdf', undefined);
 
     return pdfBuf;
   }

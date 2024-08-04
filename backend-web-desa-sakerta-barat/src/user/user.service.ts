@@ -15,7 +15,8 @@ import * as bcrypt from 'bcrypt';
 import { User } from '@prisma/client';
 import { PaginateOptions, prismaPaginate } from '../common/utils/paginator';
 import { ZodError } from 'zod';
-
+import path from 'path';
+import * as fs from 'fs';
 @Injectable()
 export class UserService {
   constructor(
@@ -147,6 +148,25 @@ export class UserService {
           endsWith: fileName,
         },
       },
+    });
+  }
+  async saveKadesSignature(
+    kadesId: number,
+    signatureFile: Express.Multer.File,
+  ): Promise<void> {
+    const uploadDir = path.join(process.cwd(), 'uploads', 'signatures');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const fileName = `kades_signature_${kadesId}.png`;
+    const filePath = path.join(uploadDir, fileName);
+
+    await fs.promises.writeFile(filePath, signatureFile.buffer);
+
+    await this.prismaService.user.update({
+      where: { id: kadesId },
+      data: { digitalSignature: filePath },
     });
   }
 }

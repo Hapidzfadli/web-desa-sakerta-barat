@@ -33,6 +33,7 @@ import * as path from 'path';
 import { promises as fsPromises } from 'fs';
 import * as fse from 'fs/promises';
 import * as mime from 'mime-types';
+import ImageModule from 'docxtemplater-image-module-free';
 @Injectable()
 export class LetterRequestService {
   constructor(
@@ -215,8 +216,14 @@ export class LetterRequestService {
       },
       include: {
         attachments: true,
+        letterType: true,
+        resident: true,
       },
     });
+
+    if (updatedLetterRequest.status === RequestStatus.APPROVED) {
+      await this.generateAndSaveApprovedLetter(updatedLetterRequest);
+    }
 
     return this.mapToResponseLetterRequest(updatedLetterRequest);
   }
@@ -282,7 +289,7 @@ export class LetterRequestService {
     });
 
     if (updatedStatus === RequestStatus.SIGNED) {
-      await this.generateSignedLetter(updatedLetterRequest);
+      await this.generateAndSaveSignedLetter(updatedLetterRequest);
     }
 
     return this.mapToResponseLetterRequest(updatedLetterRequest);
@@ -616,14 +623,31 @@ export class LetterRequestService {
       }
     }
 
-    await this.prismaService.$transaction([
-      this.prismaService.attachment.deleteMany({
+    await this.prismaService.$transaction(async (prisma) => {
+      await prisma.attachment.deleteMany({
         where: { letterRequestId: requestId },
-      }),
-      this.prismaService.letterRequest.delete({
+      });
+
+      await prisma.printedLetter.deleteMany({
+        where: { letterRequestId: requestId },
+      });
+
+      await prisma.letterStatusHistory.deleteMany({
+        where: { letterRequestId: requestId },
+      });
+
+      await prisma.letterVersion.deleteMany({
+        where: { letterRequestId: requestId },
+      });
+
+      await prisma.archivedLetter.deleteMany({
+        where: { letterRequestId: requestId },
+      });
+
+      await prisma.letterRequest.delete({
         where: { id: requestId },
-      }),
-    ]);
+      });
+    });
 
     this.logger.debug(`Letter request ${requestId} deleted by user ${userId}`);
   }
@@ -646,7 +670,7 @@ export class LetterRequestService {
     }
   }
 
-  private async generateSignedLetter(letterRequest: any): Promise<void> {
+  private async generateAndSaveSignedLetter(letterRequest: any): Promise<void> {
     const templatePath = letterRequest.letterType.template.replace(
       '/api/letter-type/template/',
       '',
@@ -657,33 +681,80 @@ export class LetterRequestService {
       'letter-type-templates',
     );
     const filePath = path.join(basePath, templatePath);
-    this.logger.debug(`file path :  ${filePath}`);
+
     if (!fs.existsSync(filePath)) {
       throw new NotFoundException('Template file not found');
     }
+
+    // Ambil user Kades
+    const kades = await this.prismaService.user.findFirst({
+      where: { role: Role.KADES },
+    });
+
+    if (!kades || !kades.digitalSignature) {
+      throw new Error('Tanda tangan Kades tidak ditemukan');
+    }
+
     const content = fs.readFileSync(filePath, 'binary');
     const zip = new PizZip(content);
+
+    const signatureImage = fs.readFileSync(kades.digitalSignature);
+    const signatureBase64 = signatureImage.toString('base64');
+
     const doc = new Docxtemplater(zip, {
       paragraphLoop: true,
       linebreaks: true,
+      modules: [
+        new ImageModule({
+          centered: false,
+          fileType: 'docx',
+        }),
+      ],
     });
-    // Render the document (replace placeholders)
+
     doc.render({
-      tanda_tangan: letterRequest.resident.user.digitalSignature,
+      nama_lengkap: letterRequest.resident.name,
+      tempat_lahir: letterRequest.resident.placeOfBirth,
+      tanggal_lahir:
+        letterRequest.resident.dateOfBirth.toLocaleDateString('id-ID'),
+      jenis_kelamin: letterRequest.resident.gender,
+      nik: letterRequest.resident.nationalId,
+      pekerjaan: letterRequest.resident.occupation,
+      alamat_lengkap: `${letterRequest.resident.residentialAddress}, RT ${letterRequest.resident.rt}, RW ${letterRequest.resident.rw}, ${letterRequest.resident.district}, ${letterRequest.resident.regency}, ${letterRequest.resident.province} ${letterRequest.resident.postalCode}`,
+      tanda_tangan: {
+        width: 100,
+        height: 50,
+        data: signatureBase64,
+        extension: '.png',
+      },
+      nama_kades: kades.name,
     });
+
     const buf = doc.getZip().generate({ type: 'nodebuffer' });
+
     // Save the signed letter
-    const fileName = `letter_${letterRequest.id}_${Date.now()}.docx`;
-    const signedLettersDir = path.join(basePath, 'signed_letters');
+    const fileName = `${letterRequest.resident.name}_${letterRequest.letterType.name}_signed.docx`;
+    const signedLettersDir = path.join(
+      process.cwd(),
+      'uploads',
+      'signed_letters',
+    );
+
     if (!fs.existsSync(signedLettersDir)) {
       fs.mkdirSync(signedLettersDir, { recursive: true });
     }
+
     const savedFilePath = path.join(signedLettersDir, fileName);
     fs.writeFileSync(savedFilePath, buf);
+
+    // Update the letterRequest with the file path
+    await this.prismaService.letterRequest.update({
+      where: { id: letterRequest.id },
+      data: { signedLetterPath: savedFilePath },
+    });
   }
 
   private generateLetterNumber(): string {
-    // Implement your letter number generation logic here
     return `LTR-${Date.now()}`;
   }
   private async processAttachments(attachments?: Express.Multer.File[]) {
@@ -705,5 +776,70 @@ export class LetterRequestService {
         };
       }),
     );
+  }
+
+  private async generateAndSaveApprovedLetter(
+    letterRequest: any,
+  ): Promise<void> {
+    if (!letterRequest.letterType || !letterRequest.letterType.template) {
+      throw new NotFoundException('Letter type or template not found');
+    }
+
+    const templatePath = letterRequest.letterType.template.replace(
+      '/api/letter-type/template/',
+      '',
+    );
+    const basePath = path.join(
+      process.cwd(),
+      'uploads',
+      'letter-type-templates',
+    );
+    const filePath = path.join(basePath, templatePath);
+
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException('Template file not found');
+    }
+
+    const content = fs.readFileSync(filePath, 'binary');
+    const zip = new PizZip(content);
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+    });
+
+    // Render the document (replace placeholders)
+    doc.render({
+      nama_lengkap: letterRequest.resident.name,
+      tempat_lahir: letterRequest.resident.placeOfBirth,
+      tanggal_lahir:
+        letterRequest.resident.dateOfBirth.toLocaleDateString('id-ID'),
+      jenis_kelamin: letterRequest.resident.gender,
+      nik: letterRequest.resident.nationalId,
+      pekerjaan: letterRequest.resident.occupation,
+      alamat_lengkap: `${letterRequest.resident.residentialAddress}, RT ${letterRequest.resident.rt}, RW ${letterRequest.resident.rw}, ${letterRequest.resident.district}, ${letterRequest.resident.regency}, ${letterRequest.resident.province} ${letterRequest.resident.postalCode}`,
+    });
+
+    const buf = doc.getZip().generate({ type: 'nodebuffer' });
+
+    // Save the approved letter
+    const fileName = `${letterRequest.resident.name}_${letterRequest.letterType.name}_approved.docx`;
+    const approvedLettersDir = path.join(
+      process.cwd(),
+      'uploads',
+      'approved_letters',
+    );
+
+    if (!fs.existsSync(approvedLettersDir)) {
+      fs.mkdirSync(approvedLettersDir, { recursive: true });
+    }
+
+    const savedFilePath = path.join(approvedLettersDir, fileName);
+    fs.writeFileSync(savedFilePath, buf);
+
+    // Update the letterRequest with the file path
+    await this.prismaService.letterRequest.update({
+      where: { id: letterRequest.id },
+      data: { approvedLetterPath: savedFilePath },
+    });
   }
 }

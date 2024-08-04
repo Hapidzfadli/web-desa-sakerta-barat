@@ -283,3 +283,28 @@ export const previewLetterRequest = async (id: number): Promise<Blob> => {
     throw error;
   }
 };
+
+export const printLetterRequest = async (id: number): Promise<Blob> => {
+  try {
+    const token = Cookies.get('session');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_URL}/api/printed-letters/print/${id}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get printable letter');
+    }
+
+    return await response.blob();
+  } catch (error) {
+    console.error('Error in printLetterRequest:', error);
+    throw error;
+  }
+};

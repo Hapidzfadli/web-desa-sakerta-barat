@@ -13,8 +13,8 @@ import { PrintedLetterResponse } from '../model/printed-letter.model';
 export class PrintedLetterController {
   constructor(private printedLetterService: PrintedLetterService) {}
 
-  @Post('print/:letterRequestId')
-  @Roles(Role.ADMIN, Role.KADES)
+  @Get('print/:letterRequestId')
+  @Roles(Role.ADMIN, Role.KADES, Role.WARGA)
   async printLetter(
     @Param('letterRequestId') letterRequestId: string,
     @Auth() user: any,
@@ -26,9 +26,8 @@ export class PrintedLetterController {
     );
 
     res.set({
-      'Content-Type':
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'Content-Disposition': `attachment; filename="letter-${letterRequestId}.docx"`,
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="letter-${letterRequestId}.pdf"`,
     });
 
     res.send(buffer);
