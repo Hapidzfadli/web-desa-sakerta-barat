@@ -4,6 +4,7 @@ import {
   saveResidentData,
   saveProfilePicture,
   addDocument,
+  uploadSignature,
 } from '../../../lib/actions/setting.actions';
 import { DocumentType } from '../types/profile.types';
 import {
@@ -100,10 +101,30 @@ export const useProfileActions = () => {
     }
   };
 
+  const handleUploadSignature = async (file: File) => {
+    try {
+      const data = await uploadSignature(file);
+      toast({
+        title: 'Berhasil',
+        description: 'Tanda tangan digital berhasil diunggah',
+      });
+      return data;
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Kesalahan',
+        description:
+          'Gagal mengunggah tanda tangan digital. Silakan coba lagi.',
+      });
+      throw error;
+    }
+  };
+
   return {
     handleSaveProfile,
     handleSaveResident,
     handleSaveAvatar,
     handleAddDocument,
+    handleUploadSignature,
   };
 };

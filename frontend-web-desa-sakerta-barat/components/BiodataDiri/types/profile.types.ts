@@ -2,6 +2,8 @@ export interface ProfileData {
   username: string;
   firstName: string;
   lastName: string;
+  digitalSignature?: string;
+  signatureUrl?: string;
   name: string;
   email: string;
   phoneNumber: string;

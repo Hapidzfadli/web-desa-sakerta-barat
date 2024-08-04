@@ -5,14 +5,18 @@ import ProfileCard from './ProfileCard';
 import ResidentCard from './ResidentCard';
 import DocumentCard from './DocumentCard';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import SignatureCard from './SignatureCard';
+import { useUser } from '../../app/context/UserContext';
 
 const BiodataDiri: React.FC = () => {
   const { profileData, isLoading, error } = useProfileData();
+  const { user } = useUser();
   const {
     handleSaveProfile,
     handleSaveResident,
     handleSaveAvatar,
     handleAddDocument,
+    handleUploadSignature,
   } = useProfileActions();
 
   const [isProfilePopupOpen, setIsProfilePopupOpen] = useState(false);
@@ -65,6 +69,12 @@ const BiodataDiri: React.FC = () => {
         isPopupOpen={isResidentPopupOpen}
         setIsPopupOpen={setIsResidentPopupOpen}
       />
+      {user?.role === 'KADES' && (
+        <SignatureCard
+          signatureUrl={profileData.signatureUrl ?? null}
+          onUploadSignature={handleUploadSignature}
+        />
+      )}
       <DocumentCard
         documents={profileData.resident?.documents}
         onAddDocument={onAddDocument}

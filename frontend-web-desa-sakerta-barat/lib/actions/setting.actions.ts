@@ -295,3 +295,36 @@ export const addDocument = async (file: File, type: DocumentType) => {
     throw error;
   }
 };
+
+export const uploadSignature = async (file: File) => {
+  const token = Cookies.get('session');
+  const formData = new FormData();
+  formData.append('signature', file);
+
+  const response = await fetch(`${API_URL}/api/users/upload-signature`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to upload signature');
+  }
+
+  return response.json();
+};
+
+export const getSignature = async (fileName: string) => {
+  const token = Cookies.get('session');
+  const response = await fetch(`${API_URL}${fileName}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error('Failed to get signature');
+  }
+  return URL.createObjectURL(await response.blob());
+};
