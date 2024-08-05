@@ -15,6 +15,8 @@ interface PreviewPopupProps {
   isLoading: boolean;
   progress: number;
   onPrint: () => void;
+  onSign: () => void;
+  showSignButton: boolean;
 }
 
 const PreviewPopup: React.FC<PreviewPopupProps> = ({
@@ -24,6 +26,8 @@ const PreviewPopup: React.FC<PreviewPopupProps> = ({
   isLoading,
   progress,
   onPrint,
+  onSign,
+  showSignButton,
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -47,7 +51,15 @@ const PreviewPopup: React.FC<PreviewPopupProps> = ({
                   className="min-h-32 rounded-lg shadow-card"
                   style={{ border: 'none' }}
                 />
-                <div className="mt-4 flex justify-end">
+                <div className="mt-4 flex justify-end space-x-2">
+                  {showSignButton && (
+                    <Button
+                      onClick={onSign}
+                      className="bg-green-500 text-white"
+                    >
+                      Tanda Tangani Surat
+                    </Button>
+                  )}
                   <Button onClick={onPrint} className="bg-blue-500 text-white">
                     Cetak Surat
                   </Button>

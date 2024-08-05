@@ -308,3 +308,34 @@ export const printLetterRequest = async (id: number): Promise<Blob> => {
     throw error;
   }
 };
+
+export const signLetterRequest = async (
+  id: number,
+  pin: string,
+): Promise<LetterRequest> => {
+  try {
+    const token = Cookies.get('session');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_URL}/api/letter-requests/${id}/sign`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ pin, status: 'SIGNED' }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to sign letter request');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Error in signLetterRequest:', error);
+    throw error;
+  }
+};

@@ -14,6 +14,7 @@ import {
   getAttachmentFile,
   previewLetterRequest,
   printLetterRequest,
+  signLetterRequest,
 } from '../../../lib/actions/letterRequest.action';
 import { formatDate } from '../../../lib/utils';
 import { translateStatus } from '../../../lib/letterRequestUtils';
@@ -31,6 +32,7 @@ import { useUser } from '../../context/UserContext';
 import EditPopup from '../../../components/shared/EditPopup';
 import { updateResidentData } from '../../../lib/actions/setting.actions';
 import PreviewPopup from '../../../components/shared/PreviewPopup';
+import PinPopup from '../../../components/shared/PinPopup';
 
 const DaftarPermohonan = () => {
   const { user } = useUser();
@@ -53,6 +55,8 @@ const DaftarPermohonan = () => {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isPrinting, setIsPrinting] = useState(false);
+  const [showPinPopup, setShowPinPopup] = useState(false);
+  const [signPin, setSignPin] = useState('');
 
   const { data, isLoading, isError } = useQuery({
     queryKey: [
@@ -179,6 +183,33 @@ const DaftarPermohonan = () => {
     },
   });
 
+  const signMutation = useMutation({
+    mutationFn: ({ id, pin }: { id: number; pin: string }) =>
+      signLetterRequest(id, pin),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['letterRequests']);
+      queryClient.invalidateQueries(['letterRequest', previewRequestId]);
+      toast({
+        title: 'Sukses',
+        description: 'Surat berhasil ditandatangani',
+        duration: 3000,
+      });
+      setShowPinPopup(false);
+      setSignPin('');
+      setPreviewRequestId(null);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Gagal menandatangani surat',
+        variant: 'destructive',
+        duration: 3000,
+      });
+    },
+  });
+
   const {
     data: pdfBlob,
     isLoading: isPdfLoading,
@@ -286,7 +317,7 @@ const DaftarPermohonan = () => {
                   size="sm"
                   variant="ghost"
                   title="Tanda Tangan"
-                  onClick={() => handleSign(row.id)}
+                  onClick={() => handlePrint(row.id)}
                 >
                   <FontAwesomeIcon
                     className="h-4 w-4 text-black-2"
@@ -403,16 +434,18 @@ const DaftarPermohonan = () => {
     setProgress(0);
   }, []);
 
-  const handleSign = useCallback((id: number) => {
-    // Implement the signing logic here
-    console.log('Signing letter request:', id);
-    // You might want to call an API to sign the letter
-    // and then invalidate the queries to refresh the data
-  }, []);
+  const handleSignButtonClick = () => {
+    setShowPinPopup(true);
+  };
+
+  const handleSignConfirm = () => {
+    if (previewRequestId) {
+      signMutation.mutate({ id: previewRequestId, pin: signPin });
+    }
+  };
 
   const printDocument = async () => {
     if (!previewRequestId) return;
-    console.log('HALLOOO');
     setIsPrinting(true);
     try {
       const printableBlob = await printLetterRequest(previewRequestId);
@@ -710,8 +743,21 @@ const DaftarPermohonan = () => {
           isLoading={isPdfLoading}
           progress={progress}
           onPrint={printDocument}
+          onSign={handleSignButtonClick}
+          showSignButton={user?.role === 'KADES'}
         />
       )}
+
+      <PinPopup
+        isOpen={showPinPopup}
+        onClose={() => {
+          setShowPinPopup(false);
+          setSignPin('');
+        }}
+        onConfirm={handleSignConfirm}
+        pin={signPin}
+        setPin={setSignPin}
+      />
 
       {showApplicantDetails && (
         <EditPopup
