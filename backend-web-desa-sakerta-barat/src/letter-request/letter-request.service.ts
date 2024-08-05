@@ -184,9 +184,9 @@ export class LetterRequestService {
       dto,
     );
 
-    // if (user.role !== Role.ADMIN) {
-    //   throw new ForbiddenException('Only admins can verify letter requests');
-    // }
+    if (user.role !== Role.ADMIN) {
+      throw new ForbiddenException('Only admins can verify letter requests');
+    }
 
     const letterRequest = await this.prismaService.letterRequest.findUnique({
       where: { id: requestId },
@@ -261,9 +261,9 @@ export class LetterRequestService {
       throw new NotFoundException('Letter request not found');
     }
 
-    // if (letterRequest.status !== RequestStatus.APPROVED) {
-    //   throw new ForbiddenException('Only approved requests can be signed');
-    // }
+    if (letterRequest.status !== RequestStatus.APPROVED) {
+      throw new ForbiddenException('Only approved requests can be signed');
+    }
 
     let updatedStatus: RequestStatus;
     if (validatedData.status === 'SIGNED') {
