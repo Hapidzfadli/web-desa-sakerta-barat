@@ -97,4 +97,23 @@ export class UserValidation {
         },
       ),
   });
+
+  static readonly CHANGE_PASSWORD: ZodType = z.object({
+    oldPassword: z.string().min(1, 'Old password is required'),
+    newPassword: z
+      .string()
+      .min(8, 'Password harus minimal 8 karakter')
+      .max(100, 'Password maksimal 100 karakter')
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+        'Password harus mengandung minimal satu huruf besar, satu huruf kecil, satu angka, dan satu karakter khusus',
+      ),
+  });
+
+  static readonly UPDATE_KADES_PIN: ZodType = z.object({
+    pin: z
+      .string()
+      .length(6, 'PIN harus terdiri dari 6 digit')
+      .regex(/^\d+$/, 'PIN harus berupa angka'),
+  });
 }

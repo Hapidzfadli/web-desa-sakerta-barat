@@ -46,6 +46,8 @@ export const fetchLetterRequests = async (
   page: number = 1,
   limit: number = 10,
   search?: string,
+  sortColumn?: string,
+  sortOrder?: 'asc' | 'desc',
 ): Promise<LetterRequestsResponse> => {
   try {
     const token = Cookies.get('session');
@@ -56,6 +58,9 @@ export const fetchLetterRequests = async (
     let url = `${API_URL}/api/letter-requests?page=${page}&limit=${limit}`;
     if (search) {
       url += `&search=${encodeURIComponent(search)}`;
+    }
+    if (sortColumn) {
+      url += `&sortBy=${sortColumn}&sortOrder=${sortOrder}`;
     }
 
     const response = await fetch(url, {
@@ -275,6 +280,62 @@ export const previewLetterRequest = async (id: number): Promise<Blob> => {
     return await response.blob();
   } catch (error) {
     console.error('Error in previewLetterRequest:', error);
+    throw error;
+  }
+};
+
+export const printLetterRequest = async (id: number): Promise<Blob> => {
+  try {
+    const token = Cookies.get('session');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_URL}/api/printed-letters/print/${id}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get printable letter');
+    }
+
+    return await response.blob();
+  } catch (error) {
+    console.error('Error in printLetterRequest:', error);
+    throw error;
+  }
+};
+
+export const signLetterRequest = async (
+  id: number,
+  pin: string,
+): Promise<LetterRequest> => {
+  try {
+    const token = Cookies.get('session');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_URL}/api/letter-requests/${id}/sign`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ pin, status: 'SIGNED' }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to sign letter request');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Error in signLetterRequest:', error);
     throw error;
   }
 };

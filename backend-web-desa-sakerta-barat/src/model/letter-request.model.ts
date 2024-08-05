@@ -14,6 +14,8 @@ export class CreateLetterRequestDto {
 export class UpdateLetterRequestDto {
   notes?: string;
   attachments?: AttachmentDto[];
+  approvedLetterPath?: string;
+  signedLetterPath?: string;
 }
 
 export class VerifyLetterRequestDto {
@@ -25,6 +27,7 @@ export class SignLetterRequestDto {
   status: Extract<RequestStatus, 'SIGNED' | 'REJECTED_BY_KADES'>;
   notes?: string;
   rejectionReason?: string;
+  pin: string;
 }
 
 export class AttachmentDto {

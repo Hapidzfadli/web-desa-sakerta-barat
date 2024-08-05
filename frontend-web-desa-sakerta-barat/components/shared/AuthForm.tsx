@@ -59,7 +59,10 @@ const AuthForm = ({ type }: { type: string }) => {
         });
 
         if (response) {
-          if (response.data.role === 'ADMIN') {
+          if (
+            response.data.role === 'ADMIN' ||
+            response.data.role === 'KADES'
+          ) {
             router.push('/admin/dashboard');
           } else {
             router.push('/member/dashboard');

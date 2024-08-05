@@ -13,6 +13,8 @@ import {
   deleteLetterRequest,
   getAttachmentFile,
   previewLetterRequest,
+  printLetterRequest,
+  signLetterRequest,
 } from '../../../lib/actions/letterRequest.action';
 import { formatDate } from '../../../lib/utils';
 import { translateStatus } from '../../../lib/letterRequestUtils';
@@ -30,6 +32,7 @@ import { useUser } from '../../context/UserContext';
 import EditPopup from '../../../components/shared/EditPopup';
 import { updateResidentData } from '../../../lib/actions/setting.actions';
 import PreviewPopup from '../../../components/shared/PreviewPopup';
+import PinPopup from '../../../components/shared/PinPopup';
 
 const DaftarPermohonan = () => {
   const { user } = useUser();
@@ -49,10 +52,23 @@ const DaftarPermohonan = () => {
   const queryClient = useQueryClient();
   const [previewRequestId, setPreviewRequestId] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [showPinPopup, setShowPinPopup] = useState(false);
+  const [signPin, setSignPin] = useState('');
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['letterRequests', page, limit, searchQuery],
-    queryFn: () => fetchLetterRequests(page, limit, searchQuery),
+    queryKey: [
+      'letterRequests',
+      page,
+      limit,
+      searchQuery,
+      sortColumn,
+      sortOrder,
+    ],
+    queryFn: () =>
+      fetchLetterRequests(page, limit, searchQuery, sortColumn, sortOrder),
     staleTime: 60000,
     cacheTime: 30000,
     refetchOnWindowFocus: false,
@@ -167,6 +183,72 @@ const DaftarPermohonan = () => {
     },
   });
 
+  const signMutation = useMutation({
+    mutationFn: ({ id, pin }: { id: number; pin: string }) =>
+      signLetterRequest(id, pin),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['letterRequests']);
+      queryClient.invalidateQueries(['letterRequest', previewRequestId]);
+      toast({
+        title: 'Sukses',
+        description: 'Surat berhasil ditandatangani',
+        duration: 3000,
+      });
+      setShowPinPopup(false);
+      setSignPin('');
+      setPreviewRequestId(null);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Gagal menandatangani surat',
+        variant: 'destructive',
+        duration: 3000,
+      });
+    },
+  });
+
+  const {
+    data: pdfBlob,
+    isLoading: isPdfLoading,
+    error: pdfError,
+    refetch: refetchPdf,
+  } = useQuery({
+    queryKey: ['letterPreview', previewRequestId],
+    queryFn: () => previewLetterRequest(previewRequestId!),
+    enabled: false,
+  });
+
+  useEffect(() => {
+    if (previewRequestId !== null) {
+      refetchPdf();
+    }
+  }, [previewRequestId, refetchPdf]);
+
+  useEffect(() => {
+    if (pdfBlob) {
+      const url = URL.createObjectURL(pdfBlob);
+      setPreviewUrl(url);
+    }
+  }, [pdfBlob]);
+
+  useEffect(() => {
+    if (isPdfLoading) {
+      const interval = setInterval(() => {
+        setProgress((oldProgress) => {
+          const newProgress = Math.min(oldProgress + 10, 90);
+          return newProgress;
+        });
+      }, 500);
+
+      return () => clearInterval(interval);
+    } else {
+      setProgress(100);
+    }
+  }, [isPdfLoading]);
+
   const statusColors: { [key: string]: string } = {
     SUBMITTED: 'bg-[#EBF9F1] text-[#1F9254]',
     APPROVED: 'bg-[#D2F3F3] text-[#3F709D]',
@@ -176,7 +258,8 @@ const DaftarPermohonan = () => {
     ARCHIVED: 'bg-gray-100 text-gray-800',
   };
 
-  const printed = ['SIGNED', 'COMPLETED', 'ARCHIVED'];
+  const printableStatuses = ['APPROVED', 'SIGNED', 'COMPLETED', 'ARCHIVED'];
+
   const columns = [
     { header: 'ID', accessor: 'id', className: 'w-16 text-center' },
     {
@@ -209,15 +292,33 @@ const DaftarPermohonan = () => {
         <div className="flex items-center space-x-1 justify-center">
           {user?.role !== 'WARGA' && (
             <>
-              <Button size="sm" variant="ghost">
-                {printed.includes(row.status) ? (
-                  <FontAwesomeIcon icon={faPrint} className="h-4 w-4" />
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handlePrint(row.id)}
+                disabled={!printableStatuses.includes(row.status)}
+                title={
+                  printableStatuses.includes(row.status)
+                    ? 'Lihat dan Cetak Surat'
+                    : 'Tidak dapat dicetak'
+                }
+              >
+                {printableStatuses.includes(row.status) ? (
+                  <FontAwesomeIcon
+                    icon={faPrint}
+                    className="h-4 w-4 text-blue-500"
+                  />
                 ) : (
-                  <Printer className="h-4 w-4" />
+                  <Printer className="h-4 w-4 text-gray-400" />
                 )}
               </Button>
-              {user?.role === 'KADES' && (
-                <Button size="sm" variant="ghost" title="Tanda Tangan">
+              {user?.role === 'KADES' && row.status === 'APPROVED' && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  title="Tanda Tangan"
+                  onClick={() => handlePrint(row.id)}
+                >
                   <FontAwesomeIcon
                     className="h-4 w-4 text-black-2"
                     icon={faSignature}
@@ -252,6 +353,16 @@ const DaftarPermohonan = () => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    setPage(1);
+  };
+
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortOrder('asc');
+    }
     setPage(1);
   };
 
@@ -318,50 +429,45 @@ const DaftarPermohonan = () => {
     }
   };
 
-  const {
-    data: pdfBlob,
-    isLoading: isPdfLoading,
-    error: pdfError,
-    refetch: refetchPdf,
-  } = useQuery({
-    queryKey: ['letterPreview', previewRequestId],
-    queryFn: () => {
-      return previewLetterRequest(previewRequestId!);
-    },
-    enabled: false, // We'll manually trigger the query
-  });
+  const handlePrint = useCallback((id: number) => {
+    setPreviewRequestId(id);
+    setProgress(0);
+  }, []);
 
-  useEffect(() => {
-    if (previewRequestId !== null) {
-      refetchPdf();
+  const handleSignButtonClick = () => {
+    setShowPinPopup(true);
+  };
+
+  const handleSignConfirm = () => {
+    if (previewRequestId) {
+      signMutation.mutate({ id: previewRequestId, pin: signPin });
     }
-  }, [previewRequestId, refetchPdf]);
+  };
 
-  useEffect(() => {
-    if (isPdfLoading) {
-      const interval = setInterval(() => {
-        setProgress((oldProgress) => {
-          const newProgress = Math.min(oldProgress + 10, 90);
-          return newProgress;
-        });
-      }, 500);
+  const printDocument = async () => {
+    if (!previewRequestId) return;
+    setIsPrinting(true);
+    try {
+      const printableBlob = await printLetterRequest(previewRequestId);
+      const printUrl = URL.createObjectURL(printableBlob);
 
-      return () => clearInterval(interval);
-    } else {
-      setProgress(100);
+      const printWindow = window.open(printUrl, '_blank');
+      printWindow?.print();
+
+      // Clean up
+      URL.revokeObjectURL(printUrl);
+    } catch (error) {
+      console.error('Error printing document:', error);
+      toast({
+        title: 'Error',
+        description: 'Gagal mencetak dokumen. Silakan coba lagi.',
+        variant: 'destructive',
+        duration: 3000,
+      });
+    } finally {
+      setIsPrinting(false);
     }
-  }, [isPdfLoading]);
-
-  const pdfUrl = pdfBlob ? URL.createObjectURL(pdfBlob) : null;
-
-  const handlePreview = useCallback(
-    (id: number) => {
-      setPreviewRequestId(id);
-      setProgress(0);
-      // queryClient.removeQueries(['letterPreview', id]); // Remove any cached query
-    },
-    [queryClient],
-  );
+  };
 
   const renderDetailsFields = () => {
     if (!selectedRequest) return [];
@@ -428,24 +534,19 @@ const DaftarPermohonan = () => {
       ),
     });
 
-    if (
-      ['APPROVED', 'SIGNED', 'COMPLETED', 'ARCHIVED'].includes(
-        selectedRequest.status,
-      )
-    ) {
+    if (printableStatuses.includes(selectedRequest.status)) {
       fields.push({
-        label: 'Preview Surat',
+        label: 'Lihat dan Cetak Surat',
         name: 'previewLetter',
         value: '',
         type: 'custom',
         render: () => (
           <Button
-            onClick={() => {
-              handlePreview(selectedRequest.id);
-            }}
+            onClick={() => handlePrint(selectedRequest.id)}
             className="bg-blue-500 text-white"
           >
-            Preview Surat
+            <FontAwesomeIcon icon={faPrint} className="mr-2 h-4 w-4" />
+            Lihat dan Cetak Surat
           </Button>
         ),
       });
@@ -568,6 +669,9 @@ const DaftarPermohonan = () => {
         currentPage={page}
         itemsPerPage={limit}
         isLoading={isLoading}
+        onSort={handleSort}
+        sortColumn={sortColumn}
+        sortOrder={sortOrder}
       />
       {selectedRequestId && (
         <EditPopup
@@ -632,13 +736,29 @@ const DaftarPermohonan = () => {
           isOpen={true}
           onClose={() => {
             setPreviewRequestId(null);
-            if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
           }}
-          pdfUrl={pdfUrl}
+          pdfUrl={previewUrl}
           isLoading={isPdfLoading}
           progress={progress}
+          onPrint={printDocument}
+          onSign={handleSignButtonClick}
+          showSignButton={user?.role === 'KADES'}
         />
       )}
+
+      <PinPopup
+        isOpen={showPinPopup}
+        onClose={() => {
+          setShowPinPopup(false);
+          setSignPin('');
+        }}
+        onConfirm={handleSignConfirm}
+        pin={signPin}
+        setPin={setSignPin}
+      />
+
       {showApplicantDetails && (
         <EditPopup
           title="Detail Pemohon"

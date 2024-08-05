@@ -15,6 +15,7 @@ import {
   ForbiddenException,
   Query,
   BadRequestException,
+  Post,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
@@ -22,11 +23,18 @@ import { UserService } from './user.service';
 import { WebResponse } from '../model/web.model';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { Auth } from '../auth/decorators/auth.decorator';
-import { UpdateUserRequest, UserResponse } from '../model/user.model';
+import {
+  ChangePasswordDto,
+  UpdateKadesPinDto,
+  UpdateUserRequest,
+  UserResponse,
+} from '../model/user.model';
 import { uploadFileAndGetUrl } from '../common/utils/utils';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { PaginateOptions } from '../common/utils/paginator';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '@prisma/client';
 @Controller('/api/users')
 @UseGuards(AuthGuard)
 export class UserController {
@@ -111,6 +119,73 @@ export class UserController {
       res.sendFile(filePath);
     } catch (error) {
       throw new NotFoundException('Profile picture not found');
+    }
+  }
+
+  @Put('change-password')
+  @UseGuards(AuthGuard)
+  async changePassword(
+    @Auth() user: any,
+    @Body() dto: ChangePasswordDto,
+  ): Promise<WebResponse<string>> {
+    await this.userService.changePassword(user.id, dto);
+    return {
+      data: 'Password changed successfully',
+    };
+  }
+
+  @Put('update-kades-pin')
+  @UseGuards(AuthGuard)
+  @Roles(Role.KADES)
+  async updateKadesPin(
+    @Auth() user: any,
+    @Body() dto: UpdateKadesPinDto,
+  ): Promise<WebResponse<string>> {
+    await this.userService.updateKadesPin(user.id, dto);
+    return {
+      data: 'KADES PIN updated successfully',
+    };
+  }
+
+  @Post('upload-signature')
+  @UseGuards(AuthGuard)
+  @Roles(Role.KADES)
+  @UseInterceptors(FileInterceptor('signature'))
+  async uploadSignature(
+    @Auth() user: any,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 1024 * 1024 }), // 1MB
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png)$/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ): Promise<WebResponse<string>> {
+    const signatureUrl = await this.userService.uploadSignature(user.id, file);
+    return {
+      data: signatureUrl,
+    };
+  }
+
+  @Get('signature/:fileName')
+  async getSignature(
+    @Param('fileName') fileName: string,
+    @Res() res: Response,
+  ) {
+    const filePath = path.join(
+      process.cwd(),
+      'uploads',
+      'signatures',
+      fileName,
+    );
+
+    try {
+      await fs.access(filePath);
+      res.sendFile(filePath);
+    } catch (error) {
+      throw new NotFoundException('Signature not found');
     }
   }
 }

@@ -42,7 +42,11 @@ export async function middleware(request: NextRequest) {
       const decodedToken = jwtDecode<CustomJwtPayload>(token);
       const userRole = decodedToken.role || 'WARGA';
 
-      if (path.startsWith('/admin') && userRole !== 'ADMIN') {
+      if (
+        path.startsWith('/admin') &&
+        userRole !== 'ADMIN' &&
+        userRole !== 'KADES'
+      ) {
         return NextResponse.redirect(new URL('/unauthorized', request.url));
       }
 

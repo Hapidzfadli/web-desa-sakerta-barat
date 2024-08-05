@@ -43,3 +43,12 @@ export class UserResponseWithoutPassword {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export class ChangePasswordDto {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export class UpdateKadesPinDto {
+  pin: string;
+}

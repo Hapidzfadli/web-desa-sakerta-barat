@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent } from 'react';
+import React, { useState, ChangeEvent, ReactNode } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,19 +9,22 @@ import {
 import { Button } from '../ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { Input } from '../ui/input';
+import Image from 'next/image';
 
-interface EditAvatarDialogProps {
+interface EditImageDialogProps {
   currentAvatar: string;
   username: string;
   label: string;
   onSave: (file: File) => Promise<void>;
+  children?: ReactNode;
 }
 
-const EditAvatarDialog: React.FC<EditAvatarDialogProps> = ({
+const EditImageDialog: React.FC<EditImageDialogProps> = ({
   currentAvatar,
   username,
   onSave,
   label,
+  children,
 }) => {
   const [open, setOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -47,10 +50,12 @@ const EditAvatarDialog: React.FC<EditAvatarDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Avatar className="h-16 w-16 cursor-pointer">
-          <AvatarImage src={currentAvatar} alt={username} />
-          <AvatarFallback>{username[0]}</AvatarFallback>
-        </Avatar>
+        {children || (
+          <Avatar className="h-16 w-16 cursor-pointer">
+            <AvatarImage src={currentAvatar} alt={username} />
+            <AvatarFallback>{username[0]}</AvatarFallback>
+          </Avatar>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] bg-white">
         <DialogHeader>
@@ -58,20 +63,34 @@ const EditAvatarDialog: React.FC<EditAvatarDialogProps> = ({
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="flex justify-center">
-            <Avatar className="h-32 w-32">
-              <AvatarImage src={previewUrl || currentAvatar} alt={username} />
-              <AvatarFallback>{username[0]}</AvatarFallback>
-            </Avatar>
+            {label === 'Tanda Tangan Digital' ? (
+              <div className="relative w-64 h-32">
+                <img
+                  src={previewUrl || currentAvatar}
+                  alt={label}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                  }}
+                />
+              </div>
+            ) : (
+              <Avatar className="h-32 w-32">
+                <AvatarImage src={previewUrl || currentAvatar} alt={username} />
+                <AvatarFallback>{username[0]}</AvatarFallback>
+              </Avatar>
+            )}
           </div>
           <Input
             className="cursor-pointer input-form"
-            id="avatar"
+            id="image"
             type="file"
             accept="image/*"
             onChange={handleFileChange}
           />
           <Button className="bg-save" onClick={handleSave} disabled={!file}>
-            Save Avatar
+            Simpan {label}
           </Button>
         </div>
       </DialogContent>
@@ -79,4 +98,4 @@ const EditAvatarDialog: React.FC<EditAvatarDialogProps> = ({
   );
 };
 
-export default EditAvatarDialog;
+export default EditImageDialog;

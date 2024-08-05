@@ -153,32 +153,34 @@ model LetterType {
 }
 
 model LetterRequest {
-  id              Int                   @id @default(autoincrement())
-  residentId      Int
-  resident        Resident              @relation(fields: [residentId], references: [id])
-  letterTypeId    Int
-  letterType      LetterType            @relation(fields: [letterTypeId], references: [id])
-  letterNumber    String?               @db.VarChar(50)
-  requestDate     DateTime              @default(now())
-  status          RequestStatus         @default(SUBMITTED)
-  notes           String?               @db.Text
-  rejectionReason String?               @db.Text
-  approvedAt      DateTime?
-  approvedBy      Int?
-  approvedByUser  User?                 @relation("ApprovedBy", fields: [approvedBy], references: [id])
-  signedAt        DateTime?
-  signedBy        Int?
-  signedByUser    User?                 @relation("SignedBy", fields: [signedBy], references: [id])
-  completedAt     DateTime?
-  completedBy     Int?
-  completedByUser User?                 @relation("CompletedBy", fields: [completedBy], references: [id])
-  attachments     Attachment[]
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
-  printedLetters  PrintedLetter[]
-  statusHistory   LetterStatusHistory[]
-  LetterVersion   LetterVersion[]
-  ArchivedLetter  ArchivedLetter?
+  id                 Int                   @id @default(autoincrement())
+  residentId         Int
+  resident           Resident              @relation(fields: [residentId], references: [id])
+  letterTypeId       Int
+  letterType         LetterType            @relation(fields: [letterTypeId], references: [id])
+  letterNumber       String?               @db.VarChar(50)
+  requestDate        DateTime              @default(now())
+  status             RequestStatus         @default(SUBMITTED)
+  notes              String?               @db.Text
+  rejectionReason    String?               @db.Text
+  approvedLetterPath String?
+  signedLetterPath   String?
+  approvedAt         DateTime?
+  approvedBy         Int?
+  approvedByUser     User?                 @relation("ApprovedBy", fields: [approvedBy], references: [id])
+  signedAt           DateTime?
+  signedBy           Int?
+  signedByUser       User?                 @relation("SignedBy", fields: [signedBy], references: [id])
+  completedAt        DateTime?
+  completedBy        Int?
+  completedByUser    User?                 @relation("CompletedBy", fields: [completedBy], references: [id])
+  attachments        Attachment[]
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  printedLetters     PrintedLetter[]
+  statusHistory      LetterStatusHistory[]
+  LetterVersion      LetterVersion[]
+  ArchivedLetter     ArchivedLetter?
 
   @@map("letter_requests")
 }

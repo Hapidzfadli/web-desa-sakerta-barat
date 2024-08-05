@@ -6,6 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 
 interface PreviewPopupProps {
   isOpen: boolean;
@@ -13,6 +14,9 @@ interface PreviewPopupProps {
   pdfUrl: string | null;
   isLoading: boolean;
   progress: number;
+  onPrint: () => void;
+  onSign: () => void;
+  showSignButton: boolean;
 }
 
 const PreviewPopup: React.FC<PreviewPopupProps> = ({
@@ -21,6 +25,9 @@ const PreviewPopup: React.FC<PreviewPopupProps> = ({
   pdfUrl,
   isLoading,
   progress,
+  onPrint,
+  onSign,
+  showSignButton,
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -35,12 +42,30 @@ const PreviewPopup: React.FC<PreviewPopupProps> = ({
               <p>Memuat PDF... {progress.toFixed(0)}%</p>
             </div>
           ) : pdfUrl ? (
-            <iframe
-              src={pdfUrl}
-              width="100%"
-              height="100%"
-              style={{ border: 'none' }}
-            />
+            <>
+              <div className="flex-col flex h-full">
+                <iframe
+                  src={pdfUrl}
+                  width="100%"
+                  height="100%"
+                  className="min-h-32 rounded-lg shadow-card"
+                  style={{ border: 'none' }}
+                />
+                <div className="mt-4 flex justify-end space-x-2">
+                  {showSignButton && (
+                    <Button
+                      onClick={onSign}
+                      className="bg-green-500 text-white"
+                    >
+                      Tanda Tangani Surat
+                    </Button>
+                  )}
+                  <Button onClick={onPrint} className="bg-blue-500 text-white">
+                    Cetak Surat
+                  </Button>
+                </div>
+              </div>
+            </>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
               PDF tidak tersedia

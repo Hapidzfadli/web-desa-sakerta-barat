@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   HttpException,
   Inject,
   Injectable,
@@ -9,13 +10,20 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { ValidationService } from '../common/validation.service';
 import { PrismaService } from '../common/prisma.service';
-import { UpdateUserRequest, UserResponse } from '../model/user.model';
+import {
+  ChangePasswordDto,
+  UpdateKadesPinDto,
+  UpdateUserRequest,
+  UserResponse,
+} from '../model/user.model';
 import { UserValidation } from './user.validation';
 import * as bcrypt from 'bcrypt';
-import { User } from '@prisma/client';
+import { Role, User } from '@prisma/client';
 import { PaginateOptions, prismaPaginate } from '../common/utils/paginator';
 import { ZodError } from 'zod';
-
+import path from 'path';
+import * as fs from 'fs';
+import { uploadFileAndGetUrl } from '../common/utils/utils';
 @Injectable()
 export class UserService {
   constructor(
@@ -148,5 +156,87 @@ export class UserService {
         },
       },
     });
+  }
+
+  async uploadSignature(
+    userId: number,
+    file: Express.Multer.File,
+  ): Promise<string> {
+    const user = await this.prismaService.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.role !== Role.KADES) {
+      throw new ForbiddenException('Only KADES can upload signature');
+    }
+
+    const fileUrl = await uploadFileAndGetUrl(
+      file,
+      'uploads/signatures',
+      '/api/users/signature',
+    );
+
+    await this.prismaService.user.update({
+      where: { id: userId },
+      data: { digitalSignature: fileUrl },
+    });
+
+    return fileUrl;
+  }
+
+  async changePassword(userId: number, dto: ChangePasswordDto): Promise<void> {
+    const user = await this.prismaService.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const isOldPasswordValid = await bcrypt.compare(
+      dto.oldPassword,
+      user.password,
+    );
+    if (!isOldPasswordValid) {
+      throw new BadRequestException('Old password is incorrect');
+    }
+
+    const hashedNewPassword = await bcrypt.hash(dto.newPassword, 10);
+    await this.prismaService.user.update({
+      where: { id: userId },
+      data: { password: hashedNewPassword },
+    });
+  }
+
+  async updateKadesPin(userId: number, dto: UpdateKadesPinDto): Promise<void> {
+    const user = await this.prismaService.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user || user.role !== Role.KADES) {
+      throw new ForbiddenException('Only KADES can update PIN');
+    }
+
+    const hashedPin = await bcrypt.hash(dto.pin, 10);
+    await this.prismaService.user.update({
+      where: { id: userId },
+      data: { signaturePin: hashedPin },
+    });
+  }
+
+  async verifyKadesPin(userId: number, pin: string): Promise<boolean> {
+    const user = await this.prismaService.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user || user.role !== Role.KADES) {
+      throw new ForbiddenException('Invalid user or role');
+    }
+
+    if (!user.signaturePin) {
+      throw new BadRequestException('Kades PIN not set');
+    }
+
+    return bcrypt.compare(pin, user.signaturePin);
   }
 }
