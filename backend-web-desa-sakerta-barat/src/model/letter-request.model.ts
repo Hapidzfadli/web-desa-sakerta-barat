@@ -49,6 +49,8 @@ export class ResponseLetterRequest {
   rejectionReason?: string;
   attachments: AttachmentDto[];
   resident?: ResidentResponse;
+  approvedLetterPath?: string;
+  signedLetterPath?: string;
   createdAt: Date;
   updatedAt: Date;
 }

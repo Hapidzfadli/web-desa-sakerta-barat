@@ -12,7 +12,7 @@ import { ValidationService } from '../common/validation.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { LetterRequestValidation } from './letter-request.validation';
-import { LetterRequest, RequestStatus, Role } from '@prisma/client';
+import { LetterRequest, RequestStatus, Role, User } from '@prisma/client';
 import {
   PaginateOptions,
   PaginatedResult,
@@ -27,14 +27,15 @@ import {
 } from '../model/letter-request.model';
 import { uploadFileAndGetUrl } from '../common/utils/utils';
 import * as PizZip from 'pizzip';
-import * as Docxtemplater from 'docxtemplater';
+import Docxtemplater from 'docxtemplater';
 import * as fs from 'fs';
 import * as path from 'path';
 import { promises as fsPromises } from 'fs';
-import * as fse from 'fs/promises';
+import * as fse from 'fs-extra';
 import * as mime from 'mime-types';
-import ImageModule from 'docxtemplater-image-module-free';
 import { UserService } from '../user/user.service';
+import { v4 as uuidv4 } from 'uuid';
+const ImageModule = require('docxtemplater-image-module-free');
 @Injectable()
 export class LetterRequestService {
   constructor(
@@ -183,9 +184,9 @@ export class LetterRequestService {
       dto,
     );
 
-    if (user.role !== Role.ADMIN) {
-      throw new ForbiddenException('Only admins can verify letter requests');
-    }
+    // if (user.role !== Role.ADMIN) {
+    //   throw new ForbiddenException('Only admins can verify letter requests');
+    // }
 
     const letterRequest = await this.prismaService.letterRequest.findUnique({
       where: { id: requestId },
@@ -260,9 +261,9 @@ export class LetterRequestService {
       throw new NotFoundException('Letter request not found');
     }
 
-    if (letterRequest.status !== RequestStatus.APPROVED) {
-      throw new ForbiddenException('Only approved requests can be signed');
-    }
+    // if (letterRequest.status !== RequestStatus.APPROVED) {
+    //   throw new ForbiddenException('Only approved requests can be signed');
+    // }
 
     let updatedStatus: RequestStatus;
     if (validatedData.status === 'SIGNED') {
@@ -677,88 +678,115 @@ export class LetterRequestService {
     }
   }
 
-  private async generateAndSaveSignedLetter(letterRequest: any): Promise<void> {
-    const templatePath = letterRequest.letterType.template.replace(
-      '/api/letter-type/template/',
-      '',
-    );
-    const basePath = path.join(
-      process.cwd(),
-      'uploads',
-      'letter-type-templates',
-    );
-    const filePath = path.join(basePath, templatePath);
-
-    if (!fs.existsSync(filePath)) {
-      throw new NotFoundException('Template file not found');
+  private async generateAndSaveSignedLetter(
+    letterRequest: LetterRequest,
+  ): Promise<void> {
+    if (!letterRequest.approvedLetterPath) {
+      throw new NotFoundException('Approved letter not found');
     }
 
-    // Ambil user Kades
+    const approvedLetterPath = letterRequest.approvedLetterPath.replace(
+      '/api/letter-requests/approved/',
+      '',
+    );
+    console.log(' Approved letter' + letterRequest.approvedLetterPath);
+    const basePath = path.join(process.cwd(), 'uploads', 'approved_letters');
+    const filePath = path.join(basePath, approvedLetterPath);
+
+    if (!(await fse.pathExists(filePath))) {
+      throw new NotFoundException('Approved letter file not found');
+    }
+
+    // Fetch the Kades user
     const kades = await this.prismaService.user.findFirst({
       where: { role: Role.KADES },
     });
 
     if (!kades || !kades.digitalSignature) {
-      throw new Error('Tanda tangan Kades tidak ditemukan');
+      throw new Error('Kades digital signature not found');
     }
 
-    const content = fs.readFileSync(filePath, 'binary');
-    const zip = new PizZip(content);
-
-    const signatureImage = fs.readFileSync(kades.digitalSignature);
-    const signatureBase64 = signatureImage.toString('base64');
-
-    const doc = new Docxtemplater(zip, {
-      paragraphLoop: true,
-      linebreaks: true,
-      modules: [
-        new ImageModule({
-          centered: false,
-          fileType: 'docx',
-        }),
-      ],
-    });
-
-    doc.render({
-      nama_lengkap: letterRequest.resident.name,
-      tempat_lahir: letterRequest.resident.placeOfBirth,
-      tanggal_lahir:
-        letterRequest.resident.dateOfBirth.toLocaleDateString('id-ID'),
-      jenis_kelamin: letterRequest.resident.gender,
-      nik: letterRequest.resident.nationalId,
-      pekerjaan: letterRequest.resident.occupation,
-      alamat_lengkap: `${letterRequest.resident.residentialAddress}, RT ${letterRequest.resident.rt}, RW ${letterRequest.resident.rw}, ${letterRequest.resident.district}, ${letterRequest.resident.regency}, ${letterRequest.resident.province} ${letterRequest.resident.postalCode}`,
-      tanda_tangan: {
-        width: 100,
-        height: 50,
-        data: signatureBase64,
-        extension: '.png',
-      },
-      nama_kades: kades.name,
-    });
-
-    const buf = doc.getZip().generate({ type: 'nodebuffer' });
-
-    // Save the signed letter
-    const fileName = `${letterRequest.resident.name}_${letterRequest.letterType.name}_signed.docx`;
-    const signedLettersDir = path.join(
+    // Read the signature file
+    const signaturePath = path.join(
       process.cwd(),
       'uploads',
-      'signed_letters',
+      'signatures',
+      path.basename(kades.digitalSignature),
     );
-
-    if (!fs.existsSync(signedLettersDir)) {
-      fs.mkdirSync(signedLettersDir, { recursive: true });
+    if (!(await fse.pathExists(signaturePath))) {
+      throw new NotFoundException('Kades signature file not found');
     }
 
-    const savedFilePath = path.join(signedLettersDir, fileName);
-    fs.writeFileSync(savedFilePath, buf);
+    const content = await fse.readFile(filePath, 'binary');
 
-    // Update the letterRequest with the file path
-    await this.prismaService.letterRequest.update({
-      where: { id: letterRequest.id },
-      data: { signedLetterPath: savedFilePath },
+    // Configure the image module
+    const opts = {
+      centered: false,
+      fileType: 'docx',
+      getImage: function (tagValue: string) {
+        return fs.readFileSync(tagValue);
+      },
+      getSize: function () {
+        return [150, 75]; // width and height in pixels
+      },
+    };
+
+    const imageModule = new ImageModule(opts);
+
+    const zip = new PizZip(content);
+    const doc = new Docxtemplater()
+      .attachModule(imageModule)
+      .loadZip(zip)
+      .setData({ tanda_tangan: signaturePath })
+      .render();
+
+    const buf = doc.getZip().generate({
+      type: 'nodebuffer',
+      compression: 'DEFLATE',
     });
+
+    // Create a temporary file
+    const tempFileName = `${uuidv4()}.docx`;
+    const tempFilePath = path.join(process.cwd(), 'temp', tempFileName);
+    await fse.ensureDir(path.dirname(tempFilePath));
+    await fse.writeFile(tempFilePath, buf);
+
+    // Create a Multer file object
+    const multerFile: Express.Multer.File = {
+      fieldname: 'file',
+      originalname: `signed_${path.basename(approvedLetterPath)}`,
+      encoding: '7bit',
+      mimetype:
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      buffer: buf,
+      size: buf.length,
+      destination: '',
+      filename: tempFileName,
+      path: tempFilePath,
+      stream: null,
+    };
+
+    try {
+      // Upload the file and get the URL
+      const fileUrl = await uploadFileAndGetUrl(
+        multerFile,
+        'uploads/signed_letters',
+        '/api/letter-requests/signed',
+      );
+
+      // Update the letterRequest with the file URL
+      await this.prismaService.letterRequest.update({
+        where: { id: letterRequest.id },
+        data: { signedLetterPath: fileUrl },
+      });
+    } finally {
+      // Clean up the temporary file
+      await fse
+        .remove(tempFilePath)
+        .catch((err) =>
+          this.logger.warn(`Failed to delete temporary file: ${err}`),
+        );
+    }
   }
 
   private generateLetterNumber(): string {
@@ -803,11 +831,16 @@ export class LetterRequestService {
     );
     const filePath = path.join(basePath, templatePath);
 
-    if (!fs.existsSync(filePath)) {
+    if (
+      !(await fse
+        .access(filePath)
+        .then(() => true)
+        .catch(() => false))
+    ) {
       throw new NotFoundException('Template file not found');
     }
 
-    const content = fs.readFileSync(filePath, 'binary');
+    const content = await fse.readFile(filePath, 'binary');
     const zip = new PizZip(content);
     const doc = new Docxtemplater(zip, {
       paragraphLoop: true,
@@ -823,30 +856,53 @@ export class LetterRequestService {
       jenis_kelamin: letterRequest.resident.gender,
       nik: letterRequest.resident.nationalId,
       pekerjaan: letterRequest.resident.occupation,
+      tanda_tangan: '{%tanda_tangan}',
       alamat_lengkap: `${letterRequest.resident.residentialAddress}, RT ${letterRequest.resident.rt}, RW ${letterRequest.resident.rw}, ${letterRequest.resident.district}, ${letterRequest.resident.regency}, ${letterRequest.resident.province} ${letterRequest.resident.postalCode}`,
     });
 
     const buf = doc.getZip().generate({ type: 'nodebuffer' });
 
-    // Save the approved letter
-    const fileName = `${letterRequest.resident.name}_${letterRequest.letterType.name}_approved.docx`;
-    const approvedLettersDir = path.join(
-      process.cwd(),
-      'uploads',
-      'approved_letters',
-    );
+    // Create a temporary file
+    const tempFileName = `${uuidv4()}.docx`;
+    const tempFilePath = path.join(process.cwd(), 'temp', tempFileName);
+    await fse.mkdir(path.dirname(tempFilePath), { recursive: true });
+    await fse.writeFile(tempFilePath, buf);
 
-    if (!fs.existsSync(approvedLettersDir)) {
-      fs.mkdirSync(approvedLettersDir, { recursive: true });
+    // Create a Multer file object
+    const multerFile: Express.Multer.File = {
+      fieldname: 'file',
+      originalname: `${letterRequest.resident.name}_${letterRequest.letterType.name}_approved.docx`,
+      encoding: '7bit',
+      mimetype:
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      buffer: buf,
+      size: buf.length,
+      destination: '',
+      filename: tempFileName,
+      path: tempFilePath,
+      stream: null,
+    };
+
+    try {
+      // Upload the file and get the URL
+      const fileUrl = await uploadFileAndGetUrl(
+        multerFile,
+        'uploads/approved_letters',
+        '/api/letter-requests/approved',
+      );
+
+      // Update the letterRequest with the file URL
+      await this.prismaService.letterRequest.update({
+        where: { id: letterRequest.id },
+        data: { approvedLetterPath: fileUrl },
+      });
+    } finally {
+      // Clean up the temporary file
+      await fse
+        .unlink(tempFilePath)
+        .catch((err) =>
+          this.logger.warn(`Failed to delete temporary file: ${err}`),
+        );
     }
-
-    const savedFilePath = path.join(approvedLettersDir, fileName);
-    fs.writeFileSync(savedFilePath, buf);
-
-    // Update the letterRequest with the file path
-    await this.prismaService.letterRequest.update({
-      where: { id: letterRequest.id },
-      data: { approvedLetterPath: savedFilePath },
-    });
   }
 }
