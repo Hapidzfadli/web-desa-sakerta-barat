@@ -33,6 +33,7 @@ import EditPopup from '../../../components/shared/EditPopup';
 import { updateResidentData } from '../../../lib/actions/setting.actions';
 import PreviewPopup from '../../../components/shared/PreviewPopup';
 import PinPopup from '../../../components/shared/PinPopup';
+import ProgressOverlay from '../../../components/shared/ProgressOverlay';
 
 const DaftarPermohonan = () => {
   const { user } = useUser();
@@ -54,7 +55,9 @@ const DaftarPermohonan = () => {
   const [progress, setProgress] = useState(0);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [isVerifying, setIsVerifying] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [isSigning, setIsSigning] = useState(false);
   const [showPinPopup, setShowPinPopup] = useState(false);
   const [signPin, setSignPin] = useState('');
 
@@ -84,7 +87,7 @@ const DaftarPermohonan = () => {
   });
 
   const { data: selectedRequest, isLoading: isLoadingDetails } = useQuery({
-    queryKey: ['letterRequest', selectedRequestId],
+    queryKey: ['letterRequest', user?.id, selectedRequestId],
     queryFn: () => fetchLetterRequestById(selectedRequestId!),
     enabled: !!selectedRequestId,
   });
@@ -99,9 +102,19 @@ const DaftarPermohonan = () => {
       status: 'APPROVED' | 'REJECTED';
       rejectionReason?: string;
     }) => verifyLetterRequest(id, status, rejectionReason),
+    onMutate: () => {
+      setIsVerifying(true);
+    },
+    onSettled: () => {
+      setIsVerifying(false);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries(['letterRequests']);
-      queryClient.invalidateQueries(['letterRequest', selectedRequestId]);
+      queryClient.invalidateQueries(['letterRequests', user?.id]);
+      queryClient.invalidateQueries([
+        'letterRequest',
+        user?.id,
+        selectedRequestId,
+      ]);
       toast({
         title: 'Sukses',
         description: 'Status permohonan berhasil diperbarui',
@@ -186,9 +199,24 @@ const DaftarPermohonan = () => {
   const signMutation = useMutation({
     mutationFn: ({ id, pin }: { id: number; pin: string }) =>
       signLetterRequest(id, pin),
+    onMutate: () => {
+      setIsSigning(true);
+    },
+    onSettled: () => {
+      setIsSigning(false);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries(['letterRequests']);
-      queryClient.invalidateQueries(['letterRequest', previewRequestId]);
+      queryClient.invalidateQueries(['letterRequests', user?.id]);
+      queryClient.invalidateQueries([
+        'letterRequest',
+        user?.id,
+        previewRequestId,
+      ]);
+      queryClient.invalidateQueries([
+        'letterPreview',
+        user?.id,
+        previewRequestId,
+      ]);
       toast({
         title: 'Sukses',
         description: 'Surat berhasil ditandatangani',
@@ -216,7 +244,7 @@ const DaftarPermohonan = () => {
     error: pdfError,
     refetch: refetchPdf,
   } = useQuery({
-    queryKey: ['letterPreview', previewRequestId],
+    queryKey: ['letterPreview', user?.id, previewRequestId],
     queryFn: () => previewLetterRequest(previewRequestId!),
     enabled: false,
   });
@@ -656,165 +684,176 @@ const DaftarPermohonan = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 ">
-      <DataTable
-        data={data?.data || []}
-        columns={columns}
-        onSearch={handleSearch}
-        searchPlaceholder="Cari Permohonan..."
-        itemsPerPageOptions={[10, 20, 50, 100]}
-        onPageChange={handlePageChange}
-        onItemsPerPageChange={handleItemsPerPageChange}
-        totalItems={data?.paging.total || 0}
-        currentPage={page}
-        itemsPerPage={limit}
-        isLoading={isLoading}
-        onSort={handleSort}
-        sortColumn={sortColumn}
-        sortOrder={sortOrder}
-      />
-      {selectedRequestId && (
-        <EditPopup
-          title="Detail Permohonan"
-          fields={renderDetailsFields()}
-          isOpen={!!selectedRequestId}
-          onClose={() => setSelectedRequestId(null)}
-          viewMode={true}
-          additionalContent={
-            selectedRequest?.attachments &&
-            selectedRequest?.attachments.length > 0 && (
-              <div className="space-y-2">
-                {selectedRequest?.attachments?.map((attachment, index) => (
-                  <Button
-                    key={index}
-                    className="flex items-center input-form p-2 rounded-lg w-full justify-start"
-                    onClick={() => {
-                      handleViewAttachment(attachment.fileUrl);
-                    }}
-                  >
-                    <FileIcon className="mr-2 h-5 w-5 text-blue-500" />
-                    {attachment.fileName}
-                  </Button>
-                ))}
-              </div>
-            )
-          }
-          customButtons={
-            <>
-              {user?.role === 'ADMIN' &&
-                selectedRequest?.status === 'SUBMITTED' && (
-                  <>
+    <>
+      {isVerifying && (
+        <ProgressOverlay isLoading={true} action="Memverifikasi Surat" />
+      )}
+      {isPrinting && (
+        <ProgressOverlay isLoading={true} action="Mencetak Surat" />
+      )}
+      {isSigning && (
+        <ProgressOverlay isLoading={true} action="Menandatangani Surat" />
+      )}
+      <div className="container mx-auto p-4 ">
+        <DataTable
+          data={data?.data || []}
+          columns={columns}
+          onSearch={handleSearch}
+          searchPlaceholder="Cari Permohonan..."
+          itemsPerPageOptions={[10, 20, 50, 100]}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handleItemsPerPageChange}
+          totalItems={data?.paging.total || 0}
+          currentPage={page}
+          itemsPerPage={limit}
+          isLoading={isLoading}
+          onSort={handleSort}
+          sortColumn={sortColumn}
+          sortOrder={sortOrder}
+        />
+        {selectedRequestId && (
+          <EditPopup
+            title="Detail Permohonan"
+            fields={renderDetailsFields()}
+            isOpen={!!selectedRequestId}
+            onClose={() => setSelectedRequestId(null)}
+            viewMode={true}
+            additionalContent={
+              selectedRequest?.attachments &&
+              selectedRequest?.attachments.length > 0 && (
+                <div className="space-y-2">
+                  {selectedRequest?.attachments?.map((attachment, index) => (
                     <Button
-                      onClick={() => handleVerify('REJECTED')}
-                      className="bg-red-500 text-white"
+                      key={index}
+                      className="flex items-center input-form p-2 rounded-lg w-full justify-start"
+                      onClick={() => {
+                        handleViewAttachment(attachment.fileUrl);
+                      }}
                     >
-                      Tolak
+                      <FileIcon className="mr-2 h-5 w-5 text-blue-500" />
+                      {attachment.fileName}
                     </Button>
+                  ))}
+                </div>
+              )
+            }
+            customButtons={
+              <>
+                {user?.role === 'ADMIN' &&
+                  selectedRequest?.status === 'SUBMITTED' && (
+                    <>
+                      <Button
+                        onClick={() => handleVerify('REJECTED')}
+                        className="bg-red-500 text-white"
+                      >
+                        Tolak
+                      </Button>
+                      <Button
+                        onClick={() => handleVerify('APPROVED')}
+                        className="bg-green-500 text-white"
+                      >
+                        Terima
+                      </Button>
+                    </>
+                  )}
+                {user?.role === 'WARGA' &&
+                  selectedRequest?.status === 'REJECTED' && (
                     <Button
-                      onClick={() => handleVerify('APPROVED')}
-                      className="bg-green-500 text-white"
+                      onClick={handleResubmit}
+                      className="bg-blue-500 text-white"
                     >
-                      Terima
+                      Ajukan Kembali
                     </Button>
-                  </>
-                )}
-              {user?.role === 'WARGA' &&
-                selectedRequest?.status === 'REJECTED' && (
-                  <Button
-                    onClick={handleResubmit}
-                    className="bg-blue-500 text-white"
-                  >
-                    Ajukan Kembali
-                  </Button>
-                )}
-            </>
-          }
-        />
-      )}
-      {previewRequestId !== null && (
-        <PreviewPopup
-          isOpen={true}
-          onClose={() => {
-            setPreviewRequestId(null);
-            if (previewUrl) URL.revokeObjectURL(previewUrl);
-            setPreviewUrl(null);
-          }}
-          pdfUrl={previewUrl}
-          isLoading={isPdfLoading}
-          progress={progress}
-          onPrint={printDocument}
-          onSign={handleSignButtonClick}
-          showSignButton={user?.role === 'KADES'}
-        />
-      )}
+                  )}
+              </>
+            }
+          />
+        )}
+        {previewRequestId !== null && (
+          <PreviewPopup
+            isOpen={true}
+            onClose={() => {
+              setPreviewRequestId(null);
+              if (previewUrl) URL.revokeObjectURL(previewUrl);
+              setPreviewUrl(null);
+            }}
+            pdfUrl={previewUrl}
+            isLoading={isPdfLoading}
+            progress={progress}
+            onPrint={printDocument}
+            onSign={handleSignButtonClick}
+            showSignButton={user?.role === 'KADES'}
+          />
+        )}
 
-      <PinPopup
-        isOpen={showPinPopup}
-        onClose={() => {
-          setShowPinPopup(false);
-          setSignPin('');
-        }}
-        onConfirm={handleSignConfirm}
-        pin={signPin}
-        setPin={setSignPin}
-      />
+        <PinPopup
+          isOpen={showPinPopup}
+          onClose={() => {
+            setShowPinPopup(false);
+            setSignPin('');
+          }}
+          onConfirm={handleSignConfirm}
+          pin={signPin}
+          setPin={setSignPin}
+        />
 
-      {showApplicantDetails && (
-        <EditPopup
-          title="Detail Pemohon"
-          fields={renderResidentFields()}
-          isOpen={showApplicantDetails}
-          onClose={() => {
-            setShowApplicantDetails(false);
-            setIsEditingResident(false);
-            setEditedResidentData({});
-          }}
-          viewMode={!isEditingResident}
-          onSave={handleSaveResident}
-        />
-      )}
-      {showRejectionPopup && (
-        <EditPopup
-          title="Alasan Penolakan"
-          fields={[
-            {
-              label: 'Alasan Penolakan',
-              name: 'rejectionReason',
-              value: rejectionReason,
-              type: 'textarea',
-              onChange: (value: string) => setRejectionReason(value),
-            },
-          ]}
-          grid={'1'}
-          isOpen={showRejectionPopup}
-          onClose={() => {
-            setShowRejectionPopup(false);
-            setRejectionReason('');
-          }}
-          viewMode={false}
-          customButtons={
-            <>
-              <Button
-                onClick={() => {
-                  setShowRejectionPopup(false);
-                  setRejectionReason('');
-                }}
-                className="bg-gray-500 text-white"
-              >
-                Batal
-              </Button>
-              <Button
-                onClick={handleRejectConfirm}
-                className="bg-red-500 text-white"
-              >
-                Konfirmasi Penolakan
-              </Button>
-            </>
-          }
-        />
-      )}
-      <Toaster />
-    </div>
+        {showApplicantDetails && (
+          <EditPopup
+            title="Detail Pemohon"
+            fields={renderResidentFields()}
+            isOpen={showApplicantDetails}
+            onClose={() => {
+              setShowApplicantDetails(false);
+              setIsEditingResident(false);
+              setEditedResidentData({});
+            }}
+            viewMode={!isEditingResident}
+            onSave={handleSaveResident}
+          />
+        )}
+        {showRejectionPopup && (
+          <EditPopup
+            title="Alasan Penolakan"
+            fields={[
+              {
+                label: 'Alasan Penolakan',
+                name: 'rejectionReason',
+                value: rejectionReason,
+                type: 'textarea',
+                onChange: (value: string) => setRejectionReason(value),
+              },
+            ]}
+            grid={'1'}
+            isOpen={showRejectionPopup}
+            onClose={() => {
+              setShowRejectionPopup(false);
+              setRejectionReason('');
+            }}
+            viewMode={false}
+            customButtons={
+              <>
+                <Button
+                  onClick={() => {
+                    setShowRejectionPopup(false);
+                    setRejectionReason('');
+                  }}
+                  className="bg-gray-500 text-white"
+                >
+                  Batal
+                </Button>
+                <Button
+                  onClick={handleRejectConfirm}
+                  className="bg-red-500 text-white"
+                >
+                  Konfirmasi Penolakan
+                </Button>
+              </>
+            }
+          />
+        )}
+        <Toaster />
+      </div>
+    </>
   );
 };
 
