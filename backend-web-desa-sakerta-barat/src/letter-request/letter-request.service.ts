@@ -35,6 +35,7 @@ import * as fse from 'fs-extra';
 import * as mime from 'mime-types';
 import { UserService } from '../user/user.service';
 import { v4 as uuidv4 } from 'uuid';
+import { NotificationService } from '../notification/notification.service';
 const ImageModule = require('docxtemplater-image-module-free');
 @Injectable()
 export class LetterRequestService {
@@ -43,6 +44,7 @@ export class LetterRequestService {
     private prismaService: PrismaService,
     private validationService: ValidationService,
     private userService: UserService,
+    private notificationService: NotificationService,
   ) {}
 
   async createLetterRequest(
@@ -104,6 +106,16 @@ export class LetterRequestService {
         attachments: true,
       },
     });
+
+    const userContent = `Permohonan surat Anda telah berhasil diajukan. Nomor pengajuan ${letterRequest.id}. Kami akan segera memprosesnya.`;
+    const adminContent = `Ada permohonan surat baru dengan nomor pengajuan ${letterRequest.id}. Silakan cek dan proses permohonan tersebut.`;
+    await this.sendNotifications(
+      letterRequest,
+      userContent,
+      adminContent,
+      [Role.ADMIN, Role.KADES],
+      userId,
+    );
 
     return this.mapToResponseLetterRequest(letterRequest);
   }
@@ -220,9 +232,28 @@ export class LetterRequestService {
       include: {
         attachments: true,
         letterType: true,
-        resident: true,
+        resident: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
+
+    const notificationContent =
+      validatedData.status === RequestStatus.APPROVED
+        ? `Permohonan surat Anda dengan Nomor pengajuan #${updatedLetterRequest.id} telah disetujui. Kami akan memberi tahu Anda setelah surat ditandatangani.`
+        : `Permohonan surat Anda dengan Nomor pengajuan #${updatedLetterRequest.id} telah ditolak. Perbaiki segera.`;
+
+    const adminContent = `Ada permohonan surat dengan nomor pengajuan ${updatedLetterRequest.id} yang telah diperbarui statusnya. Silakan cek permohonan tersebut.`;
+
+    await this.sendNotifications(
+      updatedLetterRequest,
+      notificationContent,
+      adminContent,
+      [Role.ADMIN, Role.KADES],
+      updatedLetterRequest.resident.user.id,
+    );
 
     if (updatedLetterRequest.status === RequestStatus.APPROVED) {
       await this.generateAndSaveApprovedLetter(updatedLetterRequest);
@@ -293,12 +324,32 @@ export class LetterRequestService {
       },
       include: {
         attachments: true,
+        resident: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
 
     if (updatedStatus === RequestStatus.SIGNED) {
       await this.generateAndSaveSignedLetter(updatedLetterRequest);
     }
+
+    const notificationContent =
+      updatedStatus === RequestStatus.SIGNED
+        ? 'Surat Anda telah ditandatangani oleh Kepala Desa.'
+        : 'Surat Anda ditolak oleh Kepala Desa.';
+
+    const adminContent = `Ada surat dengan nomor pengajuan ${updatedLetterRequest.id} yang telah ditandatangani atau ditolak oleh Kepala Desa. Silakan cek surat tersebut.`;
+
+    await this.sendNotifications(
+      updatedLetterRequest,
+      notificationContent,
+      adminContent,
+      [Role.ADMIN, Role.KADES],
+      updatedLetterRequest.resident.user.id,
+    );
 
     return this.mapToResponseLetterRequest(updatedLetterRequest);
   }
@@ -342,6 +393,16 @@ export class LetterRequestService {
       },
     );
 
+    const notificationContent = `Surat Anda dengan nomor pengajuan ${archivedLetterRequest.id} telah diarsipkan.`;
+    const adminContent = `Surat dengan nomor pengajuan ${archivedLetterRequest.id} telah diarsipkan.`;
+
+    await this.sendNotifications(
+      archivedLetterRequest,
+      notificationContent,
+      adminContent,
+      [Role.ADMIN, Role.KADES],
+    );
+
     return this.mapToResponseLetterRequest(archivedLetterRequest);
   }
 
@@ -378,8 +439,24 @@ export class LetterRequestService {
       },
       include: {
         attachments: true,
+        resident: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
+
+    const notificationContent = `Permohonan surat Anda dengan nomor pengajuan ${updatedLetterRequest.id} telah diajukan ulang.`;
+    const adminContent = `Ada permohonan surat dengan nomor pengajuan ${updatedLetterRequest.id} yang telah diajukan ulang. Silakan cek dan proses permohonan tersebut.`;
+
+    await this.sendNotifications(
+      updatedLetterRequest,
+      notificationContent,
+      adminContent,
+      [Role.ADMIN, Role.KADES],
+      updatedLetterRequest.resident.user.id,
+    );
 
     return this.mapToResponseLetterRequest(updatedLetterRequest);
   }
@@ -689,7 +766,7 @@ export class LetterRequestService {
       '/api/letter-requests/approved/',
       '',
     );
-    console.log(' Approved letter' + letterRequest.approvedLetterPath);
+
     const basePath = path.join(process.cwd(), 'uploads', 'approved_letters');
     const filePath = path.join(basePath, approvedLetterPath);
 
@@ -904,5 +981,37 @@ export class LetterRequestService {
           this.logger.warn(`Failed to delete temporary file: ${err}`),
         );
     }
+  }
+
+  private async sendNotifications(
+    letterRequest: any,
+    userContent: string,
+    adminContent: string,
+    roles: Role[],
+    additionalUserId?: number,
+  ) {
+    const users = await this.prismaService.user.findMany({
+      where: {
+        OR: [{ role: { in: roles } }, { id: additionalUserId }],
+      },
+      select: { id: true, role: true },
+    });
+
+    const userIds = users.map((user) => user.id);
+
+    if (additionalUserId && !userIds.includes(additionalUserId)) {
+      userIds.push(additionalUserId);
+    }
+
+    const notifications = userIds.map((userId) => {
+      const user = users.find((u) => u.id === userId);
+      const content =
+        user.role === Role.ADMIN || user.role === Role.KADES
+          ? adminContent
+          : userContent;
+      return this.notificationService.createNotification([userId], content);
+    });
+
+    await Promise.all(notifications);
   }
 }

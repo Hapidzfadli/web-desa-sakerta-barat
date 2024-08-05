@@ -128,8 +128,6 @@ export class PrintedLetterService {
       throw new ForbiddenException('This letter request cannot be printed');
     }
 
-    console.log(filePath);
-
     if (!filePath || !fs.existsSync(filePath)) {
       throw new NotFoundException('Letter file not found');
     }

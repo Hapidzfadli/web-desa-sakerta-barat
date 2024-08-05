@@ -9,6 +9,7 @@ export class RegisterUserRequest {
   name: string;
 }
 export class UserResponse {
+  id: number;
   username: string;
   name: string;
   email: string;

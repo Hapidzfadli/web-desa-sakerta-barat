@@ -6,6 +6,7 @@ import { Toaster } from '../../components/ui/toaster';
 import { sidebarLinksMember } from '../../constants';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '../../lib/reactQuery';
+import { WebSocketProvider } from '../context/WebSocketContext';
 export default function RootLayout({
   children,
 }: {
@@ -14,15 +15,19 @@ export default function RootLayout({
   return (
     <QueryClientProvider client={queryClient}>
       <UserProvider>
-        <main className="flex h-screen w-full font-dm-sans">
-          <Sidebar sidebar={sidebarLinksMember} />
+        <WebSocketProvider>
+          {' '}
+          {/* Tambahkan WebSocketProvider di sini */}
+          <main className="flex h-screen w-full font-dm-sans">
+            <Sidebar sidebar={sidebarLinksMember} />
 
-          <div className="flex flex-col flex-grow">
-            <HeaderDashboard />
-            <div className="flex-grow overflow-auto p-6">{children}</div>
-          </div>
-          <Toaster />
-        </main>
+            <div className="flex flex-col flex-grow">
+              <HeaderDashboard />
+              <div className="flex-grow overflow-auto p-6">{children}</div>
+            </div>
+            <Toaster />
+          </main>
+        </WebSocketProvider>
       </UserProvider>
     </QueryClientProvider>
   );
