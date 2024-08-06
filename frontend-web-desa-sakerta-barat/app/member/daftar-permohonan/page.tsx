@@ -1,5 +1,5 @@
 import React from 'react';
-import DaftarPermohonan from '../../admin/daftar-permohonan/page';
+import DaftarPermohonan from '../../../components/DaftarPermohonan/DaftarPermohonan';
 
 const DaftarPermohonanWarga = () => {
   return <DaftarPermohonan />;
