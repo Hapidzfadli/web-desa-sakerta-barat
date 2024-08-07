@@ -409,7 +409,6 @@ export const useDaftarPermohonan = () => {
     setShowApplicantDetails,
     setShowRejectionPopup,
     setRejectionReason,
-    setIsEditingResident,
     setEditedResidentData,
     setPreviewRequestId,
     setShowPinPopup,
