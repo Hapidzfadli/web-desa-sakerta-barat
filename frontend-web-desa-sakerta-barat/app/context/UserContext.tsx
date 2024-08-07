@@ -1,3 +1,4 @@
+'use client';
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import Cookies from 'js-cookie';
 
@@ -13,7 +14,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
     const storedUser = localStorage.getItem('userData');
 
     if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      console.log('User retrieved from storage:', parsedUser);
+      setUser(parsedUser);
     }
   }, []);
 

@@ -8,7 +8,8 @@ import CategoryForm from './components/CategoryForm';
 import ListLetter from '../ListLetter/components/ListLetter';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import { useUser } from '../../app/context/UserContext';
-import { LetterCategory } from './types/category.types';
+import { LetterCategory, FilterOption } from './types/category.types';
+import Filter from '../shared/Filter';
 
 const DaftarSurat: React.FC = () => {
   const { user } = useUser();
@@ -26,6 +27,8 @@ const DaftarSurat: React.FC = () => {
   const [currentCategory, setCurrentCategory] = useState<LetterCategory | null>(
     null,
   );
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<Record<string, string | string[]>>({});
 
   if (status === 'loading') return <LoadingSpinner />;
   if (status === 'error')
@@ -46,6 +49,35 @@ const DaftarSurat: React.FC = () => {
     setIsFormOpen(true);
   };
 
+  const handleFilterOpen = () => {
+    setIsFilterOpen(true);
+  };
+
+  const handleFilterApply = (newFilters: Record<string, string | string[]>) => {
+    setFilters(newFilters);
+
+    // Change the active tab if a category is selected in the filter
+    if (newFilters.category && typeof newFilters.category === 'string') {
+      const newActiveTab = parseInt(newFilters.category, 10);
+      if (!isNaN(newActiveTab) && newActiveTab !== activeTab) {
+        setActiveTab(newActiveTab);
+      }
+    }
+
+    setIsFilterOpen(false); // Close the filter dialog after applying
+  };
+
+  const filterOptions: FilterOption[] = [
+    {
+      id: 'category',
+      label: 'Category',
+      type: 'select',
+      options: categories.map((cat) => ({
+        value: cat.id.toString(),
+        label: cat.name,
+      })),
+    },
+  ];
   return (
     <div className="container mx-auto p-4">
       <div className="mb-6 relative flex justify-between">
@@ -65,6 +97,7 @@ const DaftarSurat: React.FC = () => {
               handleEditCategory(category);
             }
           }}
+          onFilter={handleFilterOpen}
         />
       </div>
 
@@ -85,6 +118,12 @@ const DaftarSurat: React.FC = () => {
             handleDelete(id);
             setIsFormOpen(false);
           }}
+        />
+        <Filter
+          isOpen={isFilterOpen}
+          onClose={() => setIsFilterOpen(false)}
+          onApply={handleFilterApply}
+          filterOptions={filterOptions}
         />
       </Suspense>
     </div>

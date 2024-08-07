@@ -6,12 +6,14 @@ interface ActionButtonsProps {
   userRole: string | undefined;
   onAdd: () => void;
   onSettings: () => void;
+  onFilter: () => void;
 }
 
 const ActionButtons: React.FC<ActionButtonsProps> = ({
   userRole,
   onAdd,
   onSettings,
+  onFilter,
 }) => {
   return (
     <div className="flex gap-2 text-gray-500">
@@ -28,6 +30,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
       <Button
         className="bg-save hover:bg-gray-100 h-8 px-2 rounded-lg"
         title="Filter"
+        onClick={onFilter}
       >
         <Filter className="h-4 w-4 mr-2" />
         Filter

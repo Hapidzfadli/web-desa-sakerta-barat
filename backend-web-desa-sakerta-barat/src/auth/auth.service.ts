@@ -39,6 +39,7 @@ export class AuthService {
       data: registerRequest,
     });
     return {
+      id: user.id,
       username: user.username,
       name: user.name,
       email: user.email,
@@ -80,6 +81,7 @@ export class AuthService {
       },
     });
     return {
+      id: user.id,
       username: user.username,
       name: user.name,
       email: user.email,

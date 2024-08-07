@@ -104,7 +104,7 @@ export class LetterRequestController {
 
   @Put(':id/verify')
   @HttpCode(HttpStatus.OK)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.KADES)
   async verifyLetterRequest(
     @Auth() user: any,
     @Param('id') id: string,

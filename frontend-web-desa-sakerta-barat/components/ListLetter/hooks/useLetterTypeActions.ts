@@ -118,7 +118,6 @@ export const useLetterTypeActions = (categoryId: number) => {
     notes: string,
     attachments: File[],
   ) => {
-    console.log('Applying letter with:', { letterTypeId, notes, attachments });
     if (typeof letterTypeId !== 'number' || isNaN(letterTypeId)) {
       console.error('Invalid letterTypeId:', letterTypeId);
       throw new Error('Invalid letterTypeId');

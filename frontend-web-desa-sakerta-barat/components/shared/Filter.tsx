@@ -14,20 +14,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, X } from 'lucide-react';
-
-interface FilterOption {
-  id: string;
-  label: string;
-  options: { value: string; label: string }[];
-}
-
-interface FilterProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onApply: (filters: Record<string, string>) => void;
-  filterOptions: FilterOption[];
-}
+import { FilterProps, FilterOption } from '../DaftarSurat/types/category.types';
 
 const Filter: React.FC<FilterProps> = ({
   isOpen,
@@ -36,13 +25,16 @@ const Filter: React.FC<FilterProps> = ({
   filterOptions,
 }) => {
   const [activeFilters, setActiveFilters] = useState<
-    { id: string; value: string }[]
+    { id: string; value: string | string[] }[]
   >([]);
 
   const handleAddFilter = () => {
     if (filterOptions.length > activeFilters.length) {
       const newFilter = filterOptions[activeFilters.length];
-      setActiveFilters([...activeFilters, { id: newFilter.id, value: '' }]);
+      setActiveFilters([
+        ...activeFilters,
+        { id: newFilter.id, value: newFilter.type === 'select' ? '' : [] },
+      ]);
     }
   };
 
@@ -50,9 +42,24 @@ const Filter: React.FC<FilterProps> = ({
     setActiveFilters(activeFilters.filter((_, i) => i !== index));
   };
 
-  const handleFilterChange = (index: number, value: string) => {
+  const handleFilterChange = (index: number, value: string | string[]) => {
     const newFilters = [...activeFilters];
     newFilters[index].value = value;
+    setActiveFilters(newFilters);
+  };
+
+  const handleCheckboxChange = (
+    index: number,
+    optionValue: string,
+    isChecked: boolean,
+  ) => {
+    const newFilters = [...activeFilters];
+    const currentValues = newFilters[index].value as string[];
+    if (isChecked) {
+      newFilters[index].value = [...currentValues, optionValue];
+    } else {
+      newFilters[index].value = currentValues.filter((v) => v !== optionValue);
+    }
     setActiveFilters(newFilters);
   };
 
@@ -64,7 +71,7 @@ const Filter: React.FC<FilterProps> = ({
         }
         return acc;
       },
-      {} as Record<string, string>,
+      {} as Record<string, string | string[]>,
     );
     onApply(filters);
     onClose();
@@ -72,35 +79,72 @@ const Filter: React.FC<FilterProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] bg-white">
         <DialogHeader>
-          <DialogTitle>Filter</DialogTitle>
+          <DialogTitle className="head-form">Filter</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           {activeFilters.map((filter, index) => (
             <div key={index} className="flex items-center gap-2">
-              <Select
-                value={filter.value}
-                onValueChange={(value) => handleFilterChange(index, value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue
-                    placeholder={
-                      filterOptions.find((opt) => opt.id === filter.id)
-                        ?.label || 'Select filter'
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
+              {filterOptions.find((opt) => opt.id === filter.id)?.type ===
+              'select' ? (
+                <Select
+                  value={filter.value as string}
+                  onValueChange={(value) => handleFilterChange(index, value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={
+                        filterOptions.find((opt) => opt.id === filter.id)
+                          ?.label || 'Select filter'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filterOptions
+                      .find((opt) => opt.id === filter.id)
+                      ?.options.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="w-full">
+                  <p className="mb-2">
+                    {filterOptions.find((opt) => opt.id === filter.id)?.label}
+                  </p>
                   {filterOptions
                     .find((opt) => opt.id === filter.id)
                     ?.options.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
+                      <div
+                        key={option.value}
+                        className="flex items-center space-x-2 mb-1"
+                      >
+                        <Checkbox
+                          id={`${filter.id}-${option.value}`}
+                          checked={(filter.value as string[]).includes(
+                            option.value,
+                          )}
+                          onCheckedChange={(checked) =>
+                            handleCheckboxChange(
+                              index,
+                              option.value,
+                              checked as boolean,
+                            )
+                          }
+                        />
+                        <label
+                          htmlFor={`${filter.id}-${option.value}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {option.label}
+                        </label>
+                      </div>
                     ))}
-                </SelectContent>
-              </Select>
+                </div>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
@@ -117,7 +161,9 @@ const Filter: React.FC<FilterProps> = ({
           )}
         </div>
         <DialogFooter>
-          <Button onClick={handleApply}>Apply Filters</Button>
+          <Button className="bg-save" onClick={handleApply}>
+            Apply Filters
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

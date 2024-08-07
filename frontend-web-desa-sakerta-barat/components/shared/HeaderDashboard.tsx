@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBell } from '@fortawesome/free-solid-svg-icons';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { getAvatar } from '../../lib/actions/setting.actions';
+import NotificationComponent from './NotificationComponent';
 const HeaderDashboard = () => {
   const { user, logout } = useUser();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -84,19 +85,12 @@ const HeaderDashboard = () => {
         <div className="flex items-center space-x-1 p-1">
           <Button
             className="bg-white h-8 w-8 rounded-full p-0"
-            title="Notifikasi"
-            onClick={() => {}}
-          >
-            <FontAwesomeIcon className="h-4 w-4 text-[#A3AED0]" icon={faBell} />
-          </Button>
-
-          <Button
-            className="bg-white h-8 w-8 rounded-full p-0"
             title="Info"
             onClick={() => {}}
           >
             <Info className="h-4 w-4 text-[#A3AED0]" />
           </Button>
+          <NotificationComponent />
           <Button
             className="bg-white h-8 w-8 rounded-full p-0"
             title="Profile"

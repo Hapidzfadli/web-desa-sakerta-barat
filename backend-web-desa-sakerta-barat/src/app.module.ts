@@ -7,6 +7,7 @@ import { LetterCategoryModule } from './letter-category/letter-category.module';
 import { LetterTypeModule } from './letter-type/letter-type.module';
 import { LetterRequestModule } from './letter-request/letter-request.module';
 import { PrintedLetterModule } from './printed-letter/printed-letter.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PrintedLetterModule } from './printed-letter/printed-letter.module';
     LetterTypeModule,
     LetterRequestModule,
     PrintedLetterModule,
+    NotificationModule,
   ],
   controllers: [],
   providers: [],

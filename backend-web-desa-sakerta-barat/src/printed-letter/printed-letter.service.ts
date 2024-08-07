@@ -39,11 +39,13 @@ export class PrintedLetterService {
       throw new NotFoundException('Letter request not found');
     }
 
-    let filePath;
+    let filePath: string;
     if (letterRequest.status === RequestStatus.APPROVED) {
-      filePath = letterRequest.approvedLetterPath;
+      filePath = this.convertApiPathToFilePath(
+        letterRequest.approvedLetterPath,
+      );
     } else if (letterRequest.status === RequestStatus.SIGNED) {
-      filePath = letterRequest.signedLetterPath;
+      filePath = this.convertApiPathToFilePath(letterRequest.signedLetterPath);
     } else {
       throw new ForbiddenException('This letter request cannot be printed');
     }
@@ -115,13 +117,15 @@ export class PrintedLetterService {
       throw new NotFoundException('Letter request not found');
     }
 
-    let filePath;
+    let filePath: string;
     if (letterRequest.status === RequestStatus.APPROVED) {
-      filePath = letterRequest.approvedLetterPath;
+      filePath = this.convertApiPathToFilePath(
+        letterRequest.approvedLetterPath,
+      );
     } else if (letterRequest.status === RequestStatus.SIGNED) {
-      filePath = letterRequest.signedLetterPath;
+      filePath = this.convertApiPathToFilePath(letterRequest.signedLetterPath);
     } else {
-      throw new ForbiddenException('This letter request cannot be previewed');
+      throw new ForbiddenException('This letter request cannot be printed');
     }
 
     if (!filePath || !fs.existsSync(filePath)) {
@@ -134,5 +138,20 @@ export class PrintedLetterService {
     const pdfBuf = await libreConvert(content, '.pdf', undefined);
 
     return pdfBuf;
+  }
+
+  private convertApiPathToFilePath(apiPath: string): string {
+    const fileName = path.basename(apiPath);
+    let folderName: string;
+
+    if (apiPath.includes('/api/letter-requests/signed/')) {
+      folderName = 'signed_letters';
+    } else if (apiPath.includes('/api/letter-requests/approved/')) {
+      folderName = 'approved_letters';
+    } else {
+      throw new Error('Unknown letter type');
+    }
+
+    return path.join(process.cwd(), 'uploads', folderName, fileName);
   }
 }

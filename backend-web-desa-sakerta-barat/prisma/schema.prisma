@@ -73,10 +73,10 @@ model User {
   signedLetters        LetterRequest[]       @relation("SignedBy")
   completedLetters     LetterRequest[]       @relation("CompletedBy")
   changedStatusLetters LetterStatusHistory[] @relation("ChangedBy")
-  notifications        Notification[]
   archivedLetters      ArchivedLetter[]      @relation("ArchivedBy")
 
-  LetterVersion LetterVersion[]
+  LetterVersion         LetterVersion[]
+  NotificationRecipient NotificationRecipient[]
 
   @@map("users")
 }
@@ -239,15 +239,26 @@ model LetterVersion {
 }
 
 model Notification {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  content   String
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         Int                     @id @default(autoincrement())
+  content    String
+  isRead     Boolean                 @default(false)
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+  recipients NotificationRecipient[]
 
   @@map("notifications")
+}
+
+model NotificationRecipient {
+  id             Int          @id @default(autoincrement())
+  notificationId Int
+  userId         Int
+  isRead         Boolean      @default(false)
+  notification   Notification @relation(fields: [notificationId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+
+  @@unique([notificationId, userId])
+  @@map("notification_recipients")
 }
 
 model ArchivedLetter {

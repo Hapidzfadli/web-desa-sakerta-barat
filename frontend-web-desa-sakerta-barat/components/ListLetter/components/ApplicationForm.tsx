@@ -61,11 +61,6 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
 
     try {
       const notes = (data.notes as string) || '';
-      console.log('Submitting application:', {
-        letterTypeId: letterType.id,
-        notes,
-        attachments: newAttachments,
-      });
       await onApply(letterType.id, notes, newAttachments);
       toast({
         title: 'Berhasil',

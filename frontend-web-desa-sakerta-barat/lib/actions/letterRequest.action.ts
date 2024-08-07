@@ -1,3 +1,4 @@
+import { buildQueryString } from '../../components/DaftarPermohonan/utils/helpers';
 import { API_URL } from '../../constants';
 import Cookies from 'js-cookie';
 
@@ -48,6 +49,7 @@ export const fetchLetterRequests = async (
   search?: string,
   sortColumn?: string,
   sortOrder?: 'asc' | 'desc',
+  filters?: Record<string, any>,
 ): Promise<LetterRequestsResponse> => {
   try {
     const token = Cookies.get('session');
@@ -61,6 +63,10 @@ export const fetchLetterRequests = async (
     }
     if (sortColumn) {
       url += `&sortBy=${sortColumn}&sortOrder=${sortOrder}`;
+    }
+
+    if (filters) {
+      url += buildQueryString(filters);
     }
 
     const response = await fetch(url, {
