@@ -40,6 +40,8 @@ export const useDaftarPermohonan = () => {
   const [isSigning, setIsSigning] = useState(false);
   const [showPinPopup, setShowPinPopup] = useState(false);
   const [signPin, setSignPin] = useState('');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState({});
 
   const { data, isLoading, isError } = useQuery({
     queryKey: [
@@ -49,9 +51,17 @@ export const useDaftarPermohonan = () => {
       searchQuery,
       sortColumn,
       sortOrder,
+      filters,
     ],
     queryFn: () =>
-      fetchLetterRequests(page, limit, searchQuery, sortColumn, sortOrder),
+      fetchLetterRequests(
+        page,
+        limit,
+        searchQuery,
+        sortColumn,
+        sortOrder,
+        filters,
+      ),
     staleTime: 60000,
     cacheTime: 30000,
     refetchOnWindowFocus: false,
@@ -363,6 +373,11 @@ export const useDaftarPermohonan = () => {
     }
   };
 
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    setPage(1); // Reset to first page when filters change
+  };
+
   return {
     data,
     isLoading,
@@ -389,6 +404,8 @@ export const useDaftarPermohonan = () => {
     showPinPopup,
     signPin,
     isPdfLoading,
+    isFilterOpen,
+    filters,
     setIsEditingResident,
     handleSearch,
     handleSort,
@@ -413,5 +430,7 @@ export const useDaftarPermohonan = () => {
     setPreviewRequestId,
     setShowPinPopup,
     setSignPin,
+    setIsFilterOpen,
+    handleFilterChange,
   };
 };

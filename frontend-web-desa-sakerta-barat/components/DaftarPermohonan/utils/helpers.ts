@@ -18,3 +18,26 @@ export const translateStatus = (status: string): string => {
   };
   return statusTranslations[status] || status;
 };
+
+export const buildQueryString = (
+  filters: Record<string, any>,
+  prefix = 'filter',
+): string => {
+  return Object.entries(filters).reduce((acc, [key, value]) => {
+    const fullKey = prefix ? `${prefix}[${key}]` : key;
+
+    if (value === null) {
+      return `${acc}&${fullKey}=`;
+    }
+
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      return `${acc}${buildQueryString(value, fullKey)}`;
+    }
+
+    if (Array.isArray(value)) {
+      return `${acc}${value.map((item) => `&${fullKey}[]=${encodeURIComponent(item)}`).join('')}`;
+    }
+
+    return `${acc}&${fullKey}=${encodeURIComponent(value)}`;
+  }, '');
+};

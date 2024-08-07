@@ -11,6 +11,7 @@ import ProgressOverlay from '../../components/shared/ProgressOverlay';
 
 import { Toaster } from '@/components/ui/toaster';
 import { useUser } from '../../app/context/UserContext';
+import Filter from '../shared/Filter';
 
 const DaftarPermohonan: React.FC = () => {
   const { user } = useUser();
@@ -40,6 +41,8 @@ const DaftarPermohonan: React.FC = () => {
     isSigning,
     showPinPopup,
     signPin,
+    isFilterOpen,
+    filters,
     handleSearch,
     handleSort,
     handlePageChange,
@@ -64,7 +67,25 @@ const DaftarPermohonan: React.FC = () => {
     setPreviewRequestId,
     setShowPinPopup,
     setSignPin,
+    setIsFilterOpen,
+    handleFilterChange,
   } = useDaftarPermohonan();
+
+  const filterOptions = [
+    {
+      id: 'status',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: 'SUBMITTED', label: 'Diajukan' },
+        { value: 'APPROVED', label: 'Desetujui' },
+        { value: 'REJECTED', label: 'Ditolak' },
+        { value: 'SIGNED', label: 'Ditandatangani' },
+        { value: 'COMPLETED', label: 'Selesai' },
+        { value: 'ARCHIVED', label: 'Diarsipkan' },
+      ],
+    },
+  ];
 
   return (
     <>
@@ -94,6 +115,7 @@ const DaftarPermohonan: React.FC = () => {
           onView={setSelectedRequestId}
           onDelete={handleDelete}
           userRole={user?.role || ''}
+          onFilter={() => setIsFilterOpen(true)}
         />
         {selectedRequestId && (
           <DetailPermohonan
@@ -158,6 +180,12 @@ const DaftarPermohonan: React.FC = () => {
           onConfirm={handleSignConfirm}
           pin={signPin}
           setPin={setSignPin}
+        />
+        <Filter
+          isOpen={isFilterOpen}
+          onClose={() => setIsFilterOpen(false)}
+          onApply={handleFilterChange}
+          filterOptions={filterOptions}
         />
         <Toaster />
       </div>

@@ -28,6 +28,7 @@ interface DaftarPermohonanTableProps {
   onView: (id: number) => void;
   onDelete: (id: number) => void;
   userRole: string;
+  onFilter: () => void;
 }
 
 const DaftarPermohonanTable: React.FC<DaftarPermohonanTableProps> = ({
@@ -46,6 +47,7 @@ const DaftarPermohonanTable: React.FC<DaftarPermohonanTableProps> = ({
   onView,
   onDelete,
   userRole,
+  onFilter,
 }) => {
   const statusColors: { [key: string]: string } = {
     SUBMITTED: 'bg-[#EBF9F1] text-[#1F9254]',
@@ -161,6 +163,7 @@ const DaftarPermohonanTable: React.FC<DaftarPermohonanTableProps> = ({
       onSort={onSort}
       sortColumn={sortColumn}
       sortOrder={sortOrder}
+      onFilter={onFilter}
     />
   );
 };
