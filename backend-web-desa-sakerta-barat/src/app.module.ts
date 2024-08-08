@@ -8,6 +8,7 @@ import { LetterTypeModule } from './letter-type/letter-type.module';
 import { LetterRequestModule } from './letter-request/letter-request.module';
 import { PrintedLetterModule } from './printed-letter/printed-letter.module';
 import { NotificationModule } from './notification/notification.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { NotificationModule } from './notification/notification.module';
     LetterRequestModule,
     PrintedLetterModule,
     NotificationModule,
+    DashboardModule,
   ],
   controllers: [],
   providers: [],
