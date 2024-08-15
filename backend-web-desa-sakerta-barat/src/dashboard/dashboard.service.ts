@@ -145,6 +145,8 @@ export class DashboardService {
   }
 
   private calculateGrowth(current: number, previous: number): number {
-    return previous > 0 ? ((current - previous) / previous) * 100 : 0;
+    return previous > 0
+      ? ((current - previous) / previous) * 100
+      : current * 100;
   }
 }
