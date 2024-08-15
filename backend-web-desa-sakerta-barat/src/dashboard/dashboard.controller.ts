@@ -22,7 +22,14 @@ export class DashboardController {
     try {
       return await this.dashboardService.getDashboardData();
     } catch (error) {
-      throw new InternalServerErrorException('Failed to fetch dashboard data');
+      if (error instanceof Error) {
+        throw new InternalServerErrorException(
+          `Failed to fetch dashboard data: ${error.message}`,
+        );
+      }
+      throw new InternalServerErrorException(
+        'An unexpected error occurred while fetching dashboard data',
+      );
     }
   }
 }

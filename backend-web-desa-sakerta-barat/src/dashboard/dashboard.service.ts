@@ -2,8 +2,23 @@ import { Inject, Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { PrismaService } from '../common/prisma.service';
-import { DashboardResponse, MonthlyData } from '../model/dashboard.model';
-import { subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import {
+  ComparisonData,
+  DashboardResponse,
+  MonthlyData,
+} from '../model/dashboard.model';
+import {
+  subDays,
+  subWeeks,
+  subMonths,
+  startOfDay,
+  endOfDay,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  format,
+} from 'date-fns';
 
 @Injectable()
 export class DashboardService {
@@ -14,14 +29,18 @@ export class DashboardService {
 
   async getDashboardData(): Promise<DashboardResponse> {
     try {
-      const [userStats, letterStats] = await Promise.all([
+      const [userStats, letterStats, comparisonData] = await Promise.all([
         this.getUserStats(),
         this.getLetterStats(),
+        this.getComparisonData(),
       ]);
 
       return {
         users: userStats,
-        letters: letterStats,
+        letters: {
+          ...letterStats,
+          comparison: comparisonData,
+        },
       };
     } catch (error) {
       this.logger.error('Error fetching dashboard data', { error });
@@ -29,7 +48,7 @@ export class DashboardService {
     }
   }
 
-  private async getUserStats() {
+  private async getUserStats(): Promise<DashboardResponse['users']> {
     const totalUsers = await this.prismaService.user.count();
     const monthlyData = await this.getUserMonthlyData();
     const currentMonthCount = monthlyData[monthlyData.length - 1].count;
@@ -45,7 +64,7 @@ export class DashboardService {
     };
   }
 
-  private async getLetterStats() {
+  private async getLetterStats(): Promise<DashboardResponse['letters']> {
     const totalRequests = await this.prismaService.letterRequest.count();
     const totalArchived = await this.prismaService.archivedLetter.count();
 
@@ -142,6 +161,102 @@ export class DashboardService {
     );
 
     return data.sort((a, b) => a.month.localeCompare(b.month));
+  }
+
+  private async getComparisonData(): Promise<ComparisonData> {
+    const [daily, weekly, monthly] = await Promise.all([
+      this.getDailyComparison(),
+      this.getWeeklyComparison(),
+      this.getMonthlyComparison(),
+    ]);
+
+    return { daily, weekly, monthly };
+  }
+
+  private async getDailyComparison(): Promise<ComparisonData['daily']> {
+    const currentDate = new Date();
+    const labels = Array.from({ length: 7 }, (_, i) =>
+      format(subDays(currentDate, 6 - i), 'EEE'),
+    );
+
+    const current = await Promise.all(
+      labels.map((_, i) => this.getCountForDay(subDays(currentDate, 6 - i))),
+    );
+
+    const previous = await Promise.all(
+      labels.map((_, i) => this.getCountForDay(subDays(currentDate, 13 - i))),
+    );
+
+    return { labels, current, previous };
+  }
+
+  private async getWeeklyComparison(): Promise<ComparisonData['weekly']> {
+    const currentDate = new Date();
+    const labels = ['W1', 'W2', 'W3', 'W4'];
+
+    const current = await Promise.all(
+      labels.map((_, i) => this.getCountForWeek(subWeeks(currentDate, 3 - i))),
+    );
+
+    const previous = await Promise.all(
+      labels.map((_, i) => this.getCountForWeek(subWeeks(currentDate, 7 - i))),
+    );
+
+    return { labels, current, previous };
+  }
+
+  private async getMonthlyComparison(): Promise<ComparisonData['monthly']> {
+    const currentDate = new Date();
+    const labels = Array.from({ length: 12 }, (_, i) =>
+      format(subMonths(currentDate, 11 - i), 'MMM'),
+    );
+
+    const current = await Promise.all(
+      labels.map((_, i) =>
+        this.getCountForMonth(subMonths(currentDate, 11 - i)),
+      ),
+    );
+
+    const previous = await Promise.all(
+      labels.map((_, i) =>
+        this.getCountForMonth(subMonths(currentDate, 23 - i)),
+      ),
+    );
+
+    return { labels, current, previous };
+  }
+
+  private async getCountForDay(date: Date): Promise<number> {
+    return this.prismaService.letterRequest.count({
+      where: {
+        createdAt: {
+          gte: startOfDay(date),
+          lt: endOfDay(date),
+        },
+      },
+    });
+  }
+
+  private async getCountForWeek(date: Date): Promise<number> {
+    return this.prismaService.letterRequest.count({
+      where: {
+        createdAt: {
+          gte: startOfWeek(date),
+          lt: endOfWeek(date),
+        },
+      },
+    });
+  }
+
+  private async getCountForMonth(date: Date): Promise<number> {
+    return this.prismaService.letterRequest.count({
+      where: {
+        createdAt: {
+          gte: startOfMonth(date),
+          lt: endOfMonth(date),
+        },
+      },
+    });
   }
 
   private calculateGrowth(current: number, previous: number): number {

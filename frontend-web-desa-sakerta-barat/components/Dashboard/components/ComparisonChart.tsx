@@ -8,92 +8,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ComparisonData, ComparisonChartProps } from '../types/dashboard.type';
 
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
-const generateData = (type: 'daily' | 'weekly' | 'monthly') => {
-  const currentDate = new Date();
-  const labels: string[] = [];
-  const currentData: number[] = [];
-  const previousData: number[] = [];
-
-  switch (type) {
-    case 'daily':
-      // Comparing current week with previous week
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date(currentDate);
-        date.setDate(currentDate.getDate() - i);
-        labels.push(date.toLocaleDateString('id-ID', { weekday: 'short' }));
-        currentData.push(Math.floor(Math.random() * 20) + 10);
-        previousData.push(Math.floor(Math.random() * 20) + 10);
-      }
-      break;
-    case 'weekly':
-      // Comparing current month with previous month
-      const currentMonth = currentDate.getMonth();
-      const previousMonth = (currentMonth - 1 + 12) % 12;
-      const currentMonthName = currentDate.toLocaleString('default', {
-        month: 'short',
-      });
-      const previousMonthName = new Date(
-        currentDate.getFullYear(),
-        previousMonth,
-        1,
-      ).toLocaleString('default', { month: 'short' });
-
-      for (let i = 1; i <= 4; i++) {
-        labels.push(` W${i}`);
-        currentData.push(Math.floor(Math.random() * 50) + 30);
-      }
-      for (let i = 1; i <= 4; i++) {
-        previousData.push(Math.floor(Math.random() * 50) + 30);
-      }
-      break;
-    case 'monthly':
-      // Comparing current year with previous year
-      const currentYear = currentDate.getFullYear();
-      const previousYear = currentYear - 1;
-      const months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
-      for (let i = 0; i < 12; i++) {
-        labels.push(`${months[i]}`);
-        currentData.push(Math.floor(Math.random() * 100) + 50);
-        previousData.push(Math.floor(Math.random() * 100) + 50);
-      }
-      break;
-  }
-
-  return { labels, currentData, previousData };
-};
-
-const ComparisonChart: React.FC = () => {
+const ComparisonChart: React.FC<ComparisonChartProps> = ({
+  comparisonData,
+}) => {
   const [timeframe, setTimeframe] = useState<'daily' | 'weekly' | 'monthly'>(
     'monthly',
   );
 
-  const { labels, currentData, previousData } = useMemo(
-    () => generateData(timeframe),
-    [timeframe],
-  );
+  const { labels, current, previous } = comparisonData[timeframe];
 
-  const totalCurrent = currentData.reduce((sum, value) => sum + value, 0);
-  const totalPrevious = previousData.reduce((sum, value) => sum + value, 0);
-  const growthPercentage = (
-    ((totalCurrent - totalPrevious) / totalPrevious) *
-    100
-  ).toFixed(2);
+  const totalCurrent = current.reduce((sum, value) => sum + value, 0);
+  const totalPrevious = previous.reduce((sum, value) => sum + value, 0);
+  const growthPercentage =
+    totalPrevious !== 0
+      ? (((totalCurrent - totalPrevious) / totalPrevious) * 100).toFixed(2)
+      : totalCurrent * 100;
 
   const chartOptions = {
     chart: {
@@ -143,8 +76,8 @@ const ComparisonChart: React.FC = () => {
   };
 
   const series = [
-    { name: 'Periode Ini', data: currentData },
-    { name: 'Periode Sebelumnya', data: previousData },
+    { name: 'Periode Ini', data: current },
+    { name: 'Periode Sebelumnya', data: previous },
   ];
 
   const getTimeframeLabel = () => {

@@ -22,9 +22,31 @@ export interface LetterStats {
   previousMonthArchived: number;
   monthlyRequestData: MonthlyData[];
   monthlyArchivedData: MonthlyData[];
+  comparison?: ComparisonData;
 }
 
 export interface DashboardData {
   users: UserStats;
   letters: LetterStats;
+}
+
+export interface ComparisonData {
+  daily: {
+    current: number[];
+    previous: number[];
+    labels: string[];
+  };
+  weekly: {
+    current: number[];
+    previous: number[];
+    labels: string[];
+  };
+  monthly: {
+    current: number[];
+    previous: number[];
+    labels: string[];
+  };
+}
+export interface ComparisonChartProps {
+  comparisonData: ComparisonData;
 }
