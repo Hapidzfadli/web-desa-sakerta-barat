@@ -1,24 +1,22 @@
 'use client';
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatisticCard from './components/StatisticCard';
 import { Users, FileText, Archive } from 'lucide-react';
 import useDashboardData from './hook/useDashboardData';
 import ComparisonChart from './components/ComparisonChart';
+import LetterStatusChart from './components/LetterStatusChart';
+
 const Dashboard: React.FC = () => {
   const { data, isLoading, isError } = useDashboardData();
-
-  console.log(data);
-  console.log(isError);
 
   if (isLoading) return <div>Loading...</div>;
   if (isError) return <div>Error fetching dashboard data</div>;
   if (!data) return <div>No data available</div>;
 
   return (
-    <div className="container mx-auto p-4 ">
-      <div className="flexp-4 flex-col gap-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="container mx-auto p-4">
+      <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <StatisticCard
             title="Total Pengguna"
             Icon={Users}
@@ -27,7 +25,6 @@ const Dashboard: React.FC = () => {
             monthlyData={data.users.monthlyData}
             color="#00a1ff"
           />
-
           <StatisticCard
             title="Total Surat"
             Icon={FileText}
@@ -45,12 +42,14 @@ const Dashboard: React.FC = () => {
             color="#FFA000"
           />
         </div>
-        <div className="grid grid-cols-3 mt-6 gap-4">
-          <div className="col-span-2 ">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2">
             <ComparisonChart comparisonData={data.letters.comparison} />
           </div>
-          <div className=" ">
-            <div></div>
+          <div>
+            {data.letters.statusData && (
+              <LetterStatusChart statusData={data.letters.statusData} />
+            )}
           </div>
         </div>
       </div>

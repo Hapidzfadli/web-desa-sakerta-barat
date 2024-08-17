@@ -23,11 +23,18 @@ export interface LetterStats {
   monthlyRequestData: MonthlyData[];
   monthlyArchivedData: MonthlyData[];
   comparison?: ComparisonData;
+  statusData?: LetterStatusData;
 }
 
 export interface DashboardData {
   users: UserStats;
   letters: LetterStats;
+}
+
+export interface LetterStatusData {
+  daily: { [key: string]: number };
+  weekly: { [key: string]: number };
+  monthly: { [key: string]: number };
 }
 
 export interface ComparisonData {

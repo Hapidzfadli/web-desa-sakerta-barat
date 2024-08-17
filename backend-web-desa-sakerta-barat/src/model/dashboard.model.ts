@@ -21,6 +21,12 @@ export interface ComparisonData {
   };
 }
 
+export interface LetterStatusData {
+  daily: { [key: string]: number };
+  weekly: { [key: string]: number };
+  monthly: { [key: string]: number };
+}
+
 export class DashboardResponse {
   users: {
     total: number;
@@ -41,5 +47,6 @@ export class DashboardResponse {
     comparison?: ComparisonData;
     monthlyRequestData: MonthlyData[];
     monthlyArchivedData: MonthlyData[];
+    statusData?: LetterStatusData;
   };
 }

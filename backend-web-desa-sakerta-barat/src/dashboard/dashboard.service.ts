@@ -5,6 +5,7 @@ import { PrismaService } from '../common/prisma.service';
 import {
   ComparisonData,
   DashboardResponse,
+  LetterStatusData,
   MonthlyData,
 } from '../model/dashboard.model';
 import {
@@ -19,6 +20,7 @@ import {
   endOfMonth,
   format,
 } from 'date-fns';
+import { RequestStatus } from '@prisma/client';
 
 @Injectable()
 export class DashboardService {
@@ -29,17 +31,20 @@ export class DashboardService {
 
   async getDashboardData(): Promise<DashboardResponse> {
     try {
-      const [userStats, letterStats, comparisonData] = await Promise.all([
-        this.getUserStats(),
-        this.getLetterStats(),
-        this.getComparisonData(),
-      ]);
+      const [userStats, letterStats, comparisonData, statusData] =
+        await Promise.all([
+          this.getUserStats(),
+          this.getLetterStats(),
+          this.getComparisonData(),
+          this.getLetterStatusData(),
+        ]);
 
       return {
         users: userStats,
         letters: {
           ...letterStats,
           comparison: comparisonData,
+          statusData,
         },
       };
     } catch (error) {
@@ -257,6 +262,62 @@ export class DashboardService {
         },
       },
     });
+  }
+
+  private async getLetterStatusData(): Promise<LetterStatusData> {
+    const now = new Date();
+    const dailyStart = startOfDay(subDays(now, 1));
+    const weeklyStart = startOfWeek(now);
+    const monthlyStart = startOfMonth(now);
+
+    const [dailyData, weeklyData, monthlyData] = await Promise.all([
+      this.getStatusDataForPeriod(dailyStart, now),
+      this.getStatusDataForPeriod(weeklyStart, now),
+      this.getStatusDataForPeriod(monthlyStart, now),
+    ]);
+
+    return {
+      daily: dailyData,
+      weekly: weeklyData,
+      monthly: monthlyData,
+    };
+  }
+
+  private async getStatusDataForPeriod(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<{ [key: string]: number }> {
+    const statusCounts = await this.prismaService.letterRequest.groupBy({
+      by: ['status'],
+      _count: {
+        status: true,
+      },
+      where: {
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+    });
+
+    const statusData: { [key: string]: number } = {
+      SUBMITTED: 0,
+      APPROVED: 0,
+      REJECTED: 0,
+      SIGNED: 0,
+      COMPLETED: 0,
+      ARCHIVED: 0,
+    };
+
+    statusCounts.forEach((item) => {
+      if (item.status === 'REJECTED' || item.status === 'REJECTED_BY_KADES') {
+        statusData.REJECTED += item._count.status;
+      } else {
+        statusData[item.status] = item._count.status;
+      }
+    });
+
+    return statusData;
   }
 
   private calculateGrowth(current: number, previous: number): number {
