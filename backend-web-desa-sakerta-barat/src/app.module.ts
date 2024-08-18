@@ -9,6 +9,7 @@ import { LetterRequestModule } from './letter-request/letter-request.module';
 import { PrintedLetterModule } from './printed-letter/printed-letter.module';
 import { NotificationModule } from './notification/notification.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -22,6 +23,12 @@ import { DashboardModule } from './dashboard/dashboard.module';
     PrintedLetterModule,
     NotificationModule,
     DashboardModule,
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // time to live: 60 seconds
+        limit: 40, // limit to 10 requests per ttl
+      },
+    ]),
   ],
   controllers: [],
   providers: [],

@@ -156,23 +156,25 @@ const DaftarPermohonanTable: React.FC<DaftarPermohonanTableProps> = ({
   ];
 
   return (
-    <DataTable
-      data={data}
-      columns={columns}
-      onSearch={onSearch}
-      searchPlaceholder="Cari Permohonan..."
-      itemsPerPageOptions={[10, 20, 50, 100]}
-      onPageChange={onPageChange}
-      onItemsPerPageChange={onItemsPerPageChange}
-      totalItems={totalItems}
-      currentPage={currentPage}
-      itemsPerPage={itemsPerPage}
-      isLoading={isLoading}
-      onSort={onSort}
-      sortColumn={sortColumn}
-      sortOrder={sortOrder}
-      onFilter={onFilter}
-    />
+    <div className="w-96 md:w-full lg:w-full">
+      <DataTable
+        data={data}
+        columns={columns}
+        onSearch={onSearch}
+        searchPlaceholder="Cari Permohonan..."
+        itemsPerPageOptions={[10, 20, 50, 100]}
+        onPageChange={onPageChange}
+        onItemsPerPageChange={onItemsPerPageChange}
+        totalItems={totalItems}
+        currentPage={currentPage}
+        itemsPerPage={itemsPerPage}
+        isLoading={isLoading}
+        onSort={onSort}
+        sortColumn={sortColumn}
+        sortOrder={sortOrder}
+        onFilter={onFilter}
+      />
+    </div>
   );
 };
 
