@@ -161,7 +161,7 @@ function DataTable<T extends { id: string | number }>({
 
       <div className="overflow-x-auto">
         <div className="inline-block min-w-full align-middle">
-          <div className="overflow-hidden border rounded-lg md:w-full lg:w-full w-96">
+          <div className="overflow-hidden border rounded-lg">
             <Table className="min-w-full table-fixed divide-y divide-gray-200">
               <TableHeader>
                 <TableRow>

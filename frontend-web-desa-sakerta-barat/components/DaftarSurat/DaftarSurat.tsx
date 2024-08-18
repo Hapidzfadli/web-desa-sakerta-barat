@@ -80,8 +80,8 @@ const DaftarSurat: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-        <div className="w-full sm:w-auto overflow-x-auto">
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 ">
+        <div className="w-80 md:w-full lg:w-full sm:w-auto overflow-x-auto">
           <CategoryTabs
             categories={categories}
             activeTab={activeTab}

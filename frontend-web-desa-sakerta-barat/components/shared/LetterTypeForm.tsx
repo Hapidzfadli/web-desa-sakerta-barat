@@ -15,6 +15,7 @@ import { getTemplateFile } from '../../lib/actions/list-letter.action';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { useToast } from '@/components/ui/use-toast';
+
 interface LetterTypeFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -44,7 +45,6 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
   useEffect(() => {
     if (isOpen) {
       setFormData(initialData || {});
-
       setIconPreview(
         initialData?.icon
           ? API_URL + initialData?.icon
@@ -140,20 +140,17 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        className="bg-white"
-        style={{ width: 'auto', maxWidth: '100vw', minWidth: '65vw' }}
-      >
+      <DialogContent className="bg-white sm:max-w-[425px] md:max-w-[600px] lg:max-w-[800px] w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="head-form">
+          <DialogTitle className="head-form text-lg sm:text-xl md:text-2xl">
             {viewMode ? 'Lihat' : initialData ? 'Edit' : 'Tambah'} Tipe Surat
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="max-h-[80vh] overflow-y-auto">
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-left">
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          <div className="grid gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+              <Label htmlFor="name" className="text-left text-sm sm:text-base">
                 Nama<span className="text-red-500">*</span>
               </Label>
               <Input
@@ -161,13 +158,16 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
                 name="name"
                 value={formData.name || ''}
                 onChange={handleChange}
-                className="col-span-3 input-form"
+                className="col-span-1 sm:col-span-3 input-form"
                 disabled={viewMode}
                 required
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-left">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+              <Label
+                htmlFor="description"
+                className="text-left text-sm sm:text-base"
+              >
                 Deskripsi
               </Label>
               <Textarea
@@ -175,22 +175,28 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
                 name="description"
                 value={formData.description || ''}
                 onChange={handleChange}
-                className="col-span-3 input-form"
+                className="col-span-1 sm:col-span-3 input-form"
                 disabled={viewMode}
               />
             </div>
-            <div className="grid grid-cols-4 items-start gap-4 ">
-              <Label className="text-left">Persyaratan</Label>
-              <div className="space-y-2 col-span-3 ">
-                <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+              <Label className="text-left text-sm sm:text-base">
+                Persyaratan
+              </Label>
+              <div className="space-y-2 col-span-1 sm:col-span-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {requirements.map((req, index) => (
                     <div key={index} className="flex items-center space-x-2">
-                      <Input value={req} disabled className="flex-grow " />
+                      <Input
+                        value={req}
+                        disabled
+                        className="flex-grow text-sm"
+                      />
                       {!viewMode && (
                         <Button
                           type="button"
                           onClick={() => handleRemoveRequirement(index)}
-                          className="bg-red-500 h-8 text-white"
+                          className="bg-red-500 h-8 w-8 text-white p-0"
                         >
                           -
                         </Button>
@@ -204,12 +210,12 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
                       value={newRequirement}
                       onChange={(e) => setNewRequirement(e.target.value)}
                       placeholder="Tambahkan Persyaratan"
-                      className="flex-grow"
+                      className="flex-grow text-sm"
                     />
                     <Button
                       type="button"
                       onClick={handleAddRequirement}
-                      className="bg-blue-500 text-white"
+                      className="bg-blue-500 text-white h-8 w-8 p-0"
                     >
                       +
                     </Button>
@@ -217,12 +223,12 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
                 )}
               </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="icon" className="text-left">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+              <Label htmlFor="icon" className="text-left text-sm sm:text-base">
                 Icon
               </Label>
               {viewMode ? (
-                <div className="col-span-3">
+                <div className="col-span-1 sm:col-span-3">
                   {iconPreview ? (
                     <Image
                       src={iconPreview}
@@ -231,7 +237,7 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
                       height={100}
                     />
                   ) : (
-                    <span>Tidak ada icon</span>
+                    <span className="text-sm">Tidak ada icon</span>
                   )}
                 </div>
               ) : (
@@ -240,13 +246,13 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
                   name="icon"
                   type="file"
                   onChange={handleFileChange}
-                  className="col-span-3 cursor-pointer input-form"
+                  className="col-span-1 sm:col-span-3 cursor-pointer input-form text-sm"
                   accept="image/*"
                 />
               )}
             </div>
             {!viewMode && iconPreview && (
-              <div className="grid grid-cols-4 items-center gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
                 <div className="col-start-2 col-span-3">
                   <Image
                     src={iconPreview}
@@ -257,14 +263,17 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
                 </div>
               </div>
             )}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="template" className="text-left">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+              <Label
+                htmlFor="template"
+                className="text-left text-sm sm:text-base"
+              >
                 Template <span className="text-red-500">*</span>
               </Label>
-              <div className="col-span-3 flex items-center space-x-2">
+              <div className="col-span-1 sm:col-span-3 flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                 {viewMode ? (
                   <>
-                    <span>
+                    <span className="text-sm">
                       {templateFileName
                         ? `template surat ${formData.name.toLowerCase()}.docx`
                         : 'Tidak ada template'}
@@ -284,19 +293,19 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
                     )}
                   </>
                 ) : (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col w-full gap-2">
                     <Input
                       id="template"
                       name="template"
                       type="file"
                       onChange={handleFileChange}
-                      className="cursor-pointer input-form"
+                      className="cursor-pointer input-form text-sm"
                       accept=".docx"
                       required={!initialData?.template}
                     />
                     {templateFileName && (
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm text-gray-500">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm text-gray-500">
                           {`template surat ${formData.name.toLowerCase()}.docx`}
                         </span>
                         <Button
@@ -318,13 +327,20 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
             </div>
           </div>
           {!viewMode && (
-            <div className="flex justify-end space-x-2">
+            <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2 mt-6">
               {onDelete && initialData && (
-                <Button className="bg-red-500" onClick={onDelete} type="button">
+                <Button
+                  className="bg-red-500 w-full sm:w-auto text-white"
+                  onClick={onDelete}
+                  type="button"
+                >
                   Hapus
                 </Button>
               )}
-              <Button className="bg-save" type="submit">
+              <Button
+                className="bg-save w-full sm:w-auto text-white"
+                type="submit"
+              >
                 Simpan
               </Button>
             </div>
