@@ -8,7 +8,6 @@ import RejectionPopup from './components/RejectionPopup';
 import PreviewPopup from '../../components/shared/PreviewPopup';
 import PinPopup from '../../components/shared/PinPopup';
 import ProgressOverlay from '../../components/shared/ProgressOverlay';
-
 import { Toaster } from '@/components/ui/toaster';
 import { useUser } from '../../app/context/UserContext';
 import Filter from '../shared/Filter';
@@ -78,7 +77,7 @@ const DaftarPermohonan: React.FC = () => {
       type: 'select',
       options: [
         { value: 'SUBMITTED', label: 'Diajukan' },
-        { value: 'APPROVED', label: 'Desetujui' },
+        { value: 'APPROVED', label: 'Disetujui' },
         { value: 'REJECTED', label: 'Ditolak' },
         { value: 'SIGNED', label: 'Ditandatangani' },
         { value: 'COMPLETED', label: 'Selesai' },
@@ -89,106 +88,117 @@ const DaftarPermohonan: React.FC = () => {
 
   return (
     <>
-      {isVerifying && (
-        <ProgressOverlay isLoading={true} action="Memverifikasi Surat" />
-      )}
-      {isPrinting && (
-        <ProgressOverlay isLoading={true} action="Mencetak Surat" />
-      )}
-      {isSigning && (
-        <ProgressOverlay isLoading={true} action="Menandatangani Surat" />
-      )}
-      <div className="container mx-auto p-4 ">
-        <DaftarPermohonanTable
-          data={data?.data || []}
-          onSearch={handleSearch}
-          onPageChange={handlePageChange}
-          onItemsPerPageChange={handleItemsPerPageChange}
-          onSort={handleSort}
-          totalItems={data?.paging.total || 0}
-          currentPage={page}
-          itemsPerPage={limit}
-          isLoading={isLoading}
-          sortColumn={sortColumn}
-          sortOrder={sortOrder}
-          onPrint={handlePrint}
-          onView={setSelectedRequestId}
-          onDelete={handleDelete}
-          userRole={user?.role || ''}
-          onFilter={() => setIsFilterOpen(true)}
+      {(isVerifying || isPrinting || isSigning) && (
+        <ProgressOverlay
+          isLoading={true}
+          action={
+            isVerifying
+              ? 'Memverifikasi Surat'
+              : isPrinting
+                ? 'Mencetak Surat'
+                : 'Menandatangani Surat'
+          }
         />
-        {selectedRequestId && (
-          <DetailPermohonan
-            selectedRequest={selectedRequest}
-            onClose={() => setSelectedRequestId(null)}
-            onViewApplicant={() => setShowApplicantDetails(true)}
-            onViewAttachment={handleViewAttachment}
+      )}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="space-y-6">
+          <DaftarPermohonanTable
+            data={data?.data || []}
+            onSearch={handleSearch}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleItemsPerPageChange}
+            onSort={handleSort}
+            totalItems={data?.paging.total || 0}
+            currentPage={page}
+            itemsPerPage={limit}
+            isLoading={isLoading}
+            sortColumn={sortColumn}
+            sortOrder={sortOrder}
             onPrint={handlePrint}
-            onVerify={handleVerify}
-            onResubmit={handleResubmit}
-            setIsEditingResident={setIsEditingResident}
+            onView={setSelectedRequestId}
+            onDelete={handleDelete}
             userRole={user?.role || ''}
+            onFilter={() => setIsFilterOpen(true)}
           />
-        )}
-        {showApplicantDetails && selectedRequest && (
-          <ApplicantDetails
-            resident={selectedRequest.resident}
-            isOpen={showApplicantDetails}
+
+          {selectedRequestId && (
+            <DetailPermohonan
+              selectedRequest={selectedRequest}
+              onClose={() => setSelectedRequestId(null)}
+              onViewApplicant={() => setShowApplicantDetails(true)}
+              onViewAttachment={handleViewAttachment}
+              onPrint={handlePrint}
+              onVerify={handleVerify}
+              onResubmit={handleResubmit}
+              setIsEditingResident={setIsEditingResident}
+              userRole={user?.role || ''}
+            />
+          )}
+
+          {showApplicantDetails && selectedRequest && (
+            <ApplicantDetails
+              resident={selectedRequest.resident}
+              isOpen={showApplicantDetails}
+              onClose={() => {
+                setShowApplicantDetails(false);
+                setIsEditingResident(false);
+                setEditedResidentData({});
+              }}
+              isEditing={isEditingResident}
+              onEdit={handleResidentFieldChange}
+              onSave={handleSaveResident}
+            />
+          )}
+
+          {showRejectionPopup && (
+            <RejectionPopup
+              isOpen={showRejectionPopup}
+              onClose={() => {
+                setShowRejectionPopup(false);
+                setRejectionReason('');
+              }}
+              rejectionReason={rejectionReason}
+              onReasonChange={setRejectionReason}
+              onConfirm={handleRejectConfirm}
+            />
+          )}
+
+          {previewRequestId !== null && (
+            <PreviewPopup
+              isOpen={true}
+              onClose={() => {
+                setPreviewRequestId(null);
+                if (previewUrl) URL.revokeObjectURL(previewUrl);
+              }}
+              pdfUrl={previewUrl}
+              isLoading={isPdfLoading}
+              progress={progress}
+              onPrint={printDocument}
+              onSign={handleSignButtonClick}
+              showSignButton={user?.role === 'KADES'}
+            />
+          )}
+
+          <PinPopup
+            isOpen={showPinPopup}
             onClose={() => {
-              setShowApplicantDetails(false);
-              setIsEditingResident(false);
-              setEditedResidentData({});
+              setShowPinPopup(false);
+              setSignPin('');
             }}
-            isEditing={isEditingResident}
-            onEdit={handleResidentFieldChange}
-            onSave={handleSaveResident}
+            onConfirm={handleSignConfirm}
+            pin={signPin}
+            setPin={setSignPin}
           />
-        )}
-        {showRejectionPopup && (
-          <RejectionPopup
-            isOpen={showRejectionPopup}
-            onClose={() => {
-              setShowRejectionPopup(false);
-              setRejectionReason('');
-            }}
-            rejectionReason={rejectionReason}
-            onReasonChange={setRejectionReason}
-            onConfirm={handleRejectConfirm}
+
+          <Filter
+            isOpen={isFilterOpen}
+            onClose={() => setIsFilterOpen(false)}
+            onApply={handleFilterChange}
+            filterOptions={filterOptions}
           />
-        )}
-        {previewRequestId !== null && (
-          <PreviewPopup
-            isOpen={true}
-            onClose={() => {
-              setPreviewRequestId(null);
-              if (previewUrl) URL.revokeObjectURL(previewUrl);
-            }}
-            pdfUrl={previewUrl}
-            isLoading={isPdfLoading}
-            progress={progress}
-            onPrint={printDocument}
-            onSign={handleSignButtonClick}
-            showSignButton={user?.role === 'KADES'}
-          />
-        )}
-        <PinPopup
-          isOpen={showPinPopup}
-          onClose={() => {
-            setShowPinPopup(false);
-            setSignPin('');
-          }}
-          onConfirm={handleSignConfirm}
-          pin={signPin}
-          setPin={setSignPin}
-        />
-        <Filter
-          isOpen={isFilterOpen}
-          onClose={() => setIsFilterOpen(false)}
-          onApply={handleFilterChange}
-          filterOptions={filterOptions}
-        />
-        <Toaster />
+        </div>
       </div>
+      <Toaster />
     </>
   );
 };
