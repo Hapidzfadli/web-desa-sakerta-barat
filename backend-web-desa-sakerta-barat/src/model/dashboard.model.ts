@@ -27,6 +27,18 @@ export interface LetterStatusData {
   monthly: { [key: string]: number };
 }
 
+export interface PopulationDocumentRow {
+  documentType: string;
+  totalRequests: number;
+  lastRequestDate: string;
+  completionRate: number;
+  category: string;
+}
+
+export interface PopulationDocumentData {
+  rows: PopulationDocumentRow[];
+}
+
 export class DashboardResponse {
   users: {
     total: number;
@@ -49,4 +61,5 @@ export class DashboardResponse {
     monthlyArchivedData: MonthlyData[];
     statusData?: LetterStatusData;
   };
+  populationDocuments?: PopulationDocumentData;
 }

@@ -5,6 +5,7 @@ import { Users, FileText, Archive } from 'lucide-react';
 import useDashboardData from './hook/useDashboardData';
 import ComparisonChart from './components/ComparisonChart';
 import LetterStatusChart from './components/LetterStatusChart';
+import PopulationDocumentsTable from './components/PopulationDocumentsTable';
 
 const Dashboard: React.FC = () => {
   const { data, isLoading, isError } = useDashboardData();
@@ -43,10 +44,13 @@ const Dashboard: React.FC = () => {
           />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-4">
             <ComparisonChart comparisonData={data.letters.comparison} />
+            {data.populationDocuments && (
+              <PopulationDocumentsTable data={data.populationDocuments.rows} />
+            )}
           </div>
-          <div>
+          <div className="lg:col-span-1">
             {data.letters.statusData && (
               <LetterStatusChart statusData={data.letters.statusData} />
             )}
