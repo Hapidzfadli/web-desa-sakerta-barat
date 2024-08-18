@@ -50,7 +50,7 @@ const ListLetter: React.FC<{ categoryId: number }> = ({ categoryId }) => {
         }}
       />
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 grid-cols-1 gap-6">
         <div className="grid grid-cols-1 gap-6">
           {letterTypeData
             ?.slice(0, Math.ceil(letterTypeData.length / 2))

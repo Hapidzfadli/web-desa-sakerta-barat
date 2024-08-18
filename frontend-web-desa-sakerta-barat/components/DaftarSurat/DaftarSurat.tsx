@@ -33,7 +33,7 @@ const DaftarSurat: React.FC = () => {
   if (status === 'loading') return <LoadingSpinner />;
   if (status === 'error')
     return (
-      <div>
+      <div className="p-4 text-red-500">
         Error loading categories:{' '}
         {error instanceof Error ? error.message : 'Unknown error'}
       </div>
@@ -56,7 +56,6 @@ const DaftarSurat: React.FC = () => {
   const handleFilterApply = (newFilters: Record<string, string | string[]>) => {
     setFilters(newFilters);
 
-    // Change the active tab if a category is selected in the filter
     if (newFilters.category && typeof newFilters.category === 'string') {
       const newActiveTab = parseInt(newFilters.category, 10);
       if (!isNaN(newActiveTab) && newActiveTab !== activeTab) {
@@ -64,7 +63,7 @@ const DaftarSurat: React.FC = () => {
       }
     }
 
-    setIsFilterOpen(false); // Close the filter dialog after applying
+    setIsFilterOpen(false);
   };
 
   const filterOptions: FilterOption[] = [
@@ -78,27 +77,32 @@ const DaftarSurat: React.FC = () => {
       })),
     },
   ];
+
   return (
-    <div className="container mx-auto p-4">
-      <div className="mb-6 relative flex justify-between">
-        <CategoryTabs
-          categories={categories}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          hasNextPage={hasNextPage}
-          onLoadMore={fetchNextPage}
-        />
-        <ActionButtons
-          userRole={user?.role}
-          onAdd={handleAddCategory}
-          onSettings={() => {
-            const category = categories.find((c) => c.id === activeTab);
-            if (category) {
-              handleEditCategory(category);
-            }
-          }}
-          onFilter={handleFilterOpen}
-        />
+    <div className="container mx-auto px-4 py-6">
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+        <div className="w-full sm:w-auto overflow-x-auto">
+          <CategoryTabs
+            categories={categories}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            hasNextPage={hasNextPage}
+            onLoadMore={fetchNextPage}
+          />
+        </div>
+        <div className="w-full sm:w-auto flex justify-end">
+          <ActionButtons
+            userRole={user?.role}
+            onAdd={handleAddCategory}
+            onSettings={() => {
+              const category = categories.find((c) => c.id === activeTab);
+              if (category) {
+                handleEditCategory(category);
+              }
+            }}
+            onFilter={handleFilterOpen}
+          />
+        </div>
       </div>
 
       <div className="mt-6">

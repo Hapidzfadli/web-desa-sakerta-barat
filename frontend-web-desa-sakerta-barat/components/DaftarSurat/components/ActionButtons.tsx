@@ -16,7 +16,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   onFilter,
 }) => {
   return (
-    <div className="flex gap-2 text-gray-500">
+    <div className="flex gap-2 text-gray-500 relative w-full">
       {userRole !== 'WARGA' && (
         <Button
           className="bg-save hover:bg-gray-100 h-8 w-10 p-0 rounded-lg"
