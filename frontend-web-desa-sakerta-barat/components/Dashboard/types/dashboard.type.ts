@@ -29,12 +29,25 @@ export interface LetterStats {
 export interface DashboardData {
   users: UserStats;
   letters: LetterStats;
+  populationDocuments?: PopulationDocumentData;
 }
 
 export interface LetterStatusData {
   daily: { [key: string]: number };
   weekly: { [key: string]: number };
   monthly: { [key: string]: number };
+}
+
+export interface PopulationDocumentRow {
+  documentType: string;
+  totalRequests: number;
+  lastRequestDate: string;
+  completionRate: number;
+  category: string;
+}
+
+export interface PopulationDocumentData {
+  rows: PopulationDocumentRow[];
 }
 
 export interface ComparisonData {

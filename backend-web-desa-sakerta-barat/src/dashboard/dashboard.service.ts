@@ -7,6 +7,8 @@ import {
   DashboardResponse,
   LetterStatusData,
   MonthlyData,
+  PopulationDocumentData,
+  PopulationDocumentRow,
 } from '../model/dashboard.model';
 import {
   subDays,
@@ -31,13 +33,19 @@ export class DashboardService {
 
   async getDashboardData(): Promise<DashboardResponse> {
     try {
-      const [userStats, letterStats, comparisonData, statusData] =
-        await Promise.all([
-          this.getUserStats(),
-          this.getLetterStats(),
-          this.getComparisonData(),
-          this.getLetterStatusData(),
-        ]);
+      const [
+        userStats,
+        letterStats,
+        comparisonData,
+        statusData,
+        populationDocumentData,
+      ] = await Promise.all([
+        this.getUserStats(),
+        this.getLetterStats(),
+        this.getComparisonData(),
+        this.getLetterStatusData(),
+        this.getPopulationDocumentData(),
+      ]);
 
       return {
         users: userStats,
@@ -46,6 +54,7 @@ export class DashboardService {
           comparison: comparisonData,
           statusData,
         },
+        populationDocuments: populationDocumentData,
       };
     } catch (error) {
       this.logger.error('Error fetching dashboard data', { error });
@@ -318,6 +327,62 @@ export class DashboardService {
     });
 
     return statusData;
+  }
+
+  private async getPopulationDocumentData(): Promise<PopulationDocumentData> {
+    const documentTypes = await this.prismaService.letterType.findMany({
+      select: {
+        id: true,
+        name: true,
+        category: {
+          select: {
+            name: true,
+          },
+        },
+        letterRequests: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+
+    const rows: PopulationDocumentRow[] = await Promise.all(
+      documentTypes
+        .filter((documentType) => documentType.letterRequests.length > 0)
+        .map(async (documentType) => {
+          const totalRequests = documentType.letterRequests.length;
+
+          const completedRequests =
+            await this.prismaService.letterRequest.count({
+              where: {
+                letterTypeId: documentType.id,
+                status: RequestStatus.COMPLETED,
+              },
+            });
+
+          const latestRequest =
+            await this.prismaService.letterRequest.findFirst({
+              where: { letterTypeId: documentType.id },
+              orderBy: { createdAt: 'desc' },
+              select: { createdAt: true },
+            });
+
+          const completionRate = (completedRequests / totalRequests) * 100;
+
+          return {
+            documentType: documentType.name,
+            category: documentType.category.name,
+            totalRequests: totalRequests,
+            lastRequestDate: latestRequest
+              ? format(latestRequest.createdAt, 'dd MMM yyyy')
+              : '-',
+            completionRate: Math.round(completionRate),
+          };
+        }),
+    );
+
+    return { rows };
   }
 
   private calculateGrowth(current: number, previous: number): number {
