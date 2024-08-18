@@ -264,7 +264,11 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
               <div className="col-span-3 flex items-center space-x-2">
                 {viewMode ? (
                   <>
-                    <span>{templateFileName || 'Tidak ada template'}</span>
+                    <span>
+                      {templateFileName
+                        ? `template surat ${formData.name.toLowerCase()}.docx`
+                        : 'Tidak ada template'}
+                    </span>
                     {templateFileName && (
                       <Button
                         type="button"
@@ -293,7 +297,7 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
                     {templateFileName && (
                       <div className="flex items-center gap-4">
                         <span className="text-sm text-gray-500">
-                          {templateFileName}
+                          {`template surat ${formData.name.toLowerCase()}.docx`}
                         </span>
                         <Button
                           type="button"

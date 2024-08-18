@@ -35,6 +35,7 @@
     "@sentry/profiling-node": "^8.20.0",
     "@types/fs-extra": "^11.0.4",
     "bcrypt": "^5.1.1",
+    "date-fns": "^3.6.0",
     "docx-pdf": "^0.0.1",
     "docxtemplater": "^3.49.1",
     "docxtemplater-image-module": "^3.1.0",

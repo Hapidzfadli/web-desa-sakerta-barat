@@ -17,7 +17,7 @@ enum Gender {
   PEREMPUAN = 'PEREMPUAN',
 }
 
-enum RequestStatus {
+export enum RequestStatus {
   SUBMITTED = 'SUBMITTED',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
