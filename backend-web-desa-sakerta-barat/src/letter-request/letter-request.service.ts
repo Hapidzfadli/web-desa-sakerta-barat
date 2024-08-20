@@ -405,7 +405,7 @@ export class LetterRequestService {
     user: any,
     requestId: number,
   ): Promise<ResponseLetterRequest> {
-    if (!user || (user.role !== Role.ADMIN && user.role !== Role.KADES)) {
+    if (user.role !== Role.ADMIN && user.role !== Role.KADES) {
       throw new ForbiddenException(
         'Only admins or village head can archive letter requests',
       );
@@ -413,6 +413,7 @@ export class LetterRequestService {
 
     const letterRequest = await this.prismaService.letterRequest.findUnique({
       where: { id: requestId },
+      include: { resident: { include: { user: true } } },
     });
 
     if (!letterRequest) {
@@ -436,6 +437,11 @@ export class LetterRequestService {
         },
         include: {
           attachments: true,
+          resident: {
+            include: {
+              user: true,
+            },
+          },
         },
       },
     );
@@ -448,6 +454,7 @@ export class LetterRequestService {
       notificationContent,
       adminContent,
       [Role.ADMIN, Role.KADES],
+      archivedLetterRequest.resident.user.id,
     );
 
     return this.mapToResponseLetterRequest(archivedLetterRequest);

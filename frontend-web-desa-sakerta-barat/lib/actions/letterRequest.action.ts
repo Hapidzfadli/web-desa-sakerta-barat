@@ -185,6 +185,38 @@ export const completeLetterRequest = async (
   }
 };
 
+export const archiveLetterRequest = async (
+  id: number,
+): Promise<LetterRequest> => {
+  try {
+    const token = Cookies.get('session');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(
+      `${API_URL}/api/letter-requests/${id}/archive`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to archive letter request');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Error in archiveLetterRequest:', error);
+    throw error;
+  }
+};
+
 export const updateLetterRequest = async (
   id: number,
   data: any,

@@ -69,6 +69,7 @@ const DaftarPermohonan: React.FC = () => {
     setSignPin,
     setIsFilterOpen,
     handleFilterChange,
+    handleArchive,
   } = useDaftarPermohonan();
 
   const filterOptions = [
@@ -134,6 +135,7 @@ const DaftarPermohonan: React.FC = () => {
               setIsEditingResident={setIsEditingResident}
               userRole={user?.role || ''}
               onComplete={handleComplete}
+              onArchive={handleArchive}
             />
           )}
 

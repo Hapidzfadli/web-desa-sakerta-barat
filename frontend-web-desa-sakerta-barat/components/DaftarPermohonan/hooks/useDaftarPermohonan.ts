@@ -13,6 +13,7 @@ import {
   printLetterRequest,
   signLetterRequest,
   completeLetterRequest,
+  archiveLetterRequest,
 } from '../../../lib/actions/letterRequest.action';
 import { updateResidentData } from '../../../lib/actions/setting.actions';
 import { LetterRequest } from '../types';
@@ -408,6 +409,35 @@ export const useDaftarPermohonan = () => {
     [completeMutation],
   );
 
+  const archiveMutation = useMutation({
+    mutationFn: (id: number) => archiveLetterRequest(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['letterRequests']);
+      queryClient.invalidateQueries(['letterRequest', selectedRequestId]);
+      toast({
+        title: 'Sukses',
+        description: 'Permohonan surat telah diarsipkan',
+        duration: 3000,
+      });
+      setSelectedRequestId(null);
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Gagal mengarsipkan permohonan surat',
+        variant: 'destructive',
+        duration: 3000,
+      });
+    },
+  });
+
+  const handleArchive = useCallback(
+    (id: number) => {
+      archiveMutation.mutate(id);
+    },
+    [archiveMutation],
+  );
+
   return {
     data,
     isLoading,
@@ -436,6 +466,7 @@ export const useDaftarPermohonan = () => {
     isPdfLoading,
     isFilterOpen,
     filters,
+    handleArchive,
     setIsEditingResident,
     handleSearch,
     handleSort,
