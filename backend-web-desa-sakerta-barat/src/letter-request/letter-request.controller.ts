@@ -212,10 +212,12 @@ export class LetterRequestController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   async getLetterRequestById(
+    @Auth() user: any,
     @Param('id') id: string,
   ): Promise<WebResponse<ResponseLetterRequest>> {
     const result = await this.letterRequestService.getLetterRequestById(
       parseInt(id),
+      user.role,
     );
     return {
       data: result,
