@@ -153,6 +153,38 @@ export const verifyLetterRequest = async (
   }
 };
 
+export const completeLetterRequest = async (
+  id: number,
+): Promise<LetterRequest> => {
+  try {
+    const token = Cookies.get('session');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(
+      `${API_URL}/api/letter-requests/${id}/complete`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to complete letter request');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Error in completeLetterRequest:', error);
+    throw error;
+  }
+};
+
 export const updateLetterRequest = async (
   id: number,
   data: any,

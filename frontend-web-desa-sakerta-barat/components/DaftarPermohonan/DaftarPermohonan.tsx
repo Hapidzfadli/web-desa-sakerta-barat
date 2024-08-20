@@ -42,6 +42,7 @@ const DaftarPermohonan: React.FC = () => {
     signPin,
     isFilterOpen,
     filters,
+    handleComplete,
     handleSearch,
     handleSort,
     handlePageChange,
@@ -132,6 +133,7 @@ const DaftarPermohonan: React.FC = () => {
               onResubmit={handleResubmit}
               setIsEditingResident={setIsEditingResident}
               userRole={user?.role || ''}
+              onComplete={handleComplete}
             />
           )}
 

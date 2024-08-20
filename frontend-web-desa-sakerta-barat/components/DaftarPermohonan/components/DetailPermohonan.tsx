@@ -16,6 +16,7 @@ interface DetailPermohonanProps {
   onVerify: (status: 'APPROVED' | 'REJECTED') => void;
   setIsEditingResident: (isEditing: boolean) => void;
   onResubmit: () => void;
+  onComplete: (id: number) => void;
   userRole: string;
 }
 
@@ -27,6 +28,7 @@ const DetailPermohonan: React.FC<DetailPermohonanProps> = ({
   setIsEditingResident,
   onPrint,
   onVerify,
+  onComplete,
   onResubmit,
   userRole,
 }) => {
@@ -159,6 +161,14 @@ const DetailPermohonan: React.FC<DetailPermohonanProps> = ({
                 Terima
               </Button>
             </>
+          )}
+          {selectedRequest.status === 'SIGNED' && (
+            <Button
+              onClick={() => onComplete(selectedRequest.id)}
+              className="bg-green-500 text-white"
+            >
+              Selesai
+            </Button>
           )}
           {userRole === 'WARGA' && selectedRequest.status === 'REJECTED' && (
             <Button onClick={onResubmit} className="bg-blue-500 text-white">

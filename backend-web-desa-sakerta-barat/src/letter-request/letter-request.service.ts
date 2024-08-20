@@ -186,6 +186,53 @@ export class LetterRequestService {
     return this.mapToResponseLetterRequest(updatedLetterRequest);
   }
 
+  async completeLetterRequest(
+    user: any,
+    requestId: number,
+  ): Promise<ResponseLetterRequest> {
+    const letterRequest = await this.prismaService.letterRequest.findUnique({
+      where: { id: requestId },
+      include: { resident: { include: { user: true } } },
+    });
+
+    if (!letterRequest) {
+      throw new NotFoundException('Letter request not found');
+    }
+
+    if (letterRequest.status !== RequestStatus.SIGNED) {
+      throw new ForbiddenException('Only signed requests can be completed');
+    }
+
+    const completedLetterRequest =
+      await this.prismaService.letterRequest.update({
+        where: { id: requestId },
+        data: {
+          status: RequestStatus.COMPLETED,
+        },
+        include: {
+          attachments: true,
+          resident: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      });
+
+    const notificationContent = `Permohonan surat Anda dengan nomor pengajuan ${completedLetterRequest.id} telah selesai diproses dan dapat diambil.`;
+    const adminContent = `Surat dengan nomor pengajuan ${completedLetterRequest.id} telah selesai diproses.`;
+
+    await this.sendNotifications(
+      completedLetterRequest,
+      notificationContent,
+      adminContent,
+      [Role.ADMIN, Role.KADES],
+      completedLetterRequest.resident.user.id,
+    );
+
+    return this.mapToResponseLetterRequest(completedLetterRequest);
+  }
+
   async verifyLetterRequest(
     user: any,
     requestId: number,

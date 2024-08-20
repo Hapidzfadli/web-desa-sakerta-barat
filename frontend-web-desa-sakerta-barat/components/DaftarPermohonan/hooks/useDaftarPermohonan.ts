@@ -12,6 +12,7 @@ import {
   previewLetterRequest,
   printLetterRequest,
   signLetterRequest,
+  completeLetterRequest,
 } from '../../../lib/actions/letterRequest.action';
 import { updateResidentData } from '../../../lib/actions/setting.actions';
 import { LetterRequest } from '../types';
@@ -378,6 +379,35 @@ export const useDaftarPermohonan = () => {
     setPage(1); // Reset to first page when filters change
   };
 
+  const completeMutation = useMutation({
+    mutationFn: (id: number) => completeLetterRequest(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['letterRequests']);
+      queryClient.invalidateQueries(['letterRequest', selectedRequestId]);
+      toast({
+        title: 'Sukses',
+        description: 'Permohonan surat telah diselesaikan',
+        duration: 3000,
+      });
+      setSelectedRequestId(null);
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Gagal menyelesaikan permohonan surat',
+        variant: 'destructive',
+        duration: 3000,
+      });
+    },
+  });
+
+  const handleComplete = useCallback(
+    (id: number) => {
+      completeMutation.mutate(id);
+    },
+    [completeMutation],
+  );
+
   return {
     data,
     isLoading,
@@ -432,5 +462,6 @@ export const useDaftarPermohonan = () => {
     setSignPin,
     setIsFilterOpen,
     handleFilterChange,
+    handleComplete,
   };
 };

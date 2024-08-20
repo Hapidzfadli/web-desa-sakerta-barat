@@ -96,6 +96,7 @@ const DaftarPermohonanTable: React.FC<DaftarPermohonanTableProps> = ({
     },
     {
       header: 'Action',
+      disableSorting: true,
       accessor: (row: LetterRequest) => (
         <div className="flex items-center space-x-1 justify-center">
           {userRole !== 'WARGA' && (
