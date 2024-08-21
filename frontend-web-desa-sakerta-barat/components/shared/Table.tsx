@@ -34,6 +34,7 @@ interface TableProps<T> {
     accessor: keyof T | ((data: T) => React.ReactNode);
     cell?: (value: any, row: T) => React.ReactNode;
     className?: string;
+    disableSorting?: boolean;
   }[];
   itemsPerPageOptions?: number[];
   onSearch?: (query: string) => void;
@@ -116,9 +117,9 @@ function DataTable<T extends { id: string | number }>({
 
   return (
     <div className="space-y-4 text-black-2">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          <span>Tampilkan</span>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
+          <span className="whitespace-nowrap">Tampilkan</span>
           <Select
             value={itemsPerPage.toString()}
             onValueChange={(value) => handleItemsPerPageChange(Number(value))}
@@ -135,23 +136,21 @@ function DataTable<T extends { id: string | number }>({
             </SelectContent>
           </Select>
         </div>
-        <div className="flex items-center space-x-2 text-gray-500">
-          <div className="flex-grow max-w-md mx-2 md:block py-2 px-0 text-sm">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#8F9BBA] h-5" />
-              <input
-                type="text"
-                placeholder={searchPlaceholder}
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-full text-[#8F9BBA] bg-[#F4F7FE] focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+        <div className="flex items-center space-x-2 text-gray-500 w-full sm:w-auto">
+          <div className="relative flex-grow max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#8F9BBA] h-5" />
+            <input
+              type="text"
+              placeholder={searchPlaceholder}
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-full text-[#8F9BBA] bg-[#F4F7FE] focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
           {onFilter && (
             <Button
               onClick={onFilter}
-              className="bg-save hover:bg-gray-100 h-8 px-2 rounded-lg"
+              className="bg-save hover:bg-gray-100 h-8 px-2 rounded-lg whitespace-nowrap"
               title="Filter"
             >
               <Filter className="h-4 w-4 mr-2" />
@@ -161,87 +160,100 @@ function DataTable<T extends { id: string | number }>({
         </div>
       </div>
 
-      <div className="relative">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {columns.map((column, index) => (
-                <TableHead key={index} className={column.className}>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort(column.accessor as string)}
-                    className="hover:bg-transparent p-0"
-                  >
-                    {column.header}
-                    <FontAwesomeIcon
-                      icon={faSort}
-                      className={`ml-2 h-4 w-4 ${
-                        controlledSortColumn === column.accessor
-                          ? controlledSortOrder === 'asc'
-                            ? 'text-blue-500'
-                            : 'text-blue-500 rotate-180'
-                          : 'text-[#9E9E9E]'
-                      }`}
-                    />
-                  </Button>
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  <Loader2 className="w-6 h-6 animate-spin mx-auto" />
-                </TableCell>
-              </TableRow>
-            ) : displayData.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  Tidak ada data
-                </TableCell>
-              </TableRow>
-            ) : (
-              displayData.map((row, rowIndex) => (
-                <TableRow
-                  key={row.id}
-                  className={rowIndex % 2 === 0 ? 'bg-[#F7F6FE]' : 'bg-white'}
-                >
+      <div className="overflow-x-auto">
+        <div className="inline-block min-w-full align-middle">
+          <div className="overflow-hidden border rounded-lg">
+            <Table className="min-w-full divide-y divide-gray-200">
+              <TableHeader>
+                <TableRow>
                   {columns.map((column, index) => (
-                    <TableCell key={index} className={column.className}>
-                      {column.cell
-                        ? column.cell(
-                            typeof column.accessor === 'function'
-                              ? column.accessor(row)
-                              : row[column.accessor],
-                            row,
-                          )
-                        : typeof column.accessor === 'function'
-                          ? column.accessor(row)
-                          : row[column.accessor]}
-                    </TableCell>
+                    <TableHead
+                      key={index}
+                      className={`bg-gray-50 ${column.className}`}
+                    >
+                      {column.disableSorting ? (
+                        <div className="px-2 py-1">{column.header}</div>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleSort(column.accessor as string)}
+                          className="hover:bg-transparent p-0 w-full flex justify-between items-center"
+                        >
+                          {column.header}
+                          <FontAwesomeIcon
+                            icon={faSort}
+                            className={`ml-2 h-4 w-4 ${
+                              controlledSortColumn === column.accessor
+                                ? controlledSortOrder === 'asc'
+                                  ? 'text-blue-500'
+                                  : 'text-blue-500 rotate-180'
+                                : 'text-[#9E9E9E]'
+                            }`}
+                          />
+                        </Button>
+                      )}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              </TableHeader>
+              <TableBody className="bg-white divide-y divide-gray-200">
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                    </TableCell>
+                  </TableRow>
+                ) : displayData.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      Tidak ada data
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  displayData.map((row, rowIndex) => (
+                    <TableRow
+                      key={row.id}
+                      className={
+                        rowIndex % 2 === 0 ? 'bg-[#F7F6FE]' : 'bg-white'
+                      }
+                    >
+                      {columns.map((column, index) => (
+                        <TableCell key={index} className={column.className}>
+                          {column.cell
+                            ? column.cell(
+                                typeof column.accessor === 'function'
+                                  ? column.accessor(row)
+                                  : row[column.accessor],
+                                row,
+                              )
+                            : typeof column.accessor === 'function'
+                              ? column.accessor(row)
+                              : row[column.accessor]}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       </div>
 
-      <div className="flex items-center justify-between text-sm">
-        {/* <div className="w-fit">
+      <div className="flex flex-col sm:flex-row items-center justify-between text-sm">
+        <div className="w-full sm:w-auto mb-2 sm:mb-0 text-center sm:text-left">
           <p>
             Menampilkan {(currentPage - 1) * itemsPerPage + 1} hingga{' '}
             {Math.min(currentPage * itemsPerPage, totalItems ?? data.length)}{' '}
             dari {totalItems ?? data.length} entri
           </p>
-        </div> */}
+        </div>
         <Pagination>
           <PaginationContent>
             <PaginationItem>
@@ -258,7 +270,7 @@ function DataTable<T extends { id: string | number }>({
                 (i >= currentPage - 2 && i <= currentPage + 2)
               ) {
                 return (
-                  <PaginationItem key={i}>
+                  <PaginationItem key={i} className="hidden sm:inline-block">
                     <PaginationLink
                       onClick={() => handlePageChange(i + 1)}
                       isActive={currentPage === i + 1}
@@ -269,7 +281,12 @@ function DataTable<T extends { id: string | number }>({
                   </PaginationItem>
                 );
               } else if (i === currentPage - 3 || i === currentPage + 3) {
-                return <PaginationEllipsis key={i} />;
+                return (
+                  <PaginationEllipsis
+                    key={i}
+                    className="hidden sm:inline-block"
+                  />
+                );
               }
               return null;
             })}

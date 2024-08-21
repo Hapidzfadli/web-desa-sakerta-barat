@@ -95,8 +95,8 @@ const Sidebar = ({ sidebar }: SidebarProps) => {
       <button
         onClick={toggleSidebar}
         className={cn(
-          'absolute top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-md transition-all duration-300',
-          isExpanded ? '-right-4' : '-right-1 translate-x-full',
+          'absolute top-1/2 transform z-50 -translate-y-1/2 bg-white rounded-full p-2 shadow-md transition-all duration-300 hidden md:block',
+          isExpanded ? '-right-4' : '-right-0 translate-x-full',
         )}
       >
         {isExpanded ? <ChevronLeft size={24} /> : <ChevronRight size={24} />}

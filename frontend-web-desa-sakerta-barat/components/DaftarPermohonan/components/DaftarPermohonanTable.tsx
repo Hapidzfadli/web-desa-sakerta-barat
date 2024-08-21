@@ -61,25 +61,33 @@ const DaftarPermohonanTable: React.FC<DaftarPermohonanTableProps> = ({
   const printableStatuses = ['APPROVED', 'SIGNED', 'COMPLETED', 'ARCHIVED'];
 
   const columns: TableColumn[] = [
-    { header: 'ID', accessor: 'id', className: 'w-16 text-center' },
+    {
+      header: 'ID',
+      accessor: 'id',
+      className: 'w-20 text-center',
+    },
     {
       header: 'Pemohon',
       accessor: 'residentName',
-      className: 'w-1/6 text-left',
+      className: 'w-40 text-left',
     },
-    { header: 'Surat', accessor: 'letterName', className: 'w-1/3 text-left' },
+    {
+      header: 'Surat',
+      accessor: 'letterName',
+      className: 'w-60 text-left',
+    },
     {
       header: 'Tanggal',
       accessor: 'requestDate',
       cell: (value: string) => formatDate(value),
-      className: 'w-1/5 text-left',
+      className: 'w-40 text-left',
     },
     {
       header: 'Status',
       accessor: 'status',
       cell: (value: string) => (
         <span
-          className={`px-4 py-2 rounded-full text-xs font-medium ${statusColors[value]}`}
+          className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[value]}`}
         >
           {translateStatus(value)}
         </span>
@@ -88,6 +96,7 @@ const DaftarPermohonanTable: React.FC<DaftarPermohonanTableProps> = ({
     },
     {
       header: 'Action',
+      disableSorting: true,
       accessor: (row: LetterRequest) => (
         <div className="flex items-center space-x-1 justify-center">
           {userRole !== 'WARGA' && (
@@ -143,28 +152,30 @@ const DaftarPermohonanTable: React.FC<DaftarPermohonanTableProps> = ({
           </Button>
         </div>
       ),
-      className: 'w-32 text-center',
+      className: 'w-40 text-center',
     },
   ];
 
   return (
-    <DataTable
-      data={data}
-      columns={columns}
-      onSearch={onSearch}
-      searchPlaceholder="Cari Permohonan..."
-      itemsPerPageOptions={[10, 20, 50, 100]}
-      onPageChange={onPageChange}
-      onItemsPerPageChange={onItemsPerPageChange}
-      totalItems={totalItems}
-      currentPage={currentPage}
-      itemsPerPage={itemsPerPage}
-      isLoading={isLoading}
-      onSort={onSort}
-      sortColumn={sortColumn}
-      sortOrder={sortOrder}
-      onFilter={onFilter}
-    />
+    <div className="w-96 md:w-full lg:w-full">
+      <DataTable
+        data={data}
+        columns={columns}
+        onSearch={onSearch}
+        searchPlaceholder="Cari Permohonan..."
+        itemsPerPageOptions={[10, 20, 50, 100]}
+        onPageChange={onPageChange}
+        onItemsPerPageChange={onItemsPerPageChange}
+        totalItems={totalItems}
+        currentPage={currentPage}
+        itemsPerPage={itemsPerPage}
+        isLoading={isLoading}
+        onSort={onSort}
+        sortColumn={sortColumn}
+        sortOrder={sortOrder}
+        onFilter={onFilter}
+      />
+    </div>
   );
 };
 

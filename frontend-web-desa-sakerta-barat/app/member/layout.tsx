@@ -23,7 +23,9 @@ export default function RootLayout({
 
             <div className="flex flex-col flex-grow">
               <HeaderDashboard />
-              <div className="flex-grow overflow-auto p-6">{children}</div>
+              <div className="flex-grow overflow-auto p-6 w-full relative">
+                {children}
+              </div>
             </div>
             <Toaster />
           </main>

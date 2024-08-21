@@ -357,7 +357,9 @@ export class DashboardService {
             await this.prismaService.letterRequest.count({
               where: {
                 letterTypeId: documentType.id,
-                status: RequestStatus.COMPLETED,
+                status: {
+                  in: [RequestStatus.COMPLETED, RequestStatus.ARCHIVED],
+                },
               },
             });
 

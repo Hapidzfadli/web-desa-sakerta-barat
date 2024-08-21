@@ -12,9 +12,12 @@ import {
   previewLetterRequest,
   printLetterRequest,
   signLetterRequest,
+  completeLetterRequest,
+  archiveLetterRequest,
 } from '../../../lib/actions/letterRequest.action';
 import { updateResidentData } from '../../../lib/actions/setting.actions';
 import { LetterRequest } from '../types';
+import { useUser } from '../../../app/context/UserContext';
 
 export const useDaftarPermohonan = () => {
   const [page, setPage] = useState(1);
@@ -42,16 +45,14 @@ export const useDaftarPermohonan = () => {
   const [signPin, setSignPin] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState({});
+  const { user } = useUser();
+  const userId = user?.id;
 
   const { data, isLoading, isError } = useQuery({
     queryKey: [
       'letterRequests',
-      page,
-      limit,
-      searchQuery,
-      sortColumn,
-      sortOrder,
-      filters,
+      userId,
+      { page, limit, searchQuery, sortColumn, sortOrder, filters },
     ],
     queryFn: () =>
       fetchLetterRequests(
@@ -62,6 +63,7 @@ export const useDaftarPermohonan = () => {
         sortOrder,
         filters,
       ),
+    enabled: !!userId,
     staleTime: 60000,
     cacheTime: 30000,
     refetchOnWindowFocus: false,
@@ -77,9 +79,9 @@ export const useDaftarPermohonan = () => {
   });
 
   const { data: selectedRequest, isLoading: isLoadingDetails } = useQuery({
-    queryKey: ['letterRequest', selectedRequestId],
+    queryKey: ['letterRequest', userId, selectedRequestId],
     queryFn: () => fetchLetterRequestById(selectedRequestId!),
-    enabled: !!selectedRequestId,
+    enabled: !!userId && !!selectedRequestId,
   });
 
   const verifyMutation = useMutation({
@@ -98,9 +100,9 @@ export const useDaftarPermohonan = () => {
     onSettled: () => {
       setIsVerifying(false);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['letterRequests']);
-      queryClient.invalidateQueries(['letterRequest', selectedRequestId]);
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries(['letterRequests', userId]);
+      queryClient.invalidateQueries(['letterRequest', userId, variables.id]);
       toast({
         title: 'Sukses',
         description: 'Status permohonan berhasil diperbarui',
@@ -123,7 +125,7 @@ export const useDaftarPermohonan = () => {
   const resubmitMutation = useMutation({
     mutationFn: (id: number) => resubmitLetterRequest(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['letterRequests']);
+      queryClient.invalidateQueries(['letterRequests', userId]);
       toast({
         title: 'Sukses',
         description: 'Permohonan berhasil diajukan kembali',
@@ -144,7 +146,11 @@ export const useDaftarPermohonan = () => {
   const updateResidentMutation = useMutation({
     mutationFn: (data: any) => updateResidentData(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['letterRequest', selectedRequestId]);
+      queryClient.invalidateQueries([
+        'letterRequest',
+        userId,
+        selectedRequestId,
+      ]);
       toast({
         title: 'Sukses',
         description: 'Data penduduk berhasil diperbarui',
@@ -165,7 +171,7 @@ export const useDaftarPermohonan = () => {
   const deleteMutation = useMutation({
     mutationFn: deleteLetterRequest,
     onSuccess: () => {
-      queryClient.invalidateQueries(['letterRequests']);
+      queryClient.invalidateQueries(['letterRequests', userId]);
       toast({
         title: 'Sukses',
         description: 'Permohonan surat berhasil dihapus',
@@ -192,9 +198,17 @@ export const useDaftarPermohonan = () => {
       setIsSigning(false);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['letterRequests']);
-      queryClient.invalidateQueries(['letterRequest', previewRequestId]);
-      queryClient.invalidateQueries(['letterPreview', previewRequestId]);
+      queryClient.invalidateQueries(['letterRequests', userId]);
+      queryClient.invalidateQueries([
+        'letterRequest',
+        userId,
+        previewRequestId,
+      ]);
+      queryClient.invalidateQueries([
+        'letterPreview',
+        userId,
+        previewRequestId,
+      ]);
       toast({
         title: 'Sukses',
         description: 'Surat berhasil ditandatangani',
@@ -216,13 +230,57 @@ export const useDaftarPermohonan = () => {
     },
   });
 
+  const completeMutation = useMutation({
+    mutationFn: (id: number) => completeLetterRequest(id),
+    onSuccess: (data, id) => {
+      queryClient.invalidateQueries(['letterRequests', userId]);
+      queryClient.invalidateQueries(['letterRequest', userId, id]);
+      toast({
+        title: 'Sukses',
+        description: 'Permohonan surat telah diselesaikan',
+        duration: 3000,
+      });
+      setSelectedRequestId(null);
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Gagal menyelesaikan permohonan surat',
+        variant: 'destructive',
+        duration: 3000,
+      });
+    },
+  });
+
+  const archiveMutation = useMutation({
+    mutationFn: (id: number) => archiveLetterRequest(id),
+    onSuccess: (data, id) => {
+      queryClient.invalidateQueries(['letterRequests', userId]);
+      queryClient.invalidateQueries(['letterRequest', userId, id]);
+      toast({
+        title: 'Sukses',
+        description: 'Permohonan surat telah diarsipkan',
+        duration: 3000,
+      });
+      setSelectedRequestId(null);
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Gagal mengarsipkan permohonan surat',
+        variant: 'destructive',
+        duration: 3000,
+      });
+    },
+  });
+
   const {
     data: pdfBlob,
     isLoading: isPdfLoading,
     error: pdfError,
     refetch: refetchPdf,
   } = useQuery({
-    queryKey: ['letterPreview', previewRequestId],
+    queryKey: ['letterPreview', userId, previewRequestId],
     queryFn: () => previewLetterRequest(previewRequestId!),
     enabled: false,
   });
@@ -378,6 +436,20 @@ export const useDaftarPermohonan = () => {
     setPage(1); // Reset to first page when filters change
   };
 
+  const handleComplete = useCallback(
+    (id: number) => {
+      completeMutation.mutate(id);
+    },
+    [completeMutation],
+  );
+
+  const handleArchive = useCallback(
+    (id: number) => {
+      archiveMutation.mutate(id);
+    },
+    [archiveMutation],
+  );
+
   return {
     data,
     isLoading,
@@ -406,6 +478,7 @@ export const useDaftarPermohonan = () => {
     isPdfLoading,
     isFilterOpen,
     filters,
+    handleArchive,
     setIsEditingResident,
     handleSearch,
     handleSort,
@@ -432,5 +505,6 @@ export const useDaftarPermohonan = () => {
     setSignPin,
     setIsFilterOpen,
     handleFilterChange,
+    handleComplete,
   };
 };

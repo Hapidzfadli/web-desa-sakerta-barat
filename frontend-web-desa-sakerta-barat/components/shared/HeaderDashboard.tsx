@@ -63,6 +63,9 @@ const HeaderDashboard = () => {
     <header className="flex items-center justify-between p-4 bg-white border-b border-gray-200">
       {/* Left section */}
       <div className="flex items-center">
+        <div className="md:hidden">
+          <MobileNav />
+        </div>
         <h1 className="text-2xl ml-6 font-bold text-[#2B3674] hidden md:block">
           {pageTitle}
         </h1>
@@ -81,33 +84,39 @@ const HeaderDashboard = () => {
       </div>
 
       {/* Right section */}
-      <div className=" rounded-full shadow-top">
-        <div className="flex items-center space-x-1 p-1">
-          <Button
-            className="bg-white h-8 w-8 rounded-full p-0"
-            title="Info"
-            onClick={() => {}}
-          >
-            <Info className="h-4 w-4 text-[#A3AED0]" />
-          </Button>
-          <NotificationComponent />
-          <Button
-            className="bg-white h-8 w-8 rounded-full p-0"
-            title="Profile"
-            onClick={() => {}}
-          >
-            <Avatar className="h-8 w-8">
-              <AvatarImage
-                src={avatarUrl || 'https://avatar.iran.liara.run/public'}
-                alt={user?.username || 'User Avatar'}
-              />
-              <AvatarFallback>{user?.username?.[0] || 'U'}</AvatarFallback>
-            </Avatar>
-          </Button>
-        </div>
-        <div className="md:hidden mr-4">
-          <MobileNav />
-        </div>
+      <div className="flex items-center space-x-2">
+        {/* Search icon for mobile */}
+        <Button
+          className="md:block bg-white h-8 w-8 rounded-full p-0 hidden"
+          title="Search"
+          onClick={() => {
+            /* Implement mobile search functionality */
+          }}
+        >
+          <Search className="h-4 w-4 text-[#A3AED0]" />
+        </Button>
+
+        {/* Notification component */}
+        <NotificationComponent />
+
+        {/* User avatar */}
+        <Button
+          className="bg-white h-8 w-8 rounded-full p-0 md:block hidden"
+          title="Profile"
+          onClick={() => {
+            /* Implement profile action */
+          }}
+        >
+          <Avatar className="h-8 w-8">
+            <AvatarImage
+              src={avatarUrl || 'https://avatar.iran.liara.run/public'}
+              alt={user?.username || 'User Avatar'}
+            />
+            <AvatarFallback>{user?.username?.[0] || 'U'}</AvatarFallback>
+          </Avatar>
+        </Button>
+
+        {/* Mobile Nav */}
       </div>
     </header>
   );

@@ -19,12 +19,12 @@ export default function RootLayout({
         <WebSocketProvider>
           {' '}
           {/* Tambahkan WebSocketProvider di sini */}
-          <main className="flex h-screen w-full font-inter">
+          <main className="flex h-screen w-screen font-inter">
             <Sidebar sidebar={sidebarLinksAdmin} />
 
             <div className="flex flex-col flex-grow">
               <HeaderDashboard />
-              <div className="flex-grow overflow-auto p-6">{children}</div>
+              <div className="flex-grow p-6 relative">{children}</div>
             </div>
             <Toaster />
           </main>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '../../../components/ui/button';
-import { User, FileIcon } from 'lucide-react';
+import { User, FileIcon, Archive } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import { LetterRequest } from '../types';
@@ -16,7 +16,9 @@ interface DetailPermohonanProps {
   onVerify: (status: 'APPROVED' | 'REJECTED') => void;
   setIsEditingResident: (isEditing: boolean) => void;
   onResubmit: () => void;
+  onComplete: (id: number) => void;
   userRole: string;
+  onArchive: (id: number) => void;
 }
 
 const DetailPermohonan: React.FC<DetailPermohonanProps> = ({
@@ -27,7 +29,9 @@ const DetailPermohonan: React.FC<DetailPermohonanProps> = ({
   setIsEditingResident,
   onPrint,
   onVerify,
+  onComplete,
   onResubmit,
+  onArchive,
   userRole,
 }) => {
   if (!selectedRequest) return null;
@@ -160,6 +164,24 @@ const DetailPermohonan: React.FC<DetailPermohonanProps> = ({
               </Button>
             </>
           )}
+          {selectedRequest.status === 'SIGNED' && (
+            <Button
+              onClick={() => onComplete(selectedRequest.id)}
+              className="bg-green-500 text-white"
+            >
+              Selesai
+            </Button>
+          )}
+          {selectedRequest.status === 'COMPLETED' &&
+            (userRole === 'ADMIN' || userRole === 'KADES') && (
+              <Button
+                onClick={() => onArchive(selectedRequest.id)}
+                className="bg-blue-500 text-white"
+              >
+                <Archive className="mr-2 h-4 w-4" />
+                Arsipkan
+              </Button>
+            )}
           {userRole === 'WARGA' && selectedRequest.status === 'REJECTED' && (
             <Button onClick={onResubmit} className="bg-blue-500 text-white">
               Ajukan Kembali

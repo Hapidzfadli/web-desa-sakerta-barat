@@ -102,6 +102,21 @@ export class LetterRequestController {
     };
   }
 
+  @Put(':id/complete')
+  @HttpCode(HttpStatus.OK)
+  async completeLetterRequest(
+    @Auth() user: any,
+    @Param('id') id: string,
+  ): Promise<WebResponse<ResponseLetterRequest>> {
+    const result = await this.letterRequestService.completeLetterRequest(
+      user,
+      parseInt(id),
+    );
+    return {
+      data: result,
+    };
+  }
+
   @Put(':id/verify')
   @HttpCode(HttpStatus.OK)
   @Roles(Role.ADMIN, Role.KADES)
@@ -197,10 +212,12 @@ export class LetterRequestController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   async getLetterRequestById(
+    @Auth() user: any,
     @Param('id') id: string,
   ): Promise<WebResponse<ResponseLetterRequest>> {
     const result = await this.letterRequestService.getLetterRequestById(
       parseInt(id),
+      user.role,
     );
     return {
       data: result,

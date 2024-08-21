@@ -44,6 +44,7 @@ export interface TableColumn {
   accessor: string | ((row: LetterRequest) => React.ReactNode);
   className?: string;
   cell?: (value: any) => React.ReactNode;
+  disableSorting?: boolean;
 }
 
 export interface PaginationInfo {

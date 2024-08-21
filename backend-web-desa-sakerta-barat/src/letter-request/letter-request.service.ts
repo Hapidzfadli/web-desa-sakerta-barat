@@ -186,6 +186,53 @@ export class LetterRequestService {
     return this.mapToResponseLetterRequest(updatedLetterRequest);
   }
 
+  async completeLetterRequest(
+    user: any,
+    requestId: number,
+  ): Promise<ResponseLetterRequest> {
+    const letterRequest = await this.prismaService.letterRequest.findUnique({
+      where: { id: requestId },
+      include: { resident: { include: { user: true } } },
+    });
+
+    if (!letterRequest) {
+      throw new NotFoundException('Letter request not found');
+    }
+
+    if (letterRequest.status !== RequestStatus.SIGNED) {
+      throw new ForbiddenException('Only signed requests can be completed');
+    }
+
+    const completedLetterRequest =
+      await this.prismaService.letterRequest.update({
+        where: { id: requestId },
+        data: {
+          status: RequestStatus.COMPLETED,
+        },
+        include: {
+          attachments: true,
+          resident: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      });
+
+    const notificationContent = `Permohonan surat Anda dengan nomor pengajuan ${completedLetterRequest.id} telah selesai diproses dan dapat diambil.`;
+    const adminContent = `Surat dengan nomor pengajuan ${completedLetterRequest.id} telah selesai diproses.`;
+
+    await this.sendNotifications(
+      completedLetterRequest,
+      notificationContent,
+      adminContent,
+      [Role.ADMIN, Role.KADES],
+      completedLetterRequest.resident.user.id,
+    );
+
+    return this.mapToResponseLetterRequest(completedLetterRequest);
+  }
+
   async verifyLetterRequest(
     user: any,
     requestId: number,
@@ -358,7 +405,7 @@ export class LetterRequestService {
     user: any,
     requestId: number,
   ): Promise<ResponseLetterRequest> {
-    if (!user || (user.role !== Role.ADMIN && user.role !== Role.KADES)) {
+    if (user.role !== Role.ADMIN && user.role !== Role.KADES) {
       throw new ForbiddenException(
         'Only admins or village head can archive letter requests',
       );
@@ -366,6 +413,7 @@ export class LetterRequestService {
 
     const letterRequest = await this.prismaService.letterRequest.findUnique({
       where: { id: requestId },
+      include: { resident: { include: { user: true } } },
     });
 
     if (!letterRequest) {
@@ -389,16 +437,20 @@ export class LetterRequestService {
         },
         include: {
           attachments: true,
+          resident: {
+            include: {
+              user: true,
+            },
+          },
         },
       },
     );
 
-    const notificationContent = `Surat Anda dengan nomor pengajuan ${archivedLetterRequest.id} telah diarsipkan.`;
     const adminContent = `Surat dengan nomor pengajuan ${archivedLetterRequest.id} telah diarsipkan.`;
 
     await this.sendNotifications(
       archivedLetterRequest,
-      notificationContent,
+      null, // Tidak ada notifikasi untuk warga
       adminContent,
       [Role.ADMIN, Role.KADES],
     );
@@ -521,8 +573,15 @@ export class LetterRequestService {
       );
 
       const mappedData = Array.isArray(result.data)
-        ? result.data.map(this.mapToResponseLetterRequest)
-        : [this.mapToResponseLetterRequest(result.data as LetterRequest)];
+        ? result.data.map((request) =>
+            this.mapToResponseLetterRequest(request, user.role),
+          )
+        : [
+            this.mapToResponseLetterRequest(
+              result.data as LetterRequest,
+              user.role,
+            ),
+          ];
 
       return {
         data: mappedData,
@@ -540,7 +599,10 @@ export class LetterRequestService {
     }
   }
 
-  async getLetterRequestById(id: number): Promise<ResponseLetterRequest> {
+  async getLetterRequestById(
+    id: number,
+    userRole: Role,
+  ): Promise<ResponseLetterRequest> {
     const letterRequest = await this.prismaService.letterRequest.findUnique({
       where: { id },
       include: {
@@ -558,11 +620,12 @@ export class LetterRequestService {
       throw new NotFoundException('Letter request not found');
     }
 
-    return this.mapToResponseLetterRequestDetail(letterRequest);
+    return this.mapToResponseLetterRequestDetail(letterRequest, userRole);
   }
 
   private mapToResponseLetterRequest(
     letterRequest: any,
+    userRole?: Role,
   ): ResponseLetterRequest {
     const residentDocuments =
       letterRequest.resident?.documents?.map((doc) => ({
@@ -573,6 +636,11 @@ export class LetterRequestService {
 
     const allAttachments = [...letterRequest.attachments, ...residentDocuments];
 
+    let status = letterRequest.status;
+    if (userRole === Role.WARGA && status === RequestStatus.ARCHIVED) {
+      status = RequestStatus.COMPLETED;
+    }
+
     return {
       id: letterRequest.id,
       residentId: letterRequest.residentId,
@@ -581,7 +649,7 @@ export class LetterRequestService {
       letterTypeId: letterRequest.letterTypeId,
       letterNumber: letterRequest.letterNumber,
       requestDate: letterRequest.requestDate,
-      status: letterRequest.status,
+      status: status,
       notes: letterRequest.notes,
       attachments: allAttachments.map((att) => ({
         fileName: att.fileName,
@@ -595,6 +663,7 @@ export class LetterRequestService {
 
   private mapToResponseLetterRequestDetail(
     letterRequest: any,
+    userRole: Role,
   ): ResponseLetterRequest {
     const residentDocuments =
       letterRequest.resident?.documents?.map((doc: any) => ({
@@ -608,6 +677,11 @@ export class LetterRequestService {
       ...residentDocuments,
     ];
 
+    let status = letterRequest.status;
+    if (userRole === Role.WARGA && status === RequestStatus.ARCHIVED) {
+      status = RequestStatus.COMPLETED;
+    }
+
     return {
       id: letterRequest.id,
       residentId: letterRequest.residentId,
@@ -616,7 +690,7 @@ export class LetterRequestService {
       letterNumber: letterRequest.letterNumber,
       requestDate: letterRequest.requestDate,
       rejectionReason: letterRequest.rejectionReason,
-      status: letterRequest.status,
+      status: status,
       notes: letterRequest.notes,
       resident: letterRequest.resident
         ? {
@@ -985,7 +1059,7 @@ export class LetterRequestService {
 
   private async sendNotifications(
     letterRequest: any,
-    userContent: string,
+    userContent: string | null,
     adminContent: string,
     roles: Role[],
     additionalUserId?: number,
@@ -997,20 +1071,22 @@ export class LetterRequestService {
       select: { id: true, role: true },
     });
 
-    const userIds = users.map((user) => user.id);
-
-    if (additionalUserId && !userIds.includes(additionalUserId)) {
-      userIds.push(additionalUserId);
-    }
-
-    const notifications = userIds.map((userId) => {
-      const user = users.find((u) => u.id === userId);
-      const content =
-        user.role === Role.ADMIN || user.role === Role.KADES
-          ? adminContent
-          : userContent;
-      return this.notificationService.createNotification([userId], content);
-    });
+    const notifications = users
+      .map((user) => {
+        if (user.role === Role.ADMIN || user.role === Role.KADES) {
+          return this.notificationService.createNotification(
+            [user.id],
+            adminContent,
+          );
+        } else if (userContent) {
+          return this.notificationService.createNotification(
+            [user.id],
+            userContent,
+          );
+        }
+        return null;
+      })
+      .filter(Boolean);
 
     await Promise.all(notifications);
   }

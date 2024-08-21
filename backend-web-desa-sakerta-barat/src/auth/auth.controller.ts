@@ -7,6 +7,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import {
   LoginUserRequest,
   RegisterUserRequest,
@@ -17,6 +18,7 @@ import { AuthGuard } from './guards/auth.guard';
 import { Auth } from './decorators/auth.decorator';
 
 @Controller('/api/auth')
+@UseGuards(ThrottlerGuard)
 export class AuthController {
   constructor(private authService: AuthService) {}
 
@@ -32,6 +34,7 @@ export class AuthController {
   }
 
   @Post('/login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @HttpCode(200)
   async login(
     @Body() request: LoginUserRequest,

@@ -211,50 +211,52 @@ const EditPopup: React.FC<EditPopupProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        className="bg-white"
-        style={{ width: 'auto', maxWidth: '100vw', minWidth: '65vw' }}
-      >
+      <DialogContent className="bg-white sm:max-w-[425px] md:max-w-[700px] lg:max-w-[800px] w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="head-form">{title}</DialogTitle>
+          <DialogTitle className="head-form text-lg sm:text-xl md:text-2xl">
+            {title}
+          </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="max-h-[80vh] overflow-y-auto">
-          <div className={`grid grid-cols-${grid ? '1' : '2'} gap-4 py-4`}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div
+            className={`grid grid-cols-1 ${grid ? '' : 'sm:grid-cols-2'} gap-4`}
+          >
             {fields.map((field) => (
               <div key={field.name} className="flex flex-col items-start gap-2">
-                <Label htmlFor={field.name} className="glassy-label text-left">
+                <Label
+                  htmlFor={field.name}
+                  className="glassy-label text-left text-sm sm:text-base"
+                >
                   {field.label}
                   {field.required && <span className="text-red-500">*</span>}
                 </Label>
                 {renderField(field)}
                 {errors[field.name] && (
-                  <p className="text-red-500 text-sm">{errors[field.name]}</p>
+                  <p className="text-red-500 text-xs sm:text-sm">
+                    {errors[field.name]}
+                  </p>
                 )}
               </div>
             ))}
           </div>
           {additionalContent}
-          {!viewMode && onSave && (
-            <div className="flex justify-end mt-4 space-x-2">
-              {onDelete && (
-                <Button
-                  className="bg-red-500 text-white"
-                  onClick={onDelete}
-                  type="button"
-                >
-                  Delete
-                </Button>
-              )}
-              <Button className="bg-save" type="submit">
+          <div className="flex flex-col sm:flex-row justify-end mt-4 space-y-2 sm:space-y-0 sm:space-x-2">
+            {!viewMode && onSave && (
+              <Button className="bg-save w-full sm:w-auto" type="submit">
                 {labelSubmit ?? 'Simpan'}
               </Button>
-            </div>
-          )}
-          {customButtons && (
-            <div className="flex justify-end mt-4 space-x-2">
-              {customButtons}
-            </div>
-          )}
+            )}
+            {onDelete && (
+              <Button
+                className="bg-red-500 text-white w-full sm:w-auto"
+                onClick={onDelete}
+                type="button"
+              >
+                Delete
+              </Button>
+            )}
+            {customButtons}
+          </div>
         </form>
       </DialogContent>
     </Dialog>
