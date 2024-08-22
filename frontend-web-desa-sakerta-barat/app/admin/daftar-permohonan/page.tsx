@@ -1,8 +1,12 @@
 import React from 'react';
-import DaftarPermohonan from '../../../components/DaftarPermohonan/DaftarPermohonan';
+import dynamic from 'next/dynamic';
+const DynamicDaftarPermohonan = dynamic(
+  () => import('../../../components/DaftarPermohonan/DaftarPermohonan'),
+  { ssr: false },
+);
 
 const DaftarPermohonanAdmin = () => {
-  return <DaftarPermohonan />;
+  return <DynamicDaftarPermohonan />;
 };
 
 export default DaftarPermohonanAdmin;
