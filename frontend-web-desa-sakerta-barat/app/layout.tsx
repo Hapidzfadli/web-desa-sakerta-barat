@@ -1,11 +1,5 @@
 import type { Metadata } from 'next';
-import {
-  Inter,
-  IBM_Plex_Serif,
-  Poppins,
-  Glory,
-  DM_Sans,
-} from 'next/font/google';
+import { Inter, IBM_Plex_Serif, Poppins, DM_Sans } from 'next/font/google';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -27,11 +21,6 @@ const dmSans = DM_Sans({
   variable: '--font-dm-sans',
 });
 
-export const glory = Glory({
-  subsets: ['latin'],
-  variable: '--font-glory',
-});
-
 export const metadata: Metadata = {
   title: 'Desa Sakerta Barat',
   description: 'Website Pelayanan Desa Sakerta Barat',
@@ -48,7 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${glory.variable} ${poppins.variable} ${ibmPlexSerif.variable} ${dmSans.variable}`}
+        className={`${inter.variable} ${poppins.variable} ${ibmPlexSerif.variable} ${dmSans.variable}`}
       >
         {children}
       </body>
