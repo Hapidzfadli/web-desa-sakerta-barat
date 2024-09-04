@@ -21,10 +21,12 @@ import { Input } from '@/components/ui/input';
 import CustomInput from './CustomInput';
 import { Loader2 } from 'lucide-react';
 import { loginUser, registerUser } from '../../lib/actions/user.actions';
+import { useToast } from '../ui/use-toast';
 const AuthForm = ({ type }: { type: string }) => {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const formSchema = authFormSchema(type);
   const form = useForm<z.infer<typeof formSchema>>({
@@ -50,7 +52,14 @@ const AuthForm = ({ type }: { type: string }) => {
         };
         const newUser = await registerUser(userData);
         setUser(newUser);
-        if (newUser) router.push('/login');
+        if (newUser) {
+          toast({
+            title: 'Registration Successful',
+            description: 'You have successfully registered. Please log in.',
+            duration: 5000,
+          });
+          router.push('/login');
+        }
       }
       if (type === 'login') {
         const response = await loginUser({
@@ -67,14 +76,26 @@ const AuthForm = ({ type }: { type: string }) => {
           } else {
             router.push('/member/dashboard');
           }
+          toast({
+            title: 'Login Successful',
+            description: 'You have successfully logged in.',
+            duration: 3000,
+          });
         }
       }
     } catch (error) {
-      console.log(error);
+      console.error('Error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'An error occurred. Please try again.',
+        variant: 'destructive',
+        duration: 5000,
+      });
     } finally {
       setIsLoading(false);
     }
   };
+
   return (
     <section className="auth-from">
       <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">

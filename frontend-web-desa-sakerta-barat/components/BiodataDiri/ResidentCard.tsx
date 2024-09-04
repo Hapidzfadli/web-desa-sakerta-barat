@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,7 +12,7 @@ import {
 } from './utils/profileUtils';
 
 interface ResidentCardProps {
-  residentData: ResidentData;
+  residentData: ResidentData | null;
   onSave: (data: Record<string, string>) => Promise<void>;
   isPopupOpen: boolean;
   setIsPopupOpen: (isOpen: boolean) => void;
@@ -24,6 +24,27 @@ const ResidentCard: React.FC<ResidentCardProps> = ({
   isPopupOpen,
   setIsPopupOpen,
 }) => {
+  const residentFields = [
+    { label: 'Nama Lengkap', field: 'name' },
+    { label: 'NIK', field: 'nationalId' },
+    { label: 'Tanggal Lahir', field: 'dateOfBirth', format: formatDate },
+    { label: 'Agama', field: 'religion' },
+    { label: 'Status Pernikahan', field: 'maritalStatus' },
+    { label: 'Pekerjaan', field: 'occupation' },
+    { label: 'Kewarganegaraan', field: 'nationality' },
+    { label: 'Tempat Lahir', field: 'placeOfBirth' },
+    { label: 'Jenis Kelamin', field: 'gender' },
+    { label: 'Nomor Kartu Keluarga', field: 'familyCardNumber' },
+    { label: 'Kecamatan', field: 'district' },
+    { label: 'Kabupaten', field: 'regency' },
+    { label: 'Provinsi', field: 'province' },
+    { label: 'Kode Pos', field: 'postalCode' },
+    { label: 'RT', field: 'rt' },
+    { label: 'RW', field: 'rw' },
+    { label: 'Alamat KTP', field: 'idCardAddress' },
+    { label: 'Alamat Domisili', field: 'residentialAddress' },
+  ];
+
   return (
     <Card>
       <CardHeader>
@@ -42,148 +63,42 @@ const ResidentCard: React.FC<ResidentCardProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid md:grid-cols-2 gap-4">
-          {[
-            { label: 'Nama Lengkap', field: 'name' },
-            { label: 'NIK', field: 'nationalId' },
-            {
-              label: 'Tanggal Lahir',
-              field: 'dateOfBirth',
-              format: formatDate,
-            },
-            { label: 'Agama', field: 'religion' },
-            { label: 'Status Pernikahan', field: 'maritalStatus' },
-            { label: 'Pekerjaan', field: 'occupation' },
-            { label: 'Kewarganegaraan', field: 'nationality' },
-            { label: 'Tempat Lahir', field: 'placeOfBirth' },
-            { label: 'Jenis Kelamin', field: 'gender' },
-            { label: 'Nomor Kartu Keluarga', field: 'familyCardNumber' },
-            { label: 'Kecamatan', field: 'district' },
-            { label: 'Kabupaten', field: 'regency' },
-            { label: 'Provinsi', field: 'province' },
-            { label: 'Kode Pos', field: 'postalCode' },
-            { label: 'RT', field: 'rt' },
-            { label: 'RW', field: 'rw' },
-            { label: 'Alamat KTP', field: 'idCardAddress' },
-            { label: 'Alamat Domisili', field: 'residentialAddress' },
-          ].map((item) => (
-            <div key={item.field}>
-              <p className="label-form">{item.label}</p>
-              <p>
-                {item.format
-                  ? item.format(residentData[item.field])
-                  : residentData[item.field] || 'Not provided'}
-              </p>
-            </div>
-          ))}
-        </div>
+        {residentData ? (
+          <div className="grid md:grid-cols-2 gap-4">
+            {residentFields.map((item) => (
+              <div key={item.field}>
+                <p className="label-form">{item.label}</p>
+                <p>
+                  {item.format && residentData[item.field]
+                    ? item.format(residentData[item.field])
+                    : residentData[item.field] || 'Belum diisi'}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>
+            Data penduduk belum diisi. Silakan klik tombol edit untuk mengisi
+            data.
+          </p>
+        )}
       </CardContent>
       <Suspense fallback={<div>Loading...</div>}>
         <EditPopup
           title="Edit Biodata Penduduk"
-          fields={[
-            {
-              label: 'Nama Lengkap',
-              name: 'name',
-              value: residentData.name,
-              required: true,
-            },
-            {
-              label: 'NIK',
-              name: 'nationalId',
-              value: residentData.nationalId,
-              required: true,
-            },
-            {
-              label: 'Tanggal Lahir',
-              name: 'dateOfBirth',
-              value: toInputDateValue(residentData.dateOfBirth),
-              type: 'date',
-              required: true,
-            },
-            {
-              label: 'Agama',
-              name: 'religion',
-              value: residentData.religion,
-              required: true,
-            },
-            {
-              label: 'Status Pernikahan',
-              name: 'maritalStatus',
-              value: residentData.maritalStatus,
-              required: true,
-            },
-            {
-              label: 'Pekerjaan',
-              name: 'occupation',
-              value: residentData.occupation,
-              required: true,
-            },
-            {
-              label: 'Kewarganegaraan',
-              name: 'nationality',
-              value: residentData.nationality,
-              required: true,
-            },
-            {
-              label: 'Tempat Lahir',
-              name: 'placeOfBirth',
-              value: residentData.placeOfBirth,
-              required: true,
-            },
-            {
-              label: 'Jenis Kelamin',
-              name: 'gender',
-              value: residentData.gender,
-              required: true,
-            },
-            {
-              label: 'Nomor Kartu Keluarga',
-              name: 'familyCardNumber',
-              value: residentData.familyCardNumber,
-              required: true,
-            },
-            {
-              label: 'Kecamatan',
-              name: 'district',
-              value: residentData.district,
-              required: true,
-            },
-            {
-              label: 'Kabupaten',
-              name: 'regency',
-              value: residentData.regency,
-              required: true,
-            },
-            {
-              label: 'Provinsi',
-              name: 'province',
-              value: residentData.province,
-              required: true,
-            },
-            {
-              label: 'Kode Pos',
-              name: 'postalCode',
-              value: residentData.postalCode,
-              required: true,
-            },
-            { label: 'RT', name: 'rt', value: residentData.rt, required: true },
-            { label: 'RW', name: 'rw', value: residentData.rw, required: true },
-            {
-              label: 'Alamat KTP',
-              name: 'idCardAddress',
-              value: residentData.idCardAddress,
-              type: 'textarea',
-              required: true,
-            },
-            {
-              label: 'Alamat Domisili',
-              name: 'residentialAddress',
-              value: residentData.residentialAddress,
-              type: 'textarea',
-              required: true,
-            },
-          ]}
+          fields={residentFields.map((item) => ({
+            label: item.label,
+            name: item.field,
+            value: residentData ? residentData[item.field] : '',
+            required: true,
+            type:
+              item.field === 'dateOfBirth'
+                ? 'date'
+                : item.field === 'idCardAddress' ||
+                    item.field === 'residentialAddress'
+                  ? 'textarea'
+                  : 'text',
+          }))}
           onSave={onSave}
           validationSchema={updateResidentSchema}
           isOpen={isPopupOpen}
