@@ -137,17 +137,20 @@ model LetterCategory {
 }
 
 model LetterType {
-  id             Int             @id @default(autoincrement())
-  categoryId     Int
-  category       LetterCategory  @relation(fields: [categoryId], references: [id])
-  name           String          @unique @db.VarChar(100)
-  description    String?         @db.Text
-  requirements   String?         @db.Text
-  icon           String?
-  template       String          @db.Text
-  letterRequests LetterRequest[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id                 Int             @id @default(autoincrement())
+  categoryId         Int
+  category           LetterCategory  @relation(fields: [categoryId], references: [id])
+  name               String          @unique @db.VarChar(100)
+  description        String?         @db.Text
+  requirements       String?         @db.Text
+  icon               String?
+  template           String          @db.Text
+  letterNumberPrefix String?
+  letterNumberSuffix String?
+  lastNumberUsed     Int?            @default(0)
+  letterRequests     LetterRequest[]
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
 
   @@map("letter_types")
 }
