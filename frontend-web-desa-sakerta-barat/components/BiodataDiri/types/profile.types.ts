@@ -12,7 +12,7 @@ export interface ProfileData {
   updatedAt: string;
   profilePicture?: string;
   avatarUrl?: string;
-  resident: ResidentData;
+  resident?: ResidentData | null;
 }
 
 export interface ResidentData {
