@@ -110,12 +110,7 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
       value: residentData?.nationalId || '',
       required: true,
     },
-    {
-      label: 'Alamat',
-      name: 'address',
-      value: residentData?.residentialAddress || '',
-      required: true,
-    },
+
     {
       label: 'Agama',
       name: 'religion',

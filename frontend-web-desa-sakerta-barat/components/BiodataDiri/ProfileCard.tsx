@@ -88,7 +88,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         <EditPopup
           title="Edit Profile"
           fields={[
-            { label: 'Nama Lengkap', name: 'name', value: profileData.name },
             {
               label: 'Nama Depan',
               name: 'firstName',
@@ -99,6 +98,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               name: 'lastName',
               value: profileData.lastName,
             },
+            { label: 'Nama Lengkap', name: 'name', value: profileData.name },
             { label: 'Email', name: 'email', value: profileData.email },
             {
               label: 'Nomor Hp',

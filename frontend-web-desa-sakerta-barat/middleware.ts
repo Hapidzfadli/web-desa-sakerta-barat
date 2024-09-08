@@ -25,6 +25,10 @@ export const validateToken = async (token: string) => {
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
+  if (path === '/') {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
   const isPrivatePath = path.startsWith('/member') || path.startsWith('/admin');
   const token = request.cookies.get('session')?.value;
 
@@ -63,5 +67,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/member/:path*', '/admin/:path*'],
+  matcher: ['/', '/member/:path*', '/admin/:path*'],
 };
