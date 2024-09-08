@@ -179,6 +179,42 @@ const LetterTypeForm: React.FC<LetterTypeFormProps> = ({
                 disabled={viewMode}
               />
             </div>
+            <div className="grid grid-cols-3 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+              <Label
+                htmlFor="letterNumberPrefix"
+                className="text-left text-sm sm:text-base"
+              >
+                Nomor Surat
+              </Label>
+              <Input
+                id="letterNumberPrefix"
+                name="letterNumberPrefix"
+                value={formData.letterNumberPrefix || ''}
+                onChange={handleChange}
+                className=" input-form"
+                placeholder="prefix cth : 463"
+                disabled={viewMode}
+              />
+              <Input
+                id="letterNumberSuffix"
+                name="letterNumberSuffix"
+                value={formData.letterNumberSuffix || ''}
+                onChange={handleChange}
+                className="input-form"
+                placeholder="suffix cth : Kesra"
+                disabled={viewMode}
+              />
+              <Input
+                id="lastNumberUsed"
+                name="lastNumberUsed"
+                type="number"
+                value={formData.lastNumberUsed || ''}
+                onChange={handleChange}
+                placeholder="nomer"
+                className="input-form"
+                disabled={viewMode}
+              />
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
               <Label className="text-left text-sm sm:text-base">
                 Persyaratan

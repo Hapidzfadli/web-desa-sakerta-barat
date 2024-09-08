@@ -185,6 +185,26 @@ export class LetterTypeController {
     };
   }
 
+  @Put(':id/letter-number')
+  @UseGuards(AuthGuard, RolesGuard)
+  @HttpCode(HttpStatus.OK)
+  @Roles(Role.ADMIN, Role.KADES)
+  async updateLetterNumber(
+    @Param('id') id: string,
+    @Body('lastNumberUsed') lastNumberUsed: number,
+  ): Promise<WebResponse<ResponseLetterType>> {
+    if (isNaN(lastNumberUsed) || lastNumberUsed < 0) {
+      throw new BadRequestException('Invalid lastNumberUsed value');
+    }
+    const result = await this.letterTypeService.updateLetterNumber(
+      parseInt(id),
+      lastNumberUsed,
+    );
+    return {
+      data: result,
+    };
+  }
+
   @Get('icon/:fileName')
   async getIcon(@Param('fileName') fileName: string, @Res() res: Response) {
     const filePath = path.join(

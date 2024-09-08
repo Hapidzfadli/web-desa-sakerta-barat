@@ -5,6 +5,9 @@ export interface LetterType {
   icon?: string;
   requirements: string;
   categoryId: number;
+  letterNumberPrefix?: string;
+  letterNumberSuffix?: string;
+  lastNumberUsed?: number;
 }
 
 export interface ResidentData {
