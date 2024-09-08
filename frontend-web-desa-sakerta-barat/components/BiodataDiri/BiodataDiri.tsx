@@ -9,7 +9,7 @@ import SignatureCard from './SignatureCard';
 import { useUser } from '../../app/context/UserContext';
 
 const BiodataDiri: React.FC = () => {
-  const { profileData, isLoading, error } = useProfileData();
+  const { profileData, isLoading, error, setProfileData } = useProfileData();
   const { user } = useUser();
   const {
     handleSaveProfile,
@@ -17,7 +17,7 @@ const BiodataDiri: React.FC = () => {
     handleSaveAvatar,
     handleAddDocument,
     handleUploadSignature,
-  } = useProfileActions();
+  } = useProfileActions(setProfileData);
 
   const [isProfilePopupOpen, setIsProfilePopupOpen] = useState(false);
   const [isResidentPopupOpen, setIsResidentPopupOpen] = useState(false);

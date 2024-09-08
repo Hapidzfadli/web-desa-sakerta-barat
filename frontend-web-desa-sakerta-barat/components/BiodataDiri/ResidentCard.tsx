@@ -29,11 +29,29 @@ const ResidentCard: React.FC<ResidentCardProps> = ({
     { label: 'NIK', field: 'nationalId' },
     { label: 'Tanggal Lahir', field: 'dateOfBirth', format: formatDate },
     { label: 'Agama', field: 'religion' },
-    { label: 'Status Pernikahan', field: 'maritalStatus' },
+    {
+      label: 'Status Pernikahan',
+      field: 'maritalStatus',
+      type: 'select',
+      options: [
+        { value: 'KAWIN', label: 'Kawin' },
+        { value: 'BELUM', label: 'Belum Kawin' },
+        { value: 'JANDA', label: 'Janda' },
+        { value: 'DUDA', label: 'Duda' },
+      ],
+    },
     { label: 'Pekerjaan', field: 'occupation' },
     { label: 'Kewarganegaraan', field: 'nationality' },
     { label: 'Tempat Lahir', field: 'placeOfBirth' },
-    { label: 'Jenis Kelamin', field: 'gender' },
+    {
+      label: 'Jenis Kelamin',
+      field: 'gender',
+      type: 'select',
+      options: [
+        { value: 'LAKI_LAKI', label: 'Laki-laki' },
+        { value: 'PEREMPUAN', label: 'Perempuan' },
+      ],
+    },
     { label: 'Nomor Kartu Keluarga', field: 'familyCardNumber' },
     { label: 'Kecamatan', field: 'district' },
     { label: 'Kabupaten', field: 'regency' },
@@ -71,7 +89,11 @@ const ResidentCard: React.FC<ResidentCardProps> = ({
                 <p>
                   {item.format && residentData[item.field]
                     ? item.format(residentData[item.field])
-                    : residentData[item.field] || 'Belum diisi'}
+                    : item.type === 'select'
+                      ? item.options?.find(
+                          (option) => option.value === residentData[item.field],
+                        )?.label || residentData[item.field]
+                      : residentData[item.field] || 'Belum diisi'}
                 </p>
               </div>
             ))}
@@ -89,15 +111,21 @@ const ResidentCard: React.FC<ResidentCardProps> = ({
           fields={residentFields.map((item) => ({
             label: item.label,
             name: item.field,
-            value: residentData ? residentData[item.field] : '',
+            value: residentData
+              ? item.field === 'dateOfBirth'
+                ? toInputDateValue(residentData[item.field])
+                : residentData[item.field]
+              : '',
             required: true,
             type:
-              item.field === 'dateOfBirth'
+              item.type ||
+              (item.field === 'dateOfBirth'
                 ? 'date'
                 : item.field === 'idCardAddress' ||
                     item.field === 'residentialAddress'
                   ? 'textarea'
-                  : 'text',
+                  : 'text'),
+            options: item.options,
           }))}
           onSave={onSave}
           validationSchema={updateResidentSchema}

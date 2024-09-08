@@ -42,6 +42,7 @@ export class LetterTypeService {
     this.logger.debug(`Creating new letter type: ${JSON.stringify(request)}`);
 
     request.categoryId = Number(request.categoryId);
+    request.lastNumberUsed = Number(request.lastNumberUsed);
 
     const validatedData = this.validationService.validate(
       LetterTypeValidation.CREATE,
@@ -75,6 +76,9 @@ export class LetterTypeService {
           requirements: validatedData.requirements ?? null,
           icon: iconUrl ?? null,
           template: templateUrl || null,
+          letterNumberPrefix: validatedData.letterNumberPrefix ?? null,
+          letterNumberSuffix: validatedData.letterNumberSuffix ?? null,
+          lastNumberUsed: validatedData.lastNumberUsed ?? 0,
         },
       });
 
@@ -162,7 +166,13 @@ export class LetterTypeService {
   ): Promise<ResponseLetterType> {
     this.logger.debug(`Updating letter type ${id}: ${JSON.stringify(request)}`);
 
-    request.categoryId = Number(request.categoryId);
+    if (request.categoryId) {
+      request.categoryId = Number(request.categoryId);
+    }
+
+    if (request.lastNumberUsed) {
+      request.lastNumberUsed = Number(request.lastNumberUsed);
+    }
 
     const validatedData = this.validationService.validate(
       LetterTypeValidation.UPDATE,
@@ -171,24 +181,20 @@ export class LetterTypeService {
 
     try {
       const updateData: any = { ...validatedData };
-      let iconUrl: string | undefined;
       if (iconFile) {
-        iconUrl = await uploadFileAndGetUrl(
+        updateData.icon = await uploadFileAndGetUrl(
           iconFile,
           'uploads/letter-type-icons',
           '/api/letter-type/icon',
         );
-        updateData.icon = iconUrl;
       }
 
-      let templateUrl: string | undefined;
       if (templateFile) {
-        templateUrl = await uploadFileAndGetUrl(
+        updateData.template = await uploadFileAndGetUrl(
           templateFile,
           'uploads/letter-type-templates',
           '/api/letter-type/template',
         );
-        updateData.template = templateUrl;
       }
 
       const updatedLetterType = await this.prismaService.letterType.update({
@@ -208,6 +214,25 @@ export class LetterTypeService {
         error.stack,
       );
       throw new BadRequestException('Failed to update letter type');
+    }
+  }
+
+  async updateLetterNumber(
+    id: number,
+    lastNumberUsed: number,
+  ): Promise<ResponseLetterType> {
+    try {
+      const updatedLetterType = await this.prismaService.letterType.update({
+        where: { id },
+        data: { lastNumberUsed },
+      });
+      return this.mapToResponseLetterType(updatedLetterType);
+    } catch (error) {
+      this.logger.error(
+        `Error updating letter number: ${error.message}`,
+        error.stack,
+      );
+      throw new BadRequestException('Failed to update letter number');
     }
   }
 
@@ -240,6 +265,9 @@ export class LetterTypeService {
       requirements: letterType.requirements,
       icon: letterType.icon,
       template: letterType.template,
+      letterNumberPrefix: letterType.letterNumberPrefix,
+      letterNumberSuffix: letterType.letterNumberSuffix,
+      lastNumberUsed: letterType.lastNumberUsed,
       createdAt: letterType.createdAt,
       updatedAt: letterType.updatedAt,
     };

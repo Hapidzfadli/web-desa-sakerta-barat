@@ -165,7 +165,7 @@ const EditPopup: React.FC<EditPopupProps> = ({
             value={formData[field.name] as string}
             disabled={viewMode}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full input-form">
               <SelectValue placeholder="Select an option" />
             </SelectTrigger>
             <SelectContent>

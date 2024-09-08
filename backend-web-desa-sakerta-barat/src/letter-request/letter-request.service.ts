@@ -314,11 +314,6 @@ export class LetterRequestService {
     requestId: number,
     dto: SignLetterRequestDto,
   ): Promise<ResponseLetterRequest> {
-    const validatedData = this.validationService.validate(
-      LetterRequestValidation.SIGN,
-      dto,
-    );
-
     if (user.role !== Role.KADES) {
       throw new ForbiddenException(
         'Only village head can sign letter requests',
@@ -332,7 +327,10 @@ export class LetterRequestService {
 
     const letterRequest = await this.prismaService.letterRequest.findUnique({
       where: { id: requestId },
-      include: { resident: { include: { user: true } }, letterType: true },
+      include: {
+        resident: { include: { user: true } },
+        letterType: true,
+      },
     });
 
     if (!letterRequest) {
@@ -344,27 +342,29 @@ export class LetterRequestService {
     }
 
     let updatedStatus: RequestStatus;
-    if (validatedData.status === 'SIGNED') {
+    if (dto.status === 'SIGNED') {
       updatedStatus = RequestStatus.SIGNED;
-    } else if (validatedData.status === 'REJECTED_BY_KADES') {
+    } else if (dto.status === 'REJECTED_BY_KADES') {
       updatedStatus = RequestStatus.REJECTED_BY_KADES;
     } else {
       throw new ForbiddenException('Invalid action');
+    }
+
+    let letterNumber: string | undefined;
+    if (updatedStatus === RequestStatus.SIGNED) {
+      letterNumber = await this.generateLetterNumber(letterRequest.letterType);
     }
 
     const updatedLetterRequest = await this.prismaService.letterRequest.update({
       where: { id: requestId },
       data: {
         status: updatedStatus,
-        notes: validatedData.notes,
+        notes: dto.notes,
         rejectionReason:
-          validatedData.status === RequestStatus.REJECTED_BY_KADES
-            ? validatedData.rejectionReason
+          dto.status === RequestStatus.REJECTED_BY_KADES
+            ? dto.rejectionReason
             : null,
-        letterNumber:
-          updatedStatus === RequestStatus.SIGNED
-            ? this.generateLetterNumber()
-            : undefined,
+        letterNumber: letterNumber,
         signedAt:
           updatedStatus === RequestStatus.SIGNED ? new Date() : undefined,
         signedBy: updatedStatus === RequestStatus.SIGNED ? user.id : undefined,
@@ -380,12 +380,15 @@ export class LetterRequestService {
     });
 
     if (updatedStatus === RequestStatus.SIGNED) {
-      await this.generateAndSaveSignedLetter(updatedLetterRequest);
+      await this.generateAndSaveSignedLetter(
+        updatedLetterRequest,
+        letterNumber,
+      );
     }
 
     const notificationContent =
       updatedStatus === RequestStatus.SIGNED
-        ? 'Surat Anda telah ditandatangani oleh Kepala Desa.'
+        ? `Surat Anda dengan nomor ${letterNumber} telah ditandatangani oleh Kepala Desa.`
         : 'Surat Anda ditolak oleh Kepala Desa.';
 
     const adminContent = `Ada surat dengan nomor pengajuan ${updatedLetterRequest.id} yang telah ditandatangani atau ditolak oleh Kepala Desa. Silakan cek surat tersebut.`;
@@ -830,7 +833,8 @@ export class LetterRequestService {
   }
 
   private async generateAndSaveSignedLetter(
-    letterRequest: LetterRequest,
+    letterRequest: any,
+    letterNumber: string,
   ): Promise<void> {
     if (!letterRequest.approvedLetterPath) {
       throw new NotFoundException('Approved letter not found');
@@ -840,7 +844,6 @@ export class LetterRequestService {
       '/api/letter-requests/approved/',
       '',
     );
-
     const basePath = path.join(process.cwd(), 'uploads', 'approved_letters');
     const filePath = path.join(basePath, approvedLetterPath);
 
@@ -848,7 +851,6 @@ export class LetterRequestService {
       throw new NotFoundException('Approved letter file not found');
     }
 
-    // Fetch the Kades user
     const kades = await this.prismaService.user.findFirst({
       where: { role: Role.KADES },
     });
@@ -857,7 +859,6 @@ export class LetterRequestService {
       throw new Error('Kades digital signature not found');
     }
 
-    // Read the signature file
     const signaturePath = path.join(
       process.cwd(),
       'uploads',
@@ -870,7 +871,6 @@ export class LetterRequestService {
 
     const content = await fse.readFile(filePath, 'binary');
 
-    // Configure the image module
     const opts = {
       centered: false,
       fileType: 'docx',
@@ -878,7 +878,7 @@ export class LetterRequestService {
         return fs.readFileSync(tagValue);
       },
       getSize: function () {
-        return [150, 75]; // width and height in pixels
+        return [150, 75];
       },
     };
 
@@ -888,7 +888,10 @@ export class LetterRequestService {
     const doc = new Docxtemplater()
       .attachModule(imageModule)
       .loadZip(zip)
-      .setData({ tanda_tangan: signaturePath })
+      .setData({
+        tanda_tangan: signaturePath,
+        nomor_surat: letterNumber,
+      })
       .render();
 
     const buf = doc.getZip().generate({
@@ -896,13 +899,11 @@ export class LetterRequestService {
       compression: 'DEFLATE',
     });
 
-    // Create a temporary file
     const tempFileName = `${uuidv4()}.docx`;
     const tempFilePath = path.join(process.cwd(), 'temp', tempFileName);
     await fse.ensureDir(path.dirname(tempFilePath));
     await fse.writeFile(tempFilePath, buf);
 
-    // Create a Multer file object
     const multerFile: Express.Multer.File = {
       fieldname: 'file',
       originalname: `signed_${path.basename(approvedLetterPath)}`,
@@ -918,20 +919,17 @@ export class LetterRequestService {
     };
 
     try {
-      // Upload the file and get the URL
       const fileUrl = await uploadFileAndGetUrl(
         multerFile,
         'uploads/signed_letters',
         '/api/letter-requests/signed',
       );
 
-      // Update the letterRequest with the file URL
       await this.prismaService.letterRequest.update({
         where: { id: letterRequest.id },
         data: { signedLetterPath: fileUrl },
       });
     } finally {
-      // Clean up the temporary file
       await fse
         .remove(tempFilePath)
         .catch((err) =>
@@ -940,28 +938,18 @@ export class LetterRequestService {
     }
   }
 
-  private generateLetterNumber(): string {
-    return `LTR-${Date.now()}`;
-  }
-  private async processAttachments(attachments?: Express.Multer.File[]) {
-    if (!attachments || attachments.length === 0) {
-      return [];
-    }
+  private async generateLetterNumber(letterType: any): Promise<string> {
+    const newNumber = (letterType.lastNumberUsed || 0) + 1;
 
-    return Promise.all(
-      attachments.map(async (file) => {
-        const fileUrl = await uploadFileAndGetUrl(
-          file,
-          'uploads/letter-request-attachments',
-          '/api/letter-requests/attachments',
-        );
+    await this.prismaService.letterType.update({
+      where: { id: letterType.id },
+      data: { lastNumberUsed: newNumber },
+    });
 
-        return {
-          fileName: file.originalname,
-          fileUrl: fileUrl,
-        };
-      }),
-    );
+    const paddedNumber = newNumber.toString().padStart(3, '0');
+    const currentYear = new Date().getFullYear();
+
+    return `${letterType.letterNumberPrefix || ''}/${paddedNumber}/${letterType.letterNumberSuffix || ''}`;
   }
 
   private async generateAndSaveApprovedLetter(
@@ -1008,6 +996,7 @@ export class LetterRequestService {
       nik: letterRequest.resident.nationalId,
       pekerjaan: letterRequest.resident.occupation,
       tanda_tangan: '{%tanda_tangan}',
+      nomor_surat: '{nomor_surat}',
       alamat_lengkap: `${letterRequest.resident.residentialAddress}, RT ${letterRequest.resident.rt}, RW ${letterRequest.resident.rw}, ${letterRequest.resident.district}, ${letterRequest.resident.regency}, ${letterRequest.resident.province} ${letterRequest.resident.postalCode}`,
     });
 
@@ -1089,5 +1078,26 @@ export class LetterRequestService {
       .filter(Boolean);
 
     await Promise.all(notifications);
+  }
+
+  private async processAttachments(attachments?: Express.Multer.File[]) {
+    if (!attachments || attachments.length === 0) {
+      return [];
+    }
+
+    return Promise.all(
+      attachments.map(async (file) => {
+        const fileUrl = await uploadFileAndGetUrl(
+          file,
+          'uploads/letter-request-attachments',
+          '/api/letter-requests/attachments',
+        );
+
+        return {
+          fileName: file.originalname,
+          fileUrl: fileUrl,
+        };
+      }),
+    );
   }
 }

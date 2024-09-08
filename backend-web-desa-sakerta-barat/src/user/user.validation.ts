@@ -73,6 +73,14 @@ export class UserValidation {
         'Password harus mengandung minimal satu huruf besar, satu huruf kecil, satu angka, dan satu karakter khusus',
       )
       .optional(),
+    firstName: z
+      .string()
+      .min(1, 'Nama depan tidak boleh kosong')
+      .max(50, 'Nama depan maksimal 50 karakter'),
+    lastName: z
+      .string()
+      .max(50, 'Nama belakang maksimal 50 karakter')
+      .optional(),
     email: z
       .string()
       .email('Format email tidak valid')
