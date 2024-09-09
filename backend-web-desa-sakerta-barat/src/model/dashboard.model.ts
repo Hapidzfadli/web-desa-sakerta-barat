@@ -63,3 +63,26 @@ export class DashboardResponse {
   };
   populationDocuments?: PopulationDocumentData;
 }
+
+export interface ResidentDashboardResponse {
+  totalRequests: {
+    total: number;
+    growth: number;
+    monthlyData: MonthlyData[];
+  };
+  totalDocuments: {
+    total: number;
+    growth: number;
+    monthlyData: MonthlyData[];
+  };
+  recentRequests: {
+    total: number;
+    growth: number;
+    monthlyData: MonthlyData[];
+  };
+  letterStatus: LetterStatusData;
+  comparison: ComparisonData;
+  populationDocuments: {
+    rows: PopulationDocumentRow[];
+  };
+}
