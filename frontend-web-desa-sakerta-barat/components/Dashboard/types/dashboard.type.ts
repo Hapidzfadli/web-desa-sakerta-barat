@@ -70,3 +70,24 @@ export interface ComparisonData {
 export interface ComparisonChartProps {
   comparisonData: ComparisonData;
 }
+
+export interface ResidentDashboardData {
+  totalRequests: {
+    total: number;
+    growth: number;
+    monthlyData: MonthlyData[];
+  };
+  totalDocuments: {
+    total: number;
+    growth: number;
+    monthlyData: MonthlyData[];
+  };
+  recentRequests: {
+    total: number;
+    growth: number;
+    monthlyData: MonthlyData[];
+  };
+  letterStatus: LetterStatusData;
+  comparison: ComparisonData;
+  populationDocuments: PopulationDocumentData;
+}

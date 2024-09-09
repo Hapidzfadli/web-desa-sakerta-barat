@@ -55,7 +55,7 @@ const LetterTypeCard: React.FC<LetterTypeCardProps> = ({
           <div className="h-40 mb-4 rounded-lg overflow-hidden">
             <div className="relative w-full h-full">
               <Image
-                src={`http://localhost:3001${letterType.icon}`}
+                src={`${process.env.NEXT_PUBLIC_API_URL}/${letterType.icon}`}
                 layout="fill"
                 objectFit="cover"
                 alt={letterType.name}

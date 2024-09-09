@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { PrismaService } from '../common/prisma.service';
@@ -9,6 +9,7 @@ import {
   MonthlyData,
   PopulationDocumentData,
   PopulationDocumentRow,
+  ResidentDashboardResponse,
 } from '../model/dashboard.model';
 import {
   subDays,
@@ -31,7 +32,7 @@ export class DashboardService {
     private prismaService: PrismaService,
   ) {}
 
-  async getDashboardData(): Promise<DashboardResponse> {
+  async getAdminDashboardData(): Promise<DashboardResponse> {
     try {
       const [
         userStats,
@@ -57,8 +58,50 @@ export class DashboardService {
         populationDocuments: populationDocumentData,
       };
     } catch (error) {
-      this.logger.error('Error fetching dashboard data', { error });
-      throw new Error('Error fetching dashboard data');
+      this.logger.error('Error fetching admin dashboard data', { error });
+      throw new Error('Error fetching admin dashboard data');
+    }
+  }
+
+  async getResidentDashboardData(
+    userId: number,
+  ): Promise<ResidentDashboardResponse> {
+    try {
+      const resident = await this.prismaService.resident.findUnique({
+        where: { userId: userId },
+      });
+
+      if (!resident) {
+        throw new NotFoundException('Resident not found');
+      }
+
+      const [
+        totalRequests,
+        totalDocuments,
+        recentRequests,
+        letterStatus,
+        comparison,
+        populationDocuments,
+      ] = await Promise.all([
+        this.getTotalRequestsData(resident.id),
+        this.getTotalDocumentsData(resident.id),
+        this.getRecentRequestsData(resident.id),
+        this.getLetterStatusData(resident.id),
+        this.getComparisonData(resident.id),
+        this.getPopulationDocumentData(resident.id),
+      ]);
+
+      return {
+        totalRequests,
+        totalDocuments,
+        recentRequests,
+        letterStatus,
+        comparison,
+        populationDocuments,
+      };
+    } catch (error) {
+      this.logger.error('Error fetching resident dashboard data', { error });
+      throw new Error('Error fetching resident dashboard data');
     }
   }
 
@@ -115,6 +158,68 @@ export class DashboardService {
       monthlyRequestData,
       monthlyArchivedData,
     };
+  }
+
+  private async getTotalRequestsData(
+    residentId?: number,
+  ): Promise<ResidentDashboardResponse['totalRequests']> {
+    const monthlyData = await this.getMonthlyData(async (start, end) =>
+      this.prismaService.letterRequest.count({
+        where: {
+          ...(residentId && { residentId }),
+          createdAt: { gte: start, lte: end },
+        },
+      }),
+    );
+
+    const total = monthlyData.reduce((sum, data) => sum + data.count, 0);
+    const currentMonthCount = monthlyData[monthlyData.length - 1].count;
+    const previousMonthCount = monthlyData[monthlyData.length - 2].count;
+    const growth = this.calculateGrowth(currentMonthCount, previousMonthCount);
+
+    return { total, growth, monthlyData };
+  }
+
+  private async getTotalDocumentsData(
+    residentId?: number,
+  ): Promise<ResidentDashboardResponse['totalDocuments']> {
+    const monthlyData = await this.getMonthlyData(async (start, end) =>
+      this.prismaService.document.count({
+        where: {
+          ...(residentId && { residentId }),
+          createdAt: { gte: start, lte: end },
+        },
+      }),
+    );
+
+    const total = monthlyData.reduce((sum, data) => sum + data.count, 0);
+    const currentMonthCount = monthlyData[monthlyData.length - 1].count;
+    const previousMonthCount = monthlyData[monthlyData.length - 2].count;
+    const growth = this.calculateGrowth(currentMonthCount, previousMonthCount);
+
+    return { total, growth, monthlyData };
+  }
+
+  private async getRecentRequestsData(
+    residentId?: number,
+  ): Promise<ResidentDashboardResponse['recentRequests']> {
+    const monthlyData = await this.getMonthlyData(async (start, end) =>
+      this.prismaService.letterRequest.count({
+        where: {
+          ...(residentId && { residentId }),
+          createdAt: { gte: start, lte: end },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+    );
+
+    const total = monthlyData.reduce((sum, data) => sum + data.count, 0);
+    const currentMonthCount = monthlyData[monthlyData.length - 1].count;
+    const previousMonthCount = monthlyData[monthlyData.length - 2].count;
+    const growth = this.calculateGrowth(currentMonthCount, previousMonthCount);
+
+    return { total, growth, monthlyData };
   }
 
   private async getUserMonthlyData(): Promise<MonthlyData[]> {
@@ -177,49 +282,65 @@ export class DashboardService {
     return data.sort((a, b) => a.month.localeCompare(b.month));
   }
 
-  private async getComparisonData(): Promise<ComparisonData> {
+  private async getComparisonData(
+    residentId?: number,
+  ): Promise<ComparisonData> {
     const [daily, weekly, monthly] = await Promise.all([
-      this.getDailyComparison(),
-      this.getWeeklyComparison(),
-      this.getMonthlyComparison(),
+      this.getDailyComparison(residentId),
+      this.getWeeklyComparison(residentId),
+      this.getMonthlyComparison(residentId),
     ]);
 
     return { daily, weekly, monthly };
   }
 
-  private async getDailyComparison(): Promise<ComparisonData['daily']> {
+  private async getDailyComparison(
+    residentId?: number,
+  ): Promise<ComparisonData['daily']> {
     const currentDate = new Date();
     const labels = Array.from({ length: 7 }, (_, i) =>
       format(subDays(currentDate, 6 - i), 'EEE'),
     );
 
     const current = await Promise.all(
-      labels.map((_, i) => this.getCountForDay(subDays(currentDate, 6 - i))),
+      labels.map((_, i) =>
+        this.getCountForDay(subDays(currentDate, 6 - i), residentId),
+      ),
     );
 
     const previous = await Promise.all(
-      labels.map((_, i) => this.getCountForDay(subDays(currentDate, 13 - i))),
+      labels.map((_, i) =>
+        this.getCountForDay(subDays(currentDate, 13 - i), residentId),
+      ),
     );
 
     return { labels, current, previous };
   }
 
-  private async getWeeklyComparison(): Promise<ComparisonData['weekly']> {
+  private async getWeeklyComparison(
+    residentId?: number,
+  ): Promise<ComparisonData['weekly']> {
     const currentDate = new Date();
     const labels = ['W1', 'W2', 'W3', 'W4'];
 
     const current = await Promise.all(
-      labels.map((_, i) => this.getCountForWeek(subWeeks(currentDate, 3 - i))),
+      labels.map((_, i) =>
+        this.getCountForWeek(subWeeks(currentDate, 3 - i), residentId),
+      ),
     );
 
     const previous = await Promise.all(
-      labels.map((_, i) => this.getCountForWeek(subWeeks(currentDate, 7 - i))),
+      labels.map((_, i) =>
+        this.getCountForWeek(subWeeks(currentDate, 7 - i), residentId),
+      ),
     );
 
     return { labels, current, previous };
   }
 
-  private async getMonthlyComparison(): Promise<ComparisonData['monthly']> {
+  private async getMonthlyComparison(
+    residentId?: number,
+  ): Promise<ComparisonData['monthly']> {
     const currentDate = new Date();
     const labels = Array.from({ length: 12 }, (_, i) =>
       format(subMonths(currentDate, 11 - i), 'MMM'),
@@ -227,22 +348,26 @@ export class DashboardService {
 
     const current = await Promise.all(
       labels.map((_, i) =>
-        this.getCountForMonth(subMonths(currentDate, 11 - i)),
+        this.getCountForMonth(subMonths(currentDate, 11 - i), residentId),
       ),
     );
 
     const previous = await Promise.all(
       labels.map((_, i) =>
-        this.getCountForMonth(subMonths(currentDate, 23 - i)),
+        this.getCountForMonth(subMonths(currentDate, 23 - i), residentId),
       ),
     );
 
     return { labels, current, previous };
   }
 
-  private async getCountForDay(date: Date): Promise<number> {
+  private async getCountForDay(
+    date: Date,
+    residentId?: number,
+  ): Promise<number> {
     return this.prismaService.letterRequest.count({
       where: {
+        ...(residentId && { residentId }),
         createdAt: {
           gte: startOfDay(date),
           lt: endOfDay(date),
@@ -251,9 +376,13 @@ export class DashboardService {
     });
   }
 
-  private async getCountForWeek(date: Date): Promise<number> {
+  private async getCountForWeek(
+    date: Date,
+    residentId?: number,
+  ): Promise<number> {
     return this.prismaService.letterRequest.count({
       where: {
+        ...(residentId && { residentId }),
         createdAt: {
           gte: startOfWeek(date),
           lt: endOfWeek(date),
@@ -262,9 +391,13 @@ export class DashboardService {
     });
   }
 
-  private async getCountForMonth(date: Date): Promise<number> {
+  private async getCountForMonth(
+    date: Date,
+    residentId?: number,
+  ): Promise<number> {
     return this.prismaService.letterRequest.count({
       where: {
+        ...(residentId && { residentId }),
         createdAt: {
           gte: startOfMonth(date),
           lt: endOfMonth(date),
@@ -273,16 +406,18 @@ export class DashboardService {
     });
   }
 
-  private async getLetterStatusData(): Promise<LetterStatusData> {
+  private async getLetterStatusData(
+    residentId?: number,
+  ): Promise<LetterStatusData> {
     const now = new Date();
     const dailyStart = startOfDay(subDays(now, 1));
     const weeklyStart = startOfWeek(now);
     const monthlyStart = startOfMonth(now);
 
     const [dailyData, weeklyData, monthlyData] = await Promise.all([
-      this.getStatusDataForPeriod(dailyStart, now),
-      this.getStatusDataForPeriod(weeklyStart, now),
-      this.getStatusDataForPeriod(monthlyStart, now),
+      this.getStatusDataForPeriod(dailyStart, now, residentId),
+      this.getStatusDataForPeriod(weeklyStart, now, residentId),
+      this.getStatusDataForPeriod(monthlyStart, now, residentId),
     ]);
 
     return {
@@ -295,6 +430,7 @@ export class DashboardService {
   private async getStatusDataForPeriod(
     startDate: Date,
     endDate: Date,
+    residentId?: number,
   ): Promise<{ [key: string]: number }> {
     const statusCounts = await this.prismaService.letterRequest.groupBy({
       by: ['status'],
@@ -302,6 +438,7 @@ export class DashboardService {
         status: true,
       },
       where: {
+        ...(residentId && { residentId }),
         createdAt: {
           gte: startDate,
           lte: endDate,
@@ -329,59 +466,70 @@ export class DashboardService {
     return statusData;
   }
 
-  private async getPopulationDocumentData(): Promise<PopulationDocumentData> {
-    const documentTypes = await this.prismaService.letterType.findMany({
-      select: {
-        id: true,
-        name: true,
-        category: {
-          select: {
-            name: true,
+  private async getPopulationDocumentData(
+    residentId?: number,
+  ): Promise<PopulationDocumentData> {
+    let letterRequests;
+    if (residentId) {
+      letterRequests = await this.prismaService.letterRequest.findMany({
+        where: { residentId },
+        include: {
+          letterType: {
+            include: {
+              category: true,
+            },
           },
         },
-        letterRequests: {
-          select: {
-            id: true,
+      });
+    } else {
+      letterRequests = await this.prismaService.letterRequest.findMany({
+        include: {
+          letterType: {
+            include: {
+              category: true,
+            },
           },
         },
+      });
+    }
+
+    const documentTypes = letterRequests.reduce((acc, request) => {
+      if (!acc[request.letterTypeId]) {
+        acc[request.letterTypeId] = {
+          id: request.letterTypeId,
+          name: request.letterType.name,
+          category: request.letterType.category.name,
+          requests: [],
+        };
+      }
+      acc[request.letterTypeId].requests.push(request);
+      return acc;
+    }, {});
+
+    const rows: PopulationDocumentRow[] = Object.values(documentTypes).map(
+      (documentType: any) => {
+        const totalRequests = documentType.requests.length;
+        const completedRequests = documentType.requests.filter(
+          (request) =>
+            request.status === RequestStatus.COMPLETED ||
+            request.status === RequestStatus.ARCHIVED,
+        ).length;
+        const latestRequest = documentType.requests.reduce(
+          (latest, request) =>
+            latest.createdAt > request.createdAt ? latest : request,
+          documentType.requests[0],
+        );
+
+        const completionRate = (completedRequests / totalRequests) * 100;
+
+        return {
+          documentType: documentType.name,
+          category: documentType.category,
+          totalRequests: totalRequests,
+          lastRequestDate: format(latestRequest.createdAt, 'dd MMM yyyy'),
+          completionRate: Math.round(completionRate),
+        };
       },
-    });
-
-    const rows: PopulationDocumentRow[] = await Promise.all(
-      documentTypes
-        .filter((documentType) => documentType.letterRequests.length > 0)
-        .map(async (documentType) => {
-          const totalRequests = documentType.letterRequests.length;
-
-          const completedRequests =
-            await this.prismaService.letterRequest.count({
-              where: {
-                letterTypeId: documentType.id,
-                status: {
-                  in: [RequestStatus.COMPLETED, RequestStatus.ARCHIVED],
-                },
-              },
-            });
-
-          const latestRequest =
-            await this.prismaService.letterRequest.findFirst({
-              where: { letterTypeId: documentType.id },
-              orderBy: { createdAt: 'desc' },
-              select: { createdAt: true },
-            });
-
-          const completionRate = (completedRequests / totalRequests) * 100;
-
-          return {
-            documentType: documentType.name,
-            category: documentType.category.name,
-            totalRequests: totalRequests,
-            lastRequestDate: latestRequest
-              ? format(latestRequest.createdAt, 'dd MMM yyyy')
-              : '-',
-            completionRate: Math.round(completionRate),
-          };
-        }),
     );
 
     return { rows };
@@ -390,6 +538,8 @@ export class DashboardService {
   private calculateGrowth(current: number, previous: number): number {
     return previous > 0
       ? ((current - previous) / previous) * 100
-      : current * 100;
+      : current > 0
+        ? 100
+        : 0;
   }
 }
