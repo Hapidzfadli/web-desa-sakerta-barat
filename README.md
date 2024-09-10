@@ -2,9 +2,9 @@
 
 This project is a web application for the administrative services of Sakerta Barat Village. It aims to streamline and digitize various administrative processes, making it easier for both village officials and residents to manage and access important documents and services.
 
-Support
+## Support
 
-## If you want to support my work:
+If you want to support my work:
 
 - PayPal: paypal.me/hapidz
 - Saweria: https://saweria.co/hapidzfadli
