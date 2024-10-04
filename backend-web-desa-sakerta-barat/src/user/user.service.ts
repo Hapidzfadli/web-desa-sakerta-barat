@@ -21,8 +21,6 @@ import * as bcrypt from 'bcrypt';
 import { Role, User } from '@prisma/client';
 import { PaginateOptions, prismaPaginate } from '../common/utils/paginator';
 import { ZodError } from 'zod';
-import path from 'path';
-import * as fs from 'fs';
 import { uploadFileAndGetUrl } from '../common/utils/utils';
 @Injectable()
 export class UserService {
@@ -44,6 +42,16 @@ export class UserService {
   async findAll(options: PaginateOptions) {
     try {
       const searchFields = ['username', 'name', 'email'];
+
+      // Jika filter tidak disediakan dalam options, inisialisasi sebagai objek kosong
+      if (!options.filter) {
+        options.filter = {};
+      }
+
+      // Tambahkan logika untuk mengonversi isVerified menjadi boolean jika ada
+      if (options.filter.isVerified !== undefined) {
+        options.filter.isVerified = options.filter.isVerified === 'true';
+      }
 
       const data = await prismaPaginate<UserResponse>(
         this.prismaService,
@@ -70,6 +78,7 @@ export class UserService {
       throw new Error('Failed to fetch users');
     }
   }
+
   async getFullProfile(userId: number): Promise<UserResponse> {
     try {
       const profile = await this.prismaService.user.findUnique({
@@ -238,5 +247,49 @@ export class UserService {
     }
 
     return bcrypt.compare(pin, user.signaturePin);
+  }
+
+  async updateUserRole(
+    userId: number,
+    newRole: Role,
+    currentUser: User,
+  ): Promise<UserResponse> {
+    try {
+      if (currentUser.role !== Role.KADES) {
+        throw new ForbiddenException('Only KADES can update user roles');
+      }
+
+      if (newRole === Role.KADES) {
+        throw new BadRequestException('Cannot assign KADES role');
+      }
+
+      const user = await this.prismaService.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      if (user.role === Role.KADES) {
+        throw new BadRequestException('Cannot change KADES role');
+      }
+
+      const updatedUser = await this.prismaService.user.update({
+        where: { id: userId },
+        data: { role: newRole },
+      });
+
+      delete updatedUser.password;
+      delete updatedUser.signaturePin;
+
+      return updatedUser;
+    } catch (error) {
+      this.logger.error(
+        `Error updating user role: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
   }
 }

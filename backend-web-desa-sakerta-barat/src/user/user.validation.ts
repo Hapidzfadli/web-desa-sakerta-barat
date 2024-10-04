@@ -1,3 +1,4 @@
+import { Role } from '@prisma/client';
 import { z, ZodType } from 'zod';
 
 const phoneRegex = /^(08|02)\d{8,12}$/;
@@ -123,5 +124,11 @@ export class UserValidation {
       .string()
       .length(6, 'PIN harus terdiri dari 6 digit')
       .regex(/^\d+$/, 'PIN harus berupa angka'),
+  });
+
+  static readonly UPDATE_ROLE: ZodType = z.object({
+    role: z.nativeEnum(Role, {
+      errorMap: () => ({ message: 'invalid role' }),
+    }),
   });
 }
