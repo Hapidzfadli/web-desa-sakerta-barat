@@ -1,12 +1,12 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
-const DynamicDaftarPengguna = dynamic(
-  () => import('../../../components/DaftarPengguna/DaftarPengguna'),
+const DynamicListUsers = dynamic(
+  () => import('../../../components/ListUsers/ListUsers'),
   { ssr: false },
 );
 
 const Pengguna = () => {
-  return <DynamicDaftarPengguna />;
+  return <DynamicListUsers />;
 };
 
 export default Pengguna;

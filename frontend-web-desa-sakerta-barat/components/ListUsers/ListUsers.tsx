@@ -15,7 +15,7 @@ import { useToast } from '@/components/ui/use-toast';
 import Filter from '../shared/Filter';
 import { useUser } from '../../app/context/UserContext';
 
-const DaftarPengguna: React.FC = () => {
+const ListUsers: React.FC = () => {
   const { toast } = useToast();
   const { user: currentUser } = useUser(); // Get the current user
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -144,4 +144,4 @@ const DaftarPengguna: React.FC = () => {
   );
 };
 
-export default DaftarPengguna;
+export default ListUsers;
