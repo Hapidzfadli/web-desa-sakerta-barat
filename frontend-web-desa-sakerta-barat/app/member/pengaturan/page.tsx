@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import BiodataDiri from '../../../components/BiodataDiri/BiodataDiri';
+import BiodataDiri from '../../../components/Biodata/Biodata';
 import Keamanan from '../../../components/Keamanan/Keamanan';
 import { cn } from '../../../lib/utils';
 const Pengaturan = () => {

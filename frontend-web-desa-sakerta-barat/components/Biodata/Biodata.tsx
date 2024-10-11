@@ -1,4 +1,4 @@
-import React, { Suspense, useState } from 'react';
+import React, { useState } from 'react';
 import { useProfileData } from './hooks/useProfileData';
 import { useProfileActions } from './hooks/useProfileActions';
 import ProfileCard from './ProfileCard';
@@ -8,7 +8,7 @@ import LoadingSpinner from '../shared/LoadingSpinner';
 import SignatureCard from './SignatureCard';
 import { useUser } from '../../app/context/UserContext';
 
-const BiodataDiri: React.FC = () => {
+const Biodata: React.FC = () => {
   const { profileData, isLoading, error, setProfileData } = useProfileData();
   const { user } = useUser();
   const {
@@ -85,4 +85,4 @@ const BiodataDiri: React.FC = () => {
   );
 };
 
-export default BiodataDiri;
+export default Biodata;
