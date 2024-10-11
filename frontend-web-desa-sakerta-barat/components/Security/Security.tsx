@@ -5,7 +5,7 @@ import { Button } from '../ui/button';
 import { useToast } from '../ui/use-toast';
 import { useSecurityActions } from './hook/useSecurityActions';
 
-const Keamanan: React.FC = () => {
+const Security: React.FC = () => {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -112,4 +112,4 @@ const Keamanan: React.FC = () => {
   );
 };
 
-export default Keamanan;
+export default Security;

@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useToast } from '../../../components/ui/use-toast';
+import { useToast } from '../../ui/use-toast';
 import { API_URL } from '../../../constants';
 import Cookies from 'js-cookie';
-import { ChangePasswordData, UpdatePinData } from '../type/keamananTypes';
+import { ChangePasswordData, UpdatePinData } from '../type/securityTypes';
 
 export const useSecurityActions = () => {
   const { toast } = useToast();
