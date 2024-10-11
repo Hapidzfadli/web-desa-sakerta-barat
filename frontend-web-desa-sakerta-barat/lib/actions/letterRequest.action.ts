@@ -1,4 +1,4 @@
-import { buildQueryString } from '../../components/DaftarPermohonan/utils/helpers';
+import { buildQueryString } from '../../components/ListLetterRequests/utils/helpers';
 import { API_URL } from '../../constants';
 import Cookies from 'js-cookie';
 

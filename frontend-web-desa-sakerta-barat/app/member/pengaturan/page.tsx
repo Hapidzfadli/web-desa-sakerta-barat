@@ -1,14 +1,14 @@
 'use client';
 import React, { useState } from 'react';
-import BiodataDiri from '../../../components/Biodata/Biodata';
-import Keamanan from '../../../components/Security/Security';
+import Biodata from '../../../components/Biodata/Biodata';
+import Security from '../../../components/Security/Security';
 import { cn } from '../../../lib/utils';
 const Pengaturan = () => {
   const [activeTab, setActiveTab] = useState('biodata');
 
   const tabs = [
-    { id: 'biodata', label: 'Biodata Diri', component: <BiodataDiri /> },
-    { id: 'keamanan', label: 'Keamanan', component: <Keamanan /> },
+    { id: 'biodata', label: 'Biodata Diri', component: <Biodata /> },
+    { id: 'keamanan', label: 'Keamanan', component: <Security /> },
   ];
 
   return (

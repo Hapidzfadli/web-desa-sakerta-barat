@@ -1,8 +1,8 @@
 import React from 'react';
-import DaftarSurat from '../../../components/ListLetters/ListLetters';
+import ListLetters from '../../../components/ListLetters/ListLetters';
 
 const Permohonan = () => {
-  return <DaftarSurat />;
+  return <ListLetters />;
 };
 
 export default Permohonan;

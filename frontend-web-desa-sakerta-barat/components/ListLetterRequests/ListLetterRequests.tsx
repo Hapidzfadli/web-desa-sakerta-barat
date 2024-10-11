@@ -5,14 +5,14 @@ import DaftarPermohonanTable from './components/DaftarPermohonanTable';
 import DetailPermohonan from './components/DetailPermohonan';
 import ApplicantDetails from './components/ApplicantDetails';
 import RejectionPopup from './components/RejectionPopup';
-import PreviewPopup from '../../components/shared/PreviewPopup';
-import PinPopup from '../../components/shared/PinPopup';
-import ProgressOverlay from '../../components/shared/ProgressOverlay';
+import PreviewPopup from '../shared/PreviewPopup';
+import PinPopup from '../shared/PinPopup';
+import ProgressOverlay from '../shared/ProgressOverlay';
 import { Toaster } from '@/components/ui/toaster';
 import { useUser } from '../../app/context/UserContext';
 import Filter from '../shared/Filter';
 
-const DaftarPermohonan: React.FC = () => {
+const ListLetterRequests: React.FC = () => {
   const { user } = useUser();
   const {
     data,
@@ -207,4 +207,4 @@ const DaftarPermohonan: React.FC = () => {
   );
 };
 
-export default DaftarPermohonan;
+export default ListLetterRequests;
