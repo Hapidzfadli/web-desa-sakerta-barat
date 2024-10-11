@@ -4,8 +4,6 @@ import { useLetterTypeActions } from '../hooks/useLetterTypeActions';
 import LetterTypeCard from './LetterTypeCard';
 import SearchSortBar from './SearchSortBar';
 import ApplicationForm from './ApplicationForm';
-import { Button } from '../../ui/button';
-import { CirclePlus } from 'lucide-react';
 import LoadingSpinner from '../../shared/LoadingSpinner';
 import { useUser } from '../../../app/context/UserContext';
 import CustomAlertDialog from '../../shared/CustomAlertDialog';
@@ -13,7 +11,7 @@ import { parseRequirements } from '../utils/letterTypeUtils';
 
 const LetterTypeForm = React.lazy(() => import('../../shared/LetterTypeForm'));
 
-const ListLetter: React.FC<{ categoryId: number }> = ({ categoryId }) => {
+const ListLetterType: React.FC<{ categoryId: number }> = ({ categoryId }) => {
   const { user } = useUser();
   const {
     letterTypeData,
@@ -150,4 +148,4 @@ const ListLetter: React.FC<{ categoryId: number }> = ({ categoryId }) => {
   );
 };
 
-export default ListLetter;
+export default ListLetterType;

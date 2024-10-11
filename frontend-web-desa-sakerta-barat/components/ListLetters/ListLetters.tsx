@@ -5,13 +5,13 @@ import { useCategoryActions } from './hooks/useCategoryActions';
 import CategoryTabs from './components/CategoryTabs';
 import ActionButtons from './components/ActionButtons';
 import CategoryForm from './components/CategoryForm';
-import ListLetter from '../ListLetter/components/ListLetter';
+import ListLetterType from '../ListLetterType/components/ListLetterType';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import { useUser } from '../../app/context/UserContext';
 import { LetterCategory, FilterOption } from './types/category.types';
 import Filter from '../shared/Filter';
 
-const DaftarSurat: React.FC = () => {
+const ListLetters: React.FC = () => {
   const { user } = useUser();
   const {
     categories,
@@ -106,7 +106,7 @@ const DaftarSurat: React.FC = () => {
       </div>
 
       <div className="mt-6">
-        {activeTab && <ListLetter categoryId={activeTab} />}
+        {activeTab && <ListLetterType categoryId={activeTab} />}
       </div>
 
       <Suspense fallback={<LoadingSpinner />}>
@@ -134,4 +134,4 @@ const DaftarSurat: React.FC = () => {
   );
 };
 
-export default DaftarSurat;
+export default ListLetters;

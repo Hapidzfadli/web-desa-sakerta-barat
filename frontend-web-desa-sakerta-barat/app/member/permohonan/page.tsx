@@ -1,5 +1,5 @@
 import React from 'react';
-import DaftarSurat from '../../../components/DaftarSurat/DaftarSurat';
+import DaftarSurat from '../../../components/ListLetters/ListLetters';
 
 const Permohonan = () => {
   return <DaftarSurat />;
