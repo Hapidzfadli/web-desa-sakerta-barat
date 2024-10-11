@@ -42,6 +42,7 @@ const HeaderDashboard = () => {
       '/admin/daftar-surat': 'Daftar Surat',
       '/admin/pengaturan': 'Pengaturan',
       '/admin/daftar-permohonan': 'Permohonan',
+      '/admin/daftar-pengguna': 'Pengguna',
     };
 
     const matchedRoute = Object.keys(routeTitleMap).find((route) =>

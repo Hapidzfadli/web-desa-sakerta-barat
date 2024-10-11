@@ -30,10 +30,13 @@ const ListUsers: React.FC = () => {
     totalItems,
     currentPage,
     itemsPerPage,
+    sortColumn,
+    sortOrder,
     handlePageChange,
     handleItemsPerPageChange,
     handleSearch,
     handleUpdateRole,
+    handleSort,
     handleFilterChange,
   } = useUserList();
 
@@ -120,7 +123,6 @@ const ListUsers: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Daftar Pengguna</h1>
       <DataTable
         data={users}
         columns={columns}
@@ -133,6 +135,9 @@ const ListUsers: React.FC = () => {
         onSearch={handleSearch}
         searchPlaceholder="Cari pengguna..."
         onFilter={() => setIsFilterOpen(true)}
+        onSort={handleSort}
+        sortColumn={sortColumn}
+        sortOrder={sortOrder}
       />
       <Filter
         isOpen={isFilterOpen}

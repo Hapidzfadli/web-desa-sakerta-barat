@@ -1,25 +1,7 @@
-import { Home, FilePlus, FileCheck, Settings, LogOut } from 'lucide-react';
+import { FilePlus, FileCheck, Settings, Users } from 'lucide-react';
 import { TiInfoLarge } from 'react-icons/ti';
 import { LuFilePlus2 } from 'react-icons/lu';
 import { IoHomeOutline } from 'react-icons/io5';
-// export const headerLinks = [
-//   {
-//     route: '/',
-//     label: 'Home',
-//   },
-//   {
-//     route: '/profil',
-//     label: 'Profil Desa',
-//   },
-//   {
-//     route: '/berita',
-//     label: 'Berita',
-//   },
-//   {
-//     route: '/infografis',
-//     label: 'Infografis',
-//   },
-// ];
 export const sidebarLinks = [
   {
     imgURL: '/assets/icons/home.svg',
@@ -86,6 +68,11 @@ export const sidebarLinksAdmin = [
     label: 'Daftar Permohonan',
   },
   {
+    icon: Users,
+    route: '/admin/daftar-pengguna',
+    label: 'Daftar Pengguna',
+  },
+  {
     icon: TiInfoLarge,
     route: '/admin/panduan-aplikasi',
     label: 'Panduan Aplikasi',
@@ -96,27 +83,27 @@ export const sidebarLinksAdmin = [
     label: 'Pengaturan',
   },
 ];
-export const exploreLink = [
-  {
-    route: '/berita',
-    label: 'Berita Desa',
-    icon: '/assets/icons/newspaper.png',
-  },
-  {
-    route: '/infografis',
-    label: 'Infografis',
-    icon: '/assets/icons/report.png',
-  },
-  {
-    route: '/infografis/apbdes',
-    label: 'APBDes',
-    icon: '/assets/icons/bookeeping.png',
-  },
-  {
-    route: '/infografis/bonsos',
-    label: 'Bansos',
-    icon: '/assets/icons/charity.png',
-  },
-];
+// export const exploreLink = [
+//   {
+//     route: '/berita',
+//     label: 'Berita Desa',
+//     icon: '/assets/icons/newspaper.png',
+//   },
+//   {
+//     route: '/infografis',
+//     label: 'Infografis',
+//     icon: '/assets/icons/report.png',
+//   },
+//   {
+//     route: '/infografis/apbdes',
+//     label: 'APBDes',
+//     icon: '/assets/icons/bookeeping.png',
+//   },
+//   {
+//     route: '/infografis/bonsos',
+//     label: 'Bansos',
+//     icon: '/assets/icons/charity.png',
+//   },
+// ];
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL;

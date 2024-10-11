@@ -1,3 +1,4 @@
+import { buildQueryString } from '../../components/ListLetterRequests/utils/helpers';
 import { API_URL } from '../../constants';
 import Cookies from 'js-cookie';
 
@@ -61,39 +62,49 @@ export const loginUser = async ({ username, password }: LoginProps) => {
 };
 
 export const getAllUsers = async (
-  page: number,
-  limit: number,
+  page: number = 1,
+  limit: number = 10,
   search?: string,
-  filters?: Record<string, string | string[]>,
+  sortColumn?: string,
+  sortOrder?: 'asc' | 'desc',
+  filters?: Record<string, any>,
 ) => {
   try {
     const token = Cookies.get('session');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
     let url = `${API_URL}/api/users?page=${page}&limit=${limit}`;
-    if (search) url += `&search=${search}`;
+
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`;
+    }
+
+    if (sortColumn) {
+      url += `&sortBy=${sortColumn}&sortOrder=${sortOrder}`;
+    }
+
     if (filters) {
-      // Ubah cara mengirim filter
-      url += `&filter=${encodeURIComponent(JSON.stringify(filters))}`;
+      url += buildQueryString(filters);
     }
 
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        errorData.message || 'An error occurred while fetching users',
-      );
+      throw new Error('Failed to fetch users');
     }
 
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error fetching users:', error);
+    console.error('Error in getAllUsers:', error);
     throw error;
   }
 };
