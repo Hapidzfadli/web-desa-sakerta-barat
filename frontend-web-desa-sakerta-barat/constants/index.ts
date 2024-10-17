@@ -83,27 +83,27 @@ export const sidebarLinksAdmin = [
     label: 'Pengaturan',
   },
 ];
-// export const exploreLink = [
-//   {
-//     route: '/berita',
-//     label: 'Berita Desa',
-//     icon: '/assets/icons/newspaper.png',
-//   },
-//   {
-//     route: '/infografis',
-//     label: 'Infografis',
-//     icon: '/assets/icons/report.png',
-//   },
-//   {
-//     route: '/infografis/apbdes',
-//     label: 'APBDes',
-//     icon: '/assets/icons/bookeeping.png',
-//   },
-//   {
-//     route: '/infografis/bonsos',
-//     label: 'Bansos',
-//     icon: '/assets/icons/charity.png',
-//   },
-// ];
+export const exploreLink = [
+  {
+    route: '/berita',
+    label: 'Berita Desa',
+    icon: '/assets/icons/newspaper.png',
+  },
+  {
+    route: '/infografis',
+    label: 'Infografis',
+    icon: '/assets/icons/report.png',
+  },
+  {
+    route: '/infografis/apbdes',
+    label: 'APBDes',
+    icon: '/assets/icons/bookeeping.png',
+  },
+  {
+    route: '/infografis/bonsos',
+    label: 'Bansos',
+    icon: '/assets/icons/charity.png',
+  },
+];
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL;

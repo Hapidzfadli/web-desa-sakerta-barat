@@ -8,7 +8,7 @@ import LoadingSpinner from '../../shared/LoadingSpinner';
 import { useUser } from '../../../app/context/UserContext';
 import CustomAlertDialog from '../../shared/CustomAlertDialog';
 import { parseRequirements } from '../utils/letterTypeUtils';
-
+import ConfirmationDialog from '../../shared/ConfirmationDialog';
 const LetterTypeForm = React.lazy(() => import('../../shared/LetterTypeForm'));
 
 const ListLetterType: React.FC<{ categoryId: number }> = ({ categoryId }) => {
@@ -31,6 +31,20 @@ const ListLetterType: React.FC<{ categoryId: number }> = ({ categoryId }) => {
   const [isApplicationFormOpen, setIsApplicationFormOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [alertData, setAlertData] = useState({ title: '', description: '' });
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [letterTypeToDelete, setLetterTypeToDelete] = useState(null);
+
+  const onDeleteClick = (letterType) => {
+    setLetterTypeToDelete(letterType);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const onConfirmDelete = () => {
+    if (letterTypeToDelete) {
+      handleDelete(letterTypeToDelete.id);
+    }
+    setIsDeleteConfirmOpen(false);
+  };
 
   if (isError) return <div>Error loading letter types</div>;
 
@@ -63,7 +77,7 @@ const ListLetterType: React.FC<{ categoryId: number }> = ({ categoryId }) => {
                   setIsFormOpen(true);
                 }}
                 isLoading={isLoading}
-                onDelete={() => handleDelete(letterType.id)}
+                onDelete={() => onDeleteClick(letterType)}
                 onView={() => {
                   if (user?.role === 'WARGA') {
                     setAlertData({
@@ -98,7 +112,7 @@ const ListLetterType: React.FC<{ categoryId: number }> = ({ categoryId }) => {
                   setIsFormOpen(true);
                 }}
                 isLoading={isLoading}
-                onDelete={() => handleDelete(letterType.id)}
+                onDelete={() => onDeleteClick(letterType)}
                 onView={() => {
                   if (user?.role === 'WARGA') {
                     setAlertData({
@@ -143,6 +157,15 @@ const ListLetterType: React.FC<{ categoryId: number }> = ({ categoryId }) => {
         onClose={() => setIsAlertOpen(false)}
         title={alertData.title}
         description={alertData.description}
+      />
+      <ConfirmationDialog
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={onConfirmDelete}
+        title="Konfirmasi Penghapusan"
+        description="Apakah Anda yakin ingin menghapus tipe surat ini?"
+        confirmText="Hapus"
+        cancelText="Batal"
       />
     </div>
   );

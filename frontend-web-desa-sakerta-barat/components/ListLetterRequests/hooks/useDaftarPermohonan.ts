@@ -47,6 +47,8 @@ export const useDaftarPermohonan = () => {
   const [filters, setFilters] = useState({});
   const { user } = useUser();
   const userId = user?.id;
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [requestToDelete, setRequestToDelete] = useState<number | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: [
@@ -368,9 +370,9 @@ export const useDaftarPermohonan = () => {
   };
 
   const handleDelete = (id: number) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus permohonan ini?')) {
-      deleteMutation.mutate(id);
-    }
+    deleteMutation.mutate(id);
+    setShowDeleteConfirmation(false);
+    setRequestToDelete(null);
   };
 
   const handleResidentFieldChange = (name: string, value: string) => {
@@ -478,6 +480,11 @@ export const useDaftarPermohonan = () => {
     isPdfLoading,
     isFilterOpen,
     filters,
+    showDeleteConfirmation,
+    requestToDelete,
+    handleDelete,
+    setShowDeleteConfirmation,
+    setRequestToDelete,
     handleArchive,
     setIsEditingResident,
     handleSearch,
@@ -488,7 +495,6 @@ export const useDaftarPermohonan = () => {
     handleRejectConfirm,
     handleResubmit,
     handleSaveResident,
-    handleDelete,
     handleResidentFieldChange,
     handleViewAttachment,
     handlePrint,

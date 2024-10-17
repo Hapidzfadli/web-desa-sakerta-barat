@@ -11,6 +11,7 @@ import ProgressOverlay from '../shared/ProgressOverlay';
 import { Toaster } from '@/components/ui/toaster';
 import { useUser } from '../../app/context/UserContext';
 import Filter from '../shared/Filter';
+import ConfirmationDialog from '../shared/ConfirmationDialog';
 
 const ListLetterRequests: React.FC = () => {
   const { user } = useUser();
@@ -42,6 +43,10 @@ const ListLetterRequests: React.FC = () => {
     signPin,
     isFilterOpen,
     filters,
+    showDeleteConfirmation,
+    requestToDelete,
+    setShowDeleteConfirmation,
+    setRequestToDelete,
     handleComplete,
     handleSearch,
     handleSort,
@@ -118,7 +123,10 @@ const ListLetterRequests: React.FC = () => {
             sortOrder={sortOrder}
             onPrint={handlePrint}
             onView={setSelectedRequestId}
-            onDelete={handleDelete}
+            onDelete={(id) => {
+              setRequestToDelete(id);
+              setShowDeleteConfirmation(true);
+            }}
             userRole={user?.role || ''}
             onFilter={() => setIsFilterOpen(true)}
           />
@@ -199,6 +207,21 @@ const ListLetterRequests: React.FC = () => {
             onClose={() => setIsFilterOpen(false)}
             onApply={handleFilterChange}
             filterOptions={filterOptions}
+          />
+
+          <ConfirmationDialog
+            isOpen={showDeleteConfirmation}
+            onClose={() => setShowDeleteConfirmation(false)}
+            onConfirm={() => {
+              if (requestToDelete !== null) {
+                handleDelete(requestToDelete);
+              }
+              setShowDeleteConfirmation(false);
+            }}
+            title="Konfirmasi Penghapusan"
+            description="Apakah Anda yakin ingin menghapus permohonan surat ini?"
+            confirmText="Hapus"
+            cancelText="Batal"
           />
         </div>
       </div>
