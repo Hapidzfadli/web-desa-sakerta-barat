@@ -72,7 +72,7 @@ export class DashboardService {
       });
 
       if (!resident) {
-        throw new NotFoundException('Resident not found');
+        return this.getEmptyResidentDashboardResponse();
       }
 
       const [
@@ -103,6 +103,34 @@ export class DashboardService {
       this.logger.error('Error fetching resident dashboard data', { error });
       throw new Error('Error fetching resident dashboard data');
     }
+  }
+
+  private getEmptyResidentDashboardResponse(): ResidentDashboardResponse {
+    const emptyMonthlyData = this.getEmptyMonthlyData();
+    return {
+      totalRequests: { total: 0, growth: 0, monthlyData: emptyMonthlyData },
+      totalDocuments: { total: 0, growth: 0, monthlyData: emptyMonthlyData },
+      recentRequests: { total: 0, growth: 0, monthlyData: emptyMonthlyData },
+      letterStatus: {
+        daily: {},
+        weekly: {},
+        monthly: {},
+      },
+      comparison: {
+        daily: { current: [], previous: [], labels: [] },
+        weekly: { current: [], previous: [], labels: [] },
+        monthly: { current: [], previous: [], labels: [] },
+      },
+      populationDocuments: { rows: [] },
+    };
+  }
+
+  private getEmptyMonthlyData(): MonthlyData[] {
+    const currentDate = new Date();
+    return Array.from({ length: 6 }, (_, i) => ({
+      month: format(subMonths(currentDate, i), 'yyyy-MM'),
+      count: 0,
+    })).reverse();
   }
 
   private async getUserStats(): Promise<DashboardResponse['users']> {

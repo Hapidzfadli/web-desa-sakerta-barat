@@ -47,6 +47,16 @@ export const useDaftarPermohonan = () => {
   const [filters, setFilters] = useState({});
   const { user } = useUser();
   const userId = user?.id;
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [requestToDelete, setRequestToDelete] = useState<number | null>(null);
+  const [showRejectReasonPopup, setShowRejectReasonPopup] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectingRequestId, setRejectingRequestId] = useState<number | null>(
+    null,
+  );
+  const [action, setAction] = useState<
+    'SIGN' | 'REJECT_ADMIN' | 'REJECT_KADES' | null
+  >(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: [
@@ -122,6 +132,57 @@ export const useDaftarPermohonan = () => {
     },
   });
 
+  const signMutation = useMutation({
+    mutationFn: ({
+      id,
+      pin,
+      status,
+      rejectionReason,
+    }: {
+      id: number;
+      pin: string;
+      status: 'SIGNED' | 'REJECTED_BY_KADES';
+      rejectionReason?: string;
+    }) => signLetterRequest(id, pin, status, rejectionReason),
+    onMutate: () => {
+      setIsSigning(true);
+    },
+    onSettled: () => {
+      setIsSigning(false);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['letterRequests', userId]);
+      queryClient.invalidateQueries([
+        'letterRequest',
+        userId,
+        previewRequestId,
+      ]);
+      queryClient.invalidateQueries([
+        'letterPreview',
+        userId,
+        previewRequestId,
+      ]);
+      toast({
+        title: 'Sukses',
+        description: 'Surat berhasil diproses',
+        duration: 3000,
+      });
+      setShowPinPopup(false);
+      setSignPin('');
+      setPreviewRequestId(null);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Gagal memproses surat',
+        variant: 'destructive',
+        duration: 3000,
+      });
+    },
+  });
+
   const resubmitMutation = useMutation({
     mutationFn: (id: number) => resubmitLetterRequest(id),
     onSuccess: () => {
@@ -182,48 +243,6 @@ export const useDaftarPermohonan = () => {
       toast({
         title: 'Error',
         description: 'Gagal menghapus permohonan surat',
-        variant: 'destructive',
-        duration: 3000,
-      });
-    },
-  });
-
-  const signMutation = useMutation({
-    mutationFn: ({ id, pin }: { id: number; pin: string }) =>
-      signLetterRequest(id, pin),
-    onMutate: () => {
-      setIsSigning(true);
-    },
-    onSettled: () => {
-      setIsSigning(false);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['letterRequests', userId]);
-      queryClient.invalidateQueries([
-        'letterRequest',
-        userId,
-        previewRequestId,
-      ]);
-      queryClient.invalidateQueries([
-        'letterPreview',
-        userId,
-        previewRequestId,
-      ]);
-      toast({
-        title: 'Sukses',
-        description: 'Surat berhasil ditandatangani',
-        duration: 3000,
-      });
-      setShowPinPopup(false);
-      setSignPin('');
-      setPreviewRequestId(null);
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    },
-    onError: () => {
-      toast({
-        title: 'Error',
-        description: 'Gagal menandatangani surat',
         variant: 'destructive',
         duration: 3000,
       });
@@ -306,7 +325,6 @@ export const useDaftarPermohonan = () => {
           return newProgress;
         });
       }, 500);
-
       return () => clearInterval(interval);
     } else {
       setProgress(100);
@@ -340,6 +358,7 @@ export const useDaftarPermohonan = () => {
   const handleVerify = (status: 'APPROVED' | 'REJECTED') => {
     if (selectedRequestId) {
       if (status === 'REJECTED') {
+        setAction('REJECT_ADMIN');
         setShowRejectionPopup(true);
       } else {
         verifyMutation.mutate({ id: selectedRequestId, status });
@@ -348,12 +367,35 @@ export const useDaftarPermohonan = () => {
   };
 
   const handleRejectConfirm = () => {
-    if (selectedRequestId) {
+    if (action === 'REJECT_ADMIN' && selectedRequestId) {
       verifyMutation.mutate({
         id: selectedRequestId,
         status: 'REJECTED',
-        rejectionReason,
+        rejectionReason: rejectionReason,
       });
+      setShowRejectionPopup(false);
+    } else if (action === 'REJECT_KADES' && rejectingRequestId) {
+      signMutation.mutate({
+        id: rejectingRequestId,
+        pin: signPin,
+        status: 'REJECTED_BY_KADES',
+        rejectionReason: rejectReason,
+      });
+      setShowRejectReasonPopup(false);
+    }
+    setRejectionReason('');
+    setRejectReason('');
+    setSignPin('');
+    setRejectingRequestId(null);
+    setAction(null);
+  };
+
+  const handlePinConfirm = () => {
+    setShowPinPopup(false);
+    if (action === 'SIGN') {
+      handleSignConfirm();
+    } else if (action === 'REJECT_KADES') {
+      setShowRejectReasonPopup(true);
     }
   };
 
@@ -368,9 +410,9 @@ export const useDaftarPermohonan = () => {
   };
 
   const handleDelete = (id: number) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus permohonan ini?')) {
-      deleteMutation.mutate(id);
-    }
+    deleteMutation.mutate(id);
+    setShowDeleteConfirmation(false);
+    setRequestToDelete(null);
   };
 
   const handleResidentFieldChange = (name: string, value: string) => {
@@ -397,13 +439,20 @@ export const useDaftarPermohonan = () => {
   }, []);
 
   const handleSignButtonClick = () => {
+    setAction('SIGN');
     setShowPinPopup(true);
   };
 
   const handleSignConfirm = () => {
     if (previewRequestId) {
-      signMutation.mutate({ id: previewRequestId, pin: signPin });
+      signMutation.mutate({
+        id: previewRequestId,
+        pin: signPin,
+        status: 'SIGNED',
+      });
     }
+    setSignPin('');
+    setAction(null);
   };
 
   const printDocument = async () => {
@@ -412,11 +461,8 @@ export const useDaftarPermohonan = () => {
     try {
       const printableBlob = await printLetterRequest(previewRequestId);
       const printUrl = URL.createObjectURL(printableBlob);
-
       const printWindow = window.open(printUrl, '_blank');
       printWindow?.print();
-
-      // Clean up
       URL.revokeObjectURL(printUrl);
     } catch (error) {
       console.error('Error printing document:', error);
@@ -433,7 +479,7 @@ export const useDaftarPermohonan = () => {
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
-    setPage(1); // Reset to first page when filters change
+    setPage(1);
   };
 
   const handleComplete = useCallback(
@@ -449,6 +495,12 @@ export const useDaftarPermohonan = () => {
     },
     [archiveMutation],
   );
+
+  const handleReject = (id: number) => {
+    setRejectingRequestId(id);
+    setAction('REJECT_KADES');
+    setShowPinPopup(true);
+  };
 
   return {
     data,
@@ -478,6 +530,14 @@ export const useDaftarPermohonan = () => {
     isPdfLoading,
     isFilterOpen,
     filters,
+    showDeleteConfirmation,
+    requestToDelete,
+    showRejectReasonPopup,
+    rejectReason,
+    action,
+    handleDelete,
+    setShowDeleteConfirmation,
+    setRequestToDelete,
     handleArchive,
     setIsEditingResident,
     handleSearch,
@@ -488,7 +548,6 @@ export const useDaftarPermohonan = () => {
     handleRejectConfirm,
     handleResubmit,
     handleSaveResident,
-    handleDelete,
     handleResidentFieldChange,
     handleViewAttachment,
     handlePrint,
@@ -506,5 +565,9 @@ export const useDaftarPermohonan = () => {
     setIsFilterOpen,
     handleFilterChange,
     handleComplete,
+    handleReject,
+    handlePinConfirm,
+    setShowRejectReasonPopup,
+    setRejectReason,
   };
 };

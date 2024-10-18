@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, X } from 'lucide-react';
-import { FilterProps, FilterOption } from '../DaftarSurat/types/category.types';
+import { FilterProps, FilterOption } from '../ListLetters/types/category.types';
 
 const Filter: React.FC<FilterProps> = ({
   isOpen,

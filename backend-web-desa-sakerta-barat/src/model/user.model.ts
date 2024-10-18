@@ -53,3 +53,7 @@ export class ChangePasswordDto {
 export class UpdateKadesPinDto {
   pin: string;
 }
+
+export class UpdateUserRole {
+  role: Role;
+}

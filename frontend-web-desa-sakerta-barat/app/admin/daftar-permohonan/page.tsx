@@ -1,12 +1,12 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
-const DynamicDaftarPermohonan = dynamic(
-  () => import('../../../components/DaftarPermohonan/DaftarPermohonan'),
+const DynamicListLetterRequests = dynamic(
+  () => import('../../../components/ListLetterRequests/ListLetterRequests'),
   { ssr: false },
 );
 
-const DaftarPermohonanAdmin = () => {
-  return <DynamicDaftarPermohonan />;
+const ListLetterRequestsAdmin = () => {
+  return <DynamicListLetterRequests />;
 };
 
-export default DaftarPermohonanAdmin;
+export default ListLetterRequestsAdmin;

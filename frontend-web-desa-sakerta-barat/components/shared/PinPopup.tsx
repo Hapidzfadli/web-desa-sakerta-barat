@@ -14,6 +14,7 @@ interface PinPopupProps {
   onConfirm: () => void;
   pin: string;
   setPin: (pin: string) => void;
+  action: 'sign' | 'reject';
 }
 
 const PinPopup: React.FC<PinPopupProps> = ({
@@ -22,12 +23,18 @@ const PinPopup: React.FC<PinPopupProps> = ({
   onConfirm,
   pin,
   setPin,
+  action,
 }) => {
+  const actionText = action === 'sign' ? 'Tanda Tangani' : 'Tolak';
+  const actionColor = action === 'sign' ? 'bg-blue-500' : 'bg-red-500';
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] bg-white">
         <DialogHeader>
-          <DialogTitle className="head-form">Masukkan PIN</DialogTitle>
+          <DialogTitle className="head-form">
+            Masukkan PIN untuk {actionText} Surat
+          </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <Input
@@ -41,8 +48,8 @@ const PinPopup: React.FC<PinPopupProps> = ({
           <Button onClick={onClose} variant="outline">
             Batal
           </Button>
-          <Button onClick={onConfirm} className="bg-blue-500 text-white">
-            Tanda Tangani
+          <Button onClick={onConfirm} className={`${actionColor} text-white`}>
+            {actionText}
           </Button>
         </div>
       </DialogContent>

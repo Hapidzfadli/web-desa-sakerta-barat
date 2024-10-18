@@ -39,6 +39,9 @@ const LetterTypeCard: React.FC<LetterTypeCardProps> = ({
   isLoading,
 }) => {
   if (isLoading) return <LoadingSpinner />;
+  const imageUrl = letterType.icon
+    ? `${process.env.NEXT_PUBLIC_API_URL}${letterType.icon}`
+    : '';
   return (
     <Card
       className={`flex flex-col relative ${letterType.icon ? 'h-96' : 'h-44'}`}
@@ -55,7 +58,7 @@ const LetterTypeCard: React.FC<LetterTypeCardProps> = ({
           <div className="h-40 mb-4 rounded-lg overflow-hidden">
             <div className="relative w-full h-full">
               <Image
-                src={`${process.env.NEXT_PUBLIC_API_URL}/${letterType.icon}`}
+                src={imageUrl}
                 layout="fill"
                 objectFit="cover"
                 alt={letterType.name}

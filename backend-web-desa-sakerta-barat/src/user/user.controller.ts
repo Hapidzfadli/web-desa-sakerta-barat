@@ -27,6 +27,7 @@ import {
   ChangePasswordDto,
   UpdateKadesPinDto,
   UpdateUserRequest,
+  UpdateUserRole,
   UserResponse,
 } from '../model/user.model';
 import { uploadFileAndGetUrl } from '../common/utils/utils';
@@ -50,6 +51,14 @@ export class UserController {
 
   @Get()
   async getAllUsers(@Query() query: PaginateOptions) {
+    if (query.filter && typeof query.filter === 'string') {
+      try {
+        query.filter = JSON.parse(query.filter);
+      } catch (error) {
+        console.error('Error parsing filter:', error);
+        query.filter = {};
+      }
+    }
     return this.userService.findAll(query);
   }
 
@@ -187,5 +196,22 @@ export class UserController {
     } catch (error) {
       throw new NotFoundException('Signature not found');
     }
+  }
+
+  @Put(':id/role')
+  @Roles(Role.KADES)
+  async updateUserRole(
+    @Param('id') id: string,
+    @Body() updateUserRole: UpdateUserRole,
+    @Auth() currentUser: any,
+  ): Promise<WebResponse<UserResponse>> {
+    const updatedUser = await this.userService.updateUserRole(
+      parseInt(id, 10),
+      updateUserRole.role,
+      currentUser,
+    );
+    return {
+      data: updatedUser,
+    };
   }
 }

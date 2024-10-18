@@ -9,7 +9,7 @@ import {
 } from '../../../lib/documentTypeUtils';
 import { applicationValidationSchema } from '../../../lib/letterRequestUtils';
 import { LetterType } from '../types/letterType.types';
-import { toInputDateValue } from '../../BiodataDiri/utils/profileUtils';
+import { toInputDateValue } from '../../Biodata/utils/profileUtils';
 
 interface ApplicationFormProps {
   isOpen: boolean;

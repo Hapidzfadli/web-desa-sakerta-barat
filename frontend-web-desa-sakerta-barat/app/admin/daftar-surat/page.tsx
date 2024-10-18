@@ -1,8 +1,8 @@
 import React from 'react';
-import DaftarSurat from '../../../components/DaftarSurat/DaftarSurat';
+import ListLetters from '../../../components/ListLetters/ListLetters';
 
-const DaftarSuratAdmin = () => {
-  return <DaftarSurat />;
+const ListLettersAdmin = () => {
+  return <ListLetters />;
 };
 
-export default DaftarSuratAdmin;
+export default ListLettersAdmin;

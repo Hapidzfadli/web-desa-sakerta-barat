@@ -132,8 +132,22 @@ export const authFormSchema = (type: string) =>
       type === 'login'
         ? z.string().email().optional()
         : z.string().email().max(50),
-    username: z.string().min(3, 'Username must be at least 3 characters long'),
-    password: z.string().min(8),
+    username: z
+      .string()
+      .min(3, 'Username harus minimal 3 karakter')
+      .max(50, 'Username maksimal 50 karakter')
+      .regex(
+        /^[a-zA-Z0-9_]+$/,
+        'Username hanya boleh berisi huruf, angka, dan underscore',
+      ),
+    password: z
+      .string()
+      .min(8, 'Password harus minimal 8 karakter')
+      .max(100, 'Password maksimal 100 karakter')
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+        'Password harus mengandung minimal satu huruf besar, satu huruf kecil, satu angka, dan satu karakter khusus',
+      ),
   });
 
 export const getHeaders = () => {

@@ -5,14 +5,15 @@ import DaftarPermohonanTable from './components/DaftarPermohonanTable';
 import DetailPermohonan from './components/DetailPermohonan';
 import ApplicantDetails from './components/ApplicantDetails';
 import RejectionPopup from './components/RejectionPopup';
-import PreviewPopup from '../../components/shared/PreviewPopup';
-import PinPopup from '../../components/shared/PinPopup';
-import ProgressOverlay from '../../components/shared/ProgressOverlay';
+import PreviewPopup from '../shared/PreviewPopup';
+import PinPopup from '../shared/PinPopup';
+import ProgressOverlay from '../shared/ProgressOverlay';
 import { Toaster } from '@/components/ui/toaster';
 import { useUser } from '../../app/context/UserContext';
 import Filter from '../shared/Filter';
+import ConfirmationDialog from '../shared/ConfirmationDialog';
 
-const DaftarPermohonan: React.FC = () => {
+const ListLetterRequests: React.FC = () => {
   const { user } = useUser();
   const {
     data,
@@ -42,6 +43,11 @@ const DaftarPermohonan: React.FC = () => {
     signPin,
     isFilterOpen,
     filters,
+    showDeleteConfirmation,
+    requestToDelete,
+    showRejectReasonPopup,
+    rejectReason,
+    action,
     handleComplete,
     handleSearch,
     handleSort,
@@ -69,7 +75,13 @@ const DaftarPermohonan: React.FC = () => {
     setSignPin,
     setIsFilterOpen,
     handleFilterChange,
+    setRequestToDelete,
+    setShowDeleteConfirmation,
     handleArchive,
+    handleReject,
+    setShowRejectReasonPopup,
+    setRejectReason,
+    handlePinConfirm,
   } = useDaftarPermohonan();
 
   const filterOptions = [
@@ -81,6 +93,7 @@ const DaftarPermohonan: React.FC = () => {
         { value: 'SUBMITTED', label: 'Diajukan' },
         { value: 'APPROVED', label: 'Disetujui' },
         { value: 'REJECTED', label: 'Ditolak' },
+        { value: 'REJECTED_BY_KADES', label: 'Ditolak oleh Kades' },
         { value: 'SIGNED', label: 'Ditandatangani' },
         { value: 'COMPLETED', label: 'Selesai' },
         { value: 'ARCHIVED', label: 'Diarsipkan' },
@@ -118,7 +131,10 @@ const DaftarPermohonan: React.FC = () => {
             sortOrder={sortOrder}
             onPrint={handlePrint}
             onView={setSelectedRequestId}
-            onDelete={handleDelete}
+            onDelete={(id) => {
+              setRequestToDelete(id);
+              setShowDeleteConfirmation(true);
+            }}
             userRole={user?.role || ''}
             onFilter={() => setIsFilterOpen(true)}
           />
@@ -179,6 +195,7 @@ const DaftarPermohonan: React.FC = () => {
               progress={progress}
               onPrint={printDocument}
               onSign={handleSignButtonClick}
+              onReject={() => handleReject(previewRequestId)}
               showSignButton={user?.role === 'KADES'}
             />
           )}
@@ -189,9 +206,10 @@ const DaftarPermohonan: React.FC = () => {
               setShowPinPopup(false);
               setSignPin('');
             }}
-            onConfirm={handleSignConfirm}
+            onConfirm={handlePinConfirm}
             pin={signPin}
             setPin={setSignPin}
+            action={action === 'SIGN' ? 'sign' : 'reject'}
           />
 
           <Filter
@@ -200,6 +218,32 @@ const DaftarPermohonan: React.FC = () => {
             onApply={handleFilterChange}
             filterOptions={filterOptions}
           />
+
+          <ConfirmationDialog
+            isOpen={showDeleteConfirmation}
+            onClose={() => setShowDeleteConfirmation(false)}
+            onConfirm={() => {
+              if (requestToDelete !== null) {
+                handleDelete(requestToDelete);
+              }
+              setShowDeleteConfirmation(false);
+            }}
+            title="Konfirmasi Penghapusan"
+            description="Apakah Anda yakin ingin menghapus permohonan surat ini?"
+            confirmText="Hapus"
+            cancelText="Batal"
+          />
+
+          <RejectionPopup
+            isOpen={showRejectReasonPopup}
+            onClose={() => {
+              setShowRejectReasonPopup(false);
+              setRejectReason('');
+            }}
+            rejectionReason={rejectReason}
+            onReasonChange={setRejectReason}
+            onConfirm={handleRejectConfirm}
+          />
         </div>
       </div>
       <Toaster />
@@ -207,4 +251,4 @@ const DaftarPermohonan: React.FC = () => {
   );
 };
 
-export default DaftarPermohonan;
+export default ListLetterRequests;
