@@ -25,7 +25,7 @@ import {
   UpdateLetterRequestDto,
   VerifyLetterRequestDto,
 } from '../model/letter-request.model';
-import { uploadFileAndGetUrl } from '../common/utils/utils';
+import { dataUrlToBuffer, uploadFileAndGetUrl } from '../common/utils/utils';
 import * as PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import * as fs from 'fs';
@@ -36,6 +36,7 @@ import * as mime from 'mime-types';
 import { UserService } from '../user/user.service';
 import { v4 as uuidv4 } from 'uuid';
 import { NotificationService } from '../notification/notification.service';
+import { generateSecureQRCode } from '../common/utils/resident-data-qrcode.utils';
 const ImageModule = require('docxtemplater-image-module-free');
 @Injectable()
 export class LetterRequestService {
@@ -805,7 +806,9 @@ export class LetterRequestService {
       await prisma.archivedLetter.deleteMany({
         where: { letterRequestId: requestId },
       });
-
+      await prisma.signature.deleteMany({
+        where: { letterRequestId: requestId },
+      });
       await prisma.letterRequest.delete({
         where: { id: requestId },
       });
@@ -855,31 +858,26 @@ export class LetterRequestService {
       where: { role: Role.KADES },
     });
 
-    if (!kades || !kades.digitalSignature) {
-      throw new Error('Kades digital signature not found');
+    if (!kades) {
+      throw new Error('Kades not found');
     }
 
-    const signaturePath = path.join(
-      process.cwd(),
-      'uploads',
-      'signatures',
-      path.basename(kades.digitalSignature),
-    );
-    if (!(await fse.pathExists(signaturePath))) {
-      throw new NotFoundException('Kades signature file not found');
-    }
+    // Generate QR code
+    const qrCodeDataUrl = await generateSecureQRCode(letterRequest, kades.id);
+    const qrCodeBuffer = await dataUrlToBuffer(qrCodeDataUrl);
 
     const content = await fse.readFile(filePath, 'binary');
 
     const opts = {
       centered: false,
       fileType: 'docx',
-      getImage: function (tagValue: string) {
+      getImage: (tagValue: string) => {
+        if (tagValue === 'qr_code') {
+          return qrCodeBuffer;
+        }
         return fs.readFileSync(tagValue);
       },
-      getSize: function () {
-        return [150, 75];
-      },
+      getSize: () => [150, 150], // Increased QR code size for better readability
     };
 
     const imageModule = new ImageModule(opts);
@@ -889,7 +887,7 @@ export class LetterRequestService {
       .attachModule(imageModule)
       .loadZip(zip)
       .setData({
-        tanda_tangan: signaturePath,
+        tanda_tangan: 'qr_code', // Use QR code instead of signature image
         nomor_surat: letterNumber,
       })
       .render();
@@ -927,7 +925,13 @@ export class LetterRequestService {
 
       await this.prismaService.letterRequest.update({
         where: { id: letterRequest.id },
-        data: { signedLetterPath: fileUrl },
+        data: {
+          signedLetterPath: fileUrl,
+          letterNumber: letterNumber,
+          signedAt: new Date(),
+          signedBy: kades.id,
+          status: RequestStatus.SIGNED,
+        },
       });
     } finally {
       await fse

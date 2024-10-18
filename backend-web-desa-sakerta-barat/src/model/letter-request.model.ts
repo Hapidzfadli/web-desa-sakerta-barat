@@ -1,4 +1,4 @@
-import { RequestStatus, Resident } from '@prisma/client';
+import { RequestStatus } from '@prisma/client';
 import { ResidentResponse } from './resident.model';
 
 export class CreateLetterRequestDto {
