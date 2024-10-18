@@ -5,8 +5,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
-import * as PizZip from 'pizzip';
-import * as Docxtemplater from 'docxtemplater';
 import * as fs from 'fs';
 import * as path from 'path';
 import {
@@ -44,7 +42,11 @@ export class PrintedLetterService {
       filePath = this.convertApiPathToFilePath(
         letterRequest.approvedLetterPath,
       );
-    } else if (letterRequest.status === RequestStatus.SIGNED) {
+    } else if (
+      letterRequest.status === RequestStatus.SIGNED ||
+      letterRequest.status === RequestStatus.COMPLETED ||
+      letterRequest.status === RequestStatus.ARCHIVED
+    ) {
       filePath = this.convertApiPathToFilePath(letterRequest.signedLetterPath);
     } else {
       throw new ForbiddenException('This letter request cannot be printed');
@@ -57,7 +59,6 @@ export class PrintedLetterService {
     const content = fs.readFileSync(filePath);
 
     const pdfBuf = await libreConvert(content, '.pdf', undefined);
-    // Save the printed letter information
     const createPrintedLetterDto: CreatePrintedLetterDto = {
       letterRequestId: letterRequestId,
       printedBy: userId,
@@ -88,17 +89,33 @@ export class PrintedLetterService {
     });
   }
 
-  async downloadPrintedLetter(fileName: string): Promise<Buffer> {
-    const filePath = path.join(
-      process.cwd(),
-      'uploads',
-      'letter-type-templates',
-      'printed_letters',
-      fileName,
+  async downloadPrintedLetter(letterRequestId: number): Promise<Buffer> {
+    const letterRequest = await this.prismaService.letterRequest.findUnique({
+      where: { id: letterRequestId },
+    });
+
+    if (!letterRequest) {
+      throw new NotFoundException('Letter request not found');
+    }
+
+    if (
+      letterRequest.status !== RequestStatus.SIGNED &&
+      letterRequest.status !== RequestStatus.COMPLETED &&
+      letterRequest.status !== RequestStatus.ARCHIVED
+    ) {
+      throw new ForbiddenException('This letter is not available for download');
+    }
+
+    if (!letterRequest.signedLetterPath) {
+      throw new NotFoundException('Signed letter file not found');
+    }
+
+    const filePath = this.convertApiPathToFilePath(
+      letterRequest.signedLetterPath,
     );
 
     if (!fs.existsSync(filePath)) {
-      throw new NotFoundException('Printed letter file not found');
+      throw new NotFoundException('Letter file not found');
     }
 
     return fs.readFileSync(filePath);
@@ -122,7 +139,11 @@ export class PrintedLetterService {
       filePath = this.convertApiPathToFilePath(
         letterRequest.approvedLetterPath,
       );
-    } else if (letterRequest.status === RequestStatus.SIGNED) {
+    } else if (
+      letterRequest.status === RequestStatus.SIGNED ||
+      letterRequest.status === RequestStatus.COMPLETED ||
+      letterRequest.status === RequestStatus.ARCHIVED
+    ) {
       filePath = this.convertApiPathToFilePath(letterRequest.signedLetterPath);
     } else {
       throw new ForbiddenException('This letter request cannot be printed');
@@ -133,8 +154,6 @@ export class PrintedLetterService {
     }
 
     const content = fs.readFileSync(filePath);
-
-    // Convert to PDF
     const pdfBuf = await libreConvert(content, '.pdf', undefined);
 
     return pdfBuf;

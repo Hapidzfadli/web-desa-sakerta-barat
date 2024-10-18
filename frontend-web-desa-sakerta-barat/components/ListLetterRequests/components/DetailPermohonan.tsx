@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '../../../components/ui/button';
-import { User, FileIcon, Archive } from 'lucide-react';
+import { User, FileIcon, Archive, Download } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import { LetterRequest } from '../types';
@@ -13,6 +13,7 @@ interface DetailPermohonanProps {
   onViewApplicant: () => void;
   onViewAttachment: (fileUrl: string) => void;
   onPrint: (id: number) => void;
+  onDownload: (id: number) => void;
   onVerify: (status: 'APPROVED' | 'REJECTED') => void;
   setIsEditingResident: (isEditing: boolean) => void;
   onResubmit: () => void;
@@ -28,6 +29,7 @@ const DetailPermohonan: React.FC<DetailPermohonanProps> = ({
   onViewAttachment,
   setIsEditingResident,
   onPrint,
+  onDownload,
   onVerify,
   onComplete,
   onResubmit,
@@ -37,6 +39,7 @@ const DetailPermohonan: React.FC<DetailPermohonanProps> = ({
   if (!selectedRequest) return null;
 
   const printableStatuses = ['APPROVED', 'SIGNED', 'COMPLETED', 'ARCHIVED'];
+  const downloadableStatuses = ['SIGNED', 'COMPLETED', 'ARCHIVED'];
 
   const renderDetailsFields = () => {
     const fields = [
@@ -108,13 +111,24 @@ const DetailPermohonan: React.FC<DetailPermohonanProps> = ({
         value: '',
         type: 'custom',
         render: () => (
-          <Button
-            onClick={() => onPrint(selectedRequest.id)}
-            className="bg-blue-500 text-white"
-          >
-            <FontAwesomeIcon icon={faPrint} className="mr-2 h-4 w-4" />
-            Lihat dan Cetak Surat
-          </Button>
+          <div className="flex space-x-2">
+            <Button
+              onClick={() => onPrint(selectedRequest.id)}
+              className="bg-blue-500 text-white"
+            >
+              <FontAwesomeIcon icon={faPrint} className="mr-2 h-4 w-4" />
+              Lihat dan Cetak Surat
+            </Button>
+            {downloadableStatuses.includes(selectedRequest.status) && (
+              <Button
+                onClick={() => onDownload(selectedRequest.id)}
+                className="bg-purple-500 text-white"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Unduh Surat
+              </Button>
+            )}
+          </div>
         ),
       });
     }

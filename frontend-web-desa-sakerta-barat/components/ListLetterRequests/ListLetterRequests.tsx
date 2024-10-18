@@ -48,6 +48,7 @@ const ListLetterRequests: React.FC = () => {
     showRejectReasonPopup,
     rejectReason,
     action,
+    handleDownload,
     handleComplete,
     handleSearch,
     handleSort,
@@ -146,6 +147,7 @@ const ListLetterRequests: React.FC = () => {
               onViewApplicant={() => setShowApplicantDetails(true)}
               onViewAttachment={handleViewAttachment}
               onPrint={handlePrint}
+              onDownload={handleDownload}
               onVerify={handleVerify}
               onResubmit={handleResubmit}
               setIsEditingResident={setIsEditingResident}
@@ -196,7 +198,9 @@ const ListLetterRequests: React.FC = () => {
               onPrint={printDocument}
               onSign={handleSignButtonClick}
               onReject={() => handleReject(previewRequestId)}
+              onDownload={() => handleDownload(previewRequestId)}
               showSignButton={user?.role === 'KADES'}
+              letterStatus={selectedRequest?.status || ''}
             />
           )}
 

@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
 
 interface PreviewPopupProps {
   isOpen: boolean;
@@ -17,7 +18,9 @@ interface PreviewPopupProps {
   onPrint: () => void;
   onSign: () => void;
   onReject: () => void;
+  onDownload: () => void;
   showSignButton: boolean;
+  letterStatus: string;
 }
 
 const PreviewPopup: React.FC<PreviewPopupProps> = ({
@@ -29,8 +32,15 @@ const PreviewPopup: React.FC<PreviewPopupProps> = ({
   onPrint,
   onSign,
   onReject,
+  onDownload,
   showSignButton,
+  letterStatus,
 }) => {
+  const canSign = showSignButton && letterStatus === 'APPROVED';
+  const canDownload = ['SIGNED', 'COMPLETED', 'ARCHIVED'].includes(
+    letterStatus,
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[90vw] max-h-[90vh] bg-white">
@@ -54,7 +64,7 @@ const PreviewPopup: React.FC<PreviewPopupProps> = ({
                   style={{ border: 'none' }}
                 />
                 <div className="mt-4 flex justify-end space-x-2">
-                  {showSignButton && (
+                  {canSign && (
                     <>
                       <Button
                         onClick={onSign}
@@ -73,6 +83,15 @@ const PreviewPopup: React.FC<PreviewPopupProps> = ({
                   <Button onClick={onPrint} className="bg-blue-500 text-white">
                     Cetak Surat
                   </Button>
+                  {canDownload && (
+                    <Button
+                      onClick={onDownload}
+                      className="bg-purple-500 text-white"
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Unduh Surat
+                    </Button>
+                  )}
                 </div>
               </div>
             </>

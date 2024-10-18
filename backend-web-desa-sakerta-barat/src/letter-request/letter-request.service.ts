@@ -12,7 +12,7 @@ import { ValidationService } from '../common/validation.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { LetterRequestValidation } from './letter-request.validation';
-import { LetterRequest, RequestStatus, Role, User } from '@prisma/client';
+import { LetterRequest, RequestStatus, Role } from '@prisma/client';
 import {
   PaginateOptions,
   PaginatedResult,
@@ -877,7 +877,7 @@ export class LetterRequestService {
         }
         return fs.readFileSync(tagValue);
       },
-      getSize: () => [150, 150], // Increased QR code size for better readability
+      getSize: () => [100, 100],
     };
 
     const imageModule = new ImageModule(opts);
@@ -951,7 +951,6 @@ export class LetterRequestService {
     });
 
     const paddedNumber = newNumber.toString().padStart(3, '0');
-    const currentYear = new Date().getFullYear();
 
     return `${letterType.letterNumberPrefix || ''}/${paddedNumber}/${letterType.letterNumberSuffix || ''}`;
   }

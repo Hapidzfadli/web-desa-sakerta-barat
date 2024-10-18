@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import Cookies from 'js-cookie';
+import { API_URL } from '../../../constants';
 import { useToast } from '@/components/ui/use-toast';
 import {
   fetchLetterRequests,
@@ -502,6 +504,50 @@ export const useDaftarPermohonan = () => {
     setShowPinPopup(true);
   };
 
+  const handleDownload = useCallback(
+    async (id: number) => {
+      try {
+        const token = Cookies.get('session');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
+        const response = await fetch(
+          `${API_URL}/api/printed-letters/download/${id}`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to download letter');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `surat_${id}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Error downloading document:', error);
+        toast({
+          title: 'Error',
+          description: 'Gagal mengunduh dokumen. Silakan coba lagi.',
+          variant: 'destructive',
+          duration: 3000,
+        });
+      }
+    },
+    [toast],
+  );
+
   return {
     data,
     isLoading,
@@ -535,6 +581,8 @@ export const useDaftarPermohonan = () => {
     showRejectReasonPopup,
     rejectReason,
     action,
+    letterStatus: selectedRequest?.status,
+    handleDownload,
     handleDelete,
     setShowDeleteConfirmation,
     setRequestToDelete,
