@@ -45,8 +45,9 @@ const ListLetterRequests: React.FC = () => {
     filters,
     showDeleteConfirmation,
     requestToDelete,
-    setShowDeleteConfirmation,
-    setRequestToDelete,
+    showRejectReasonPopup,
+    rejectReason,
+    action,
     handleComplete,
     handleSearch,
     handleSort,
@@ -74,7 +75,13 @@ const ListLetterRequests: React.FC = () => {
     setSignPin,
     setIsFilterOpen,
     handleFilterChange,
+    setRequestToDelete,
+    setShowDeleteConfirmation,
     handleArchive,
+    handleReject,
+    setShowRejectReasonPopup,
+    setRejectReason,
+    handlePinConfirm,
   } = useDaftarPermohonan();
 
   const filterOptions = [
@@ -86,6 +93,7 @@ const ListLetterRequests: React.FC = () => {
         { value: 'SUBMITTED', label: 'Diajukan' },
         { value: 'APPROVED', label: 'Disetujui' },
         { value: 'REJECTED', label: 'Ditolak' },
+        { value: 'REJECTED_BY_KADES', label: 'Ditolak oleh Kades' },
         { value: 'SIGNED', label: 'Ditandatangani' },
         { value: 'COMPLETED', label: 'Selesai' },
         { value: 'ARCHIVED', label: 'Diarsipkan' },
@@ -187,6 +195,7 @@ const ListLetterRequests: React.FC = () => {
               progress={progress}
               onPrint={printDocument}
               onSign={handleSignButtonClick}
+              onReject={() => handleReject(previewRequestId)}
               showSignButton={user?.role === 'KADES'}
             />
           )}
@@ -197,9 +206,10 @@ const ListLetterRequests: React.FC = () => {
               setShowPinPopup(false);
               setSignPin('');
             }}
-            onConfirm={handleSignConfirm}
+            onConfirm={handlePinConfirm}
             pin={signPin}
             setPin={setSignPin}
+            action={action === 'SIGN' ? 'sign' : 'reject'}
           />
 
           <Filter
@@ -222,6 +232,17 @@ const ListLetterRequests: React.FC = () => {
             description="Apakah Anda yakin ingin menghapus permohonan surat ini?"
             confirmText="Hapus"
             cancelText="Batal"
+          />
+
+          <RejectionPopup
+            isOpen={showRejectReasonPopup}
+            onClose={() => {
+              setShowRejectReasonPopup(false);
+              setRejectReason('');
+            }}
+            rejectionReason={rejectReason}
+            onReasonChange={setRejectReason}
+            onConfirm={handleRejectConfirm}
           />
         </div>
       </div>

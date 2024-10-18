@@ -16,6 +16,7 @@ interface PreviewPopupProps {
   progress: number;
   onPrint: () => void;
   onSign: () => void;
+  onReject: () => void;
   showSignButton: boolean;
 }
 
@@ -27,6 +28,7 @@ const PreviewPopup: React.FC<PreviewPopupProps> = ({
   progress,
   onPrint,
   onSign,
+  onReject,
   showSignButton,
 }) => {
   return (
@@ -53,12 +55,20 @@ const PreviewPopup: React.FC<PreviewPopupProps> = ({
                 />
                 <div className="mt-4 flex justify-end space-x-2">
                   {showSignButton && (
-                    <Button
-                      onClick={onSign}
-                      className="bg-green-500 text-white"
-                    >
-                      Tanda Tangani Surat
-                    </Button>
+                    <>
+                      <Button
+                        onClick={onSign}
+                        className="bg-green-500 text-white"
+                      >
+                        Tanda Tangani Surat
+                      </Button>
+                      <Button
+                        onClick={onReject}
+                        className="bg-red-500 text-white"
+                      >
+                        Tolak Surat
+                      </Button>
+                    </>
                   )}
                   <Button onClick={onPrint} className="bg-blue-500 text-white">
                     Cetak Surat

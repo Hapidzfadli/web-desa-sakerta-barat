@@ -120,7 +120,7 @@ export const fetchLetterRequestById = async (
 
 export const verifyLetterRequest = async (
   id: number,
-  status: 'APPROVED' | 'REJECTED',
+  status: 'APPROVED' | 'REJECTED' | 'REJECTED_BY_KADES',
   rejectionReason: string,
 ): Promise<LetterRequest> => {
   try {
@@ -382,6 +382,8 @@ export const printLetterRequest = async (id: number): Promise<Blob> => {
 export const signLetterRequest = async (
   id: number,
   pin: string,
+  status: 'SIGNED' | 'REJECTED_BY_KADES',
+  rejectionReason?: string,
 ): Promise<LetterRequest> => {
   try {
     const token = Cookies.get('session');
@@ -395,11 +397,11 @@ export const signLetterRequest = async (
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ pin, status: 'SIGNED' }),
+      body: JSON.stringify({ pin, status, rejectionReason }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to sign letter request');
+      throw new Error('Failed to process letter request');
     }
 
     const data = await response.json();
