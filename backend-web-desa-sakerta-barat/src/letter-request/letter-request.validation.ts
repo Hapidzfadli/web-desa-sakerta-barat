@@ -5,6 +5,7 @@ export class LetterRequestValidation {
   static readonly CREATE = z.object({
     letterTypeId: z.number().int().positive(),
     notes: z.string().optional(),
+    additionalResidents: z.record(z.string()).optional(),
     attachments: z
       .array(
         z.object({
@@ -18,6 +19,7 @@ export class LetterRequestValidation {
 
   static readonly UPDATE = z.object({
     notes: z.string().optional(),
+    additionalResidents: z.record(z.string()).optional(),
     attachments: z
       .array(
         z.object({

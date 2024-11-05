@@ -4,6 +4,7 @@ import { ResidentResponse } from './resident.model';
 export class CreateLetterRequestDto {
   letterTypeId: number;
   notes?: string;
+  additionalResidents?: Record<string, string>;
   attachments?: {
     fileName: string;
     fileUrl?: string;
@@ -13,6 +14,7 @@ export class CreateLetterRequestDto {
 
 export class UpdateLetterRequestDto {
   notes?: string;
+  additionalResidents?: Record<string, string>;
   attachments?: AttachmentDto[];
   approvedLetterPath?: string;
   signedLetterPath?: string;
@@ -46,6 +48,7 @@ export class ResponseLetterRequest {
   requestDate: Date;
   status: RequestStatus;
   notes?: string;
+  additionalResidents?: Record<string, string>;
   rejectionReason?: string;
   attachments: AttachmentDto[];
   resident?: ResidentResponse;

@@ -48,6 +48,8 @@ const ListLetterRequests: React.FC = () => {
     showRejectReasonPopup,
     rejectReason,
     action,
+    previewLetterStatus,
+    setPreviewLetterStatus,
     handleDownload,
     handleComplete,
     handleSearch,
@@ -131,6 +133,14 @@ const ListLetterRequests: React.FC = () => {
             sortColumn={sortColumn}
             sortOrder={sortOrder}
             onPrint={handlePrint}
+            onSign={(id) => {
+              const request = data?.data.find((req) => req.id === id);
+              if (request) {
+                setPreviewLetterStatus(request.status);
+                setPreviewRequestId(id);
+              }
+              console.log(request.status);
+            }}
             onView={setSelectedRequestId}
             onDelete={(id) => {
               setRequestToDelete(id);
@@ -200,7 +210,7 @@ const ListLetterRequests: React.FC = () => {
               onReject={() => handleReject(previewRequestId)}
               onDownload={() => handleDownload(previewRequestId)}
               showSignButton={user?.role === 'KADES'}
-              letterStatus={selectedRequest?.status || ''}
+              letterStatus={selectedRequest?.status || previewLetterStatus}
             />
           )}
 

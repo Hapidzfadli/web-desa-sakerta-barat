@@ -2,7 +2,7 @@ import React from 'react';
 import DataTable from '../../../components/shared/Table';
 import { LetterRequest, TableColumn } from '../types';
 import { Button } from '../../../components/ui/button';
-import { Printer, FileIcon, User, Edit, Save } from 'lucide-react';
+import { Printer } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faEye,
@@ -25,6 +25,7 @@ interface DaftarPermohonanTableProps {
   sortColumn: string | null;
   sortOrder: 'asc' | 'desc';
   onPrint: (id: number) => void;
+  onSign: (id: number) => void; // Add new prop for signature handling
   onView: (id: number) => void;
   onDelete: (id: number) => void;
   userRole: string;
@@ -44,6 +45,7 @@ const DaftarPermohonanTable: React.FC<DaftarPermohonanTableProps> = ({
   sortColumn,
   sortOrder,
   onPrint,
+  onSign, // Add new prop
   onView,
   onDelete,
   userRole,
@@ -126,7 +128,10 @@ const DaftarPermohonanTable: React.FC<DaftarPermohonanTableProps> = ({
                   size="sm"
                   variant="ghost"
                   title="Tanda Tangan"
-                  onClick={() => onPrint(row.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSign(row.id);
+                  }}
                 >
                   <FontAwesomeIcon
                     className="h-4 w-4 text-black-2"
@@ -136,14 +141,24 @@ const DaftarPermohonanTable: React.FC<DaftarPermohonanTableProps> = ({
               )}
             </>
           )}
-          <Button size="sm" title="Lihat" onClick={() => onView(row.id)}>
+          <Button
+            size="sm"
+            title="Lihat"
+            onClick={(e) => {
+              e.stopPropagation();
+              onView(row.id);
+            }}
+          >
             <FontAwesomeIcon className="h-4 w-4 text-view" icon={faEye} />
           </Button>
           <Button
             size="sm"
             variant="ghost"
             title="Delete"
-            onClick={() => onDelete(row.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(row.id);
+            }}
           >
             <FontAwesomeIcon
               className="h-4 w-4 text-delete"

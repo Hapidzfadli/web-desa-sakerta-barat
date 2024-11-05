@@ -99,17 +99,21 @@ export class LetterRequestService {
         residentId: user.resident.id,
         letterTypeId: validatedData.letterTypeId,
         notes: validatedData.notes,
+        additionalResidents: validatedData.additionalResidents || {},
         attachments: {
           create: allAttachments,
         },
       },
       include: {
         attachments: true,
+        resident: true,
+        letterType: true,
       },
     });
 
     const userContent = `Permohonan surat Anda telah berhasil diajukan. Nomor pengajuan ${letterRequest.id}. Kami akan segera memprosesnya.`;
     const adminContent = `Ada permohonan surat baru dengan nomor pengajuan ${letterRequest.id}. Silakan cek dan proses permohonan tersebut.`;
+
     await this.sendNotifications(
       letterRequest,
       userContent,
@@ -174,6 +178,9 @@ export class LetterRequestService {
       where: { id: requestId },
       data: {
         notes: validatedData.notes,
+        additionalResidents:
+          validatedData.additionalResidents ||
+          letterRequest.additionalResidents,
         attachments: {
           deleteMany: {},
           create: allAttachments,
@@ -181,6 +188,8 @@ export class LetterRequestService {
       },
       include: {
         attachments: true,
+        resident: true,
+        letterType: true,
       },
     });
 
@@ -491,6 +500,8 @@ export class LetterRequestService {
       data: {
         status: RequestStatus.SUBMITTED,
         notes: dto.notes,
+        additionalResidents:
+          dto.additionalResidents || letterRequest.additionalResidents,
         rejectionReason: null,
       },
       include: {
@@ -655,6 +666,8 @@ export class LetterRequestService {
       requestDate: letterRequest.requestDate,
       status: status,
       notes: letterRequest.notes,
+      rejectionReason: letterRequest.rejectionReason,
+      additionalResidents: letterRequest.additionalResidents || {}, // Include additional residents data
       attachments: allAttachments.map((att) => ({
         fileName: att.fileName,
         fileUrl: att.fileUrl,
@@ -973,12 +986,7 @@ export class LetterRequestService {
     );
     const filePath = path.join(basePath, templatePath);
 
-    if (
-      !(await fse
-        .access(filePath)
-        .then(() => true)
-        .catch(() => false))
-    ) {
+    if (!(await fse.pathExists(filePath))) {
       throw new NotFoundException('Template file not found');
     }
 
@@ -989,29 +997,41 @@ export class LetterRequestService {
       linebreaks: true,
     });
 
-    // Render the document (replace placeholders)
-    doc.render({
-      nama_lengkap: letterRequest.resident.name,
-      tempat_lahir: letterRequest.resident.placeOfBirth,
-      tanggal_lahir:
-        letterRequest.resident.dateOfBirth.toLocaleDateString('id-ID'),
-      jenis_kelamin: letterRequest.resident.gender,
-      nik: letterRequest.resident.nationalId,
-      pekerjaan: letterRequest.resident.occupation,
+    // Prepare main resident data
+    const mainResident = letterRequest.resident;
+    const mainResidentData = {
+      nama_lengkap: mainResident.name,
+      tempat_lahir: mainResident.placeOfBirth,
+      tanggal_lahir: mainResident.dateOfBirth.toLocaleDateString('id-ID'),
+      jenis_kelamin: mainResident.gender,
+      nik: mainResident.nationalId,
+      pekerjaan: mainResident.occupation,
+      agama: mainResident.religion,
+      status: mainResident.maritalStatus,
       tanda_tangan: '{%tanda_tangan}',
       nomor_surat: '{nomor_surat}',
-      alamat_lengkap: `${letterRequest.resident.residentialAddress}, RT ${letterRequest.resident.rt}, RW ${letterRequest.resident.rw}, ${letterRequest.resident.district}, ${letterRequest.resident.regency}, ${letterRequest.resident.province} ${letterRequest.resident.postalCode}`,
+      tanggal_pembuatan: new Date().toLocaleDateString('id-ID'),
+      alamat_lengkap: `${mainResident.residentialAddress}, RT ${mainResident.rt}, RW ${mainResident.rw}, ${mainResident.district}, ${mainResident.regency}, ${mainResident.province} ${mainResident.postalCode}`,
+    };
+
+    // Combine main resident data with additional residents data
+    const templateData = {
+      ...mainResidentData,
+      ...(letterRequest.additionalResidents || {}),
+    };
+
+    doc.render(templateData);
+
+    const buf = doc.getZip().generate({
+      type: 'nodebuffer',
+      compression: 'DEFLATE',
     });
 
-    const buf = doc.getZip().generate({ type: 'nodebuffer' });
-
-    // Create a temporary file
     const tempFileName = `${uuidv4()}.docx`;
     const tempFilePath = path.join(process.cwd(), 'temp', tempFileName);
-    await fse.mkdir(path.dirname(tempFilePath), { recursive: true });
+    await fse.ensureDir(path.dirname(tempFilePath));
     await fse.writeFile(tempFilePath, buf);
 
-    // Create a Multer file object
     const multerFile: Express.Multer.File = {
       fieldname: 'file',
       originalname: `${letterRequest.resident.name}_${letterRequest.letterType.name}_approved.docx`,
@@ -1027,22 +1047,19 @@ export class LetterRequestService {
     };
 
     try {
-      // Upload the file and get the URL
       const fileUrl = await uploadFileAndGetUrl(
         multerFile,
         'uploads/approved_letters',
         '/api/letter-requests/approved',
       );
 
-      // Update the letterRequest with the file URL
       await this.prismaService.letterRequest.update({
         where: { id: letterRequest.id },
         data: { approvedLetterPath: fileUrl },
       });
     } finally {
-      // Clean up the temporary file
       await fse
-        .unlink(tempFilePath)
+        .remove(tempFilePath)
         .catch((err) =>
           this.logger.warn(`Failed to delete temporary file: ${err}`),
         );

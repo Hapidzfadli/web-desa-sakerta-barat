@@ -60,6 +60,8 @@ export const useDaftarPermohonan = () => {
     'SIGN' | 'REJECT_ADMIN' | 'REJECT_KADES' | null
   >(null);
 
+  const [previewLetterStatus, setPreviewLetterStatus] = useState<string>('');
+
   const { data, isLoading, isError } = useQuery({
     queryKey: [
       'letterRequests',
@@ -582,6 +584,8 @@ export const useDaftarPermohonan = () => {
     rejectReason,
     action,
     letterStatus: selectedRequest?.status,
+    previewLetterStatus,
+    setPreviewLetterStatus,
     handleDownload,
     handleDelete,
     setShowDeleteConfirmation,

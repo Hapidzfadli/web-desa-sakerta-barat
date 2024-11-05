@@ -46,7 +46,7 @@ export class LetterRequestController {
   @UseInterceptors(FilesInterceptor('attachments'))
   async createLetterRequest(
     @Auth() user: any,
-    @Body() createDto: CreateLetterRequestDto,
+    @Body() createDto: CreateLetterRequestDto & { additionalResidents: string },
     @UploadedFiles(
       new ParseFilePipe({
         validators: [
@@ -61,6 +61,9 @@ export class LetterRequestController {
     const parsedDto = {
       ...createDto,
       letterTypeId: Number(createDto.letterTypeId),
+      additionalResidents: createDto.additionalResidents
+        ? JSON.parse(createDto.additionalResidents)
+        : undefined,
     };
     const result = await this.letterRequestService.createLetterRequest(
       user.id,
