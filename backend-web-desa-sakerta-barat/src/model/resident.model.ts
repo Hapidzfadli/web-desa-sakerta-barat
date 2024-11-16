@@ -21,6 +21,8 @@ export class CreateResidentRequest {
   rt?: number;
   rw?: number;
   bloodType?: BloodType;
+  fatherName?: string;
+  motherName?: string;
 }
 
 export class createDocumentRequest {
@@ -49,6 +51,8 @@ export class UpdateResidentRequest {
   rt?: number;
   rw?: number;
   bloodType?: BloodType;
+  fatherName?: string;
+  motherName?: string;
 }
 
 export class ResidentResponse {
@@ -72,6 +76,8 @@ export class ResidentResponse {
   rt?: number;
   rw?: number;
   bloodType?: BloodType;
+  fatherName?: string;
+  motherName?: string;
   documents?: DocumentResponse[];
 }
 

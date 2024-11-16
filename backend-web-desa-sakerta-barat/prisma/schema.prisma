@@ -105,6 +105,8 @@ model Resident {
   rt                 Int?
   rw                 Int?
   bloodType          BloodType?
+  fatherName         String?         @db.VarChar(100)
+  motherName         String?         @db.VarChar(100)
   documents          Document[]
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt

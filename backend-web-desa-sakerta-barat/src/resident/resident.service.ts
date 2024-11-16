@@ -90,6 +90,8 @@ export class ResidentService {
           rt: validatedData.rt,
           rw: validatedData.rw,
           bloodType: validatedData.bloodType,
+          fatherName: validatedData.fatherName,
+          motherName: validatedData.motherName,
           documents: file
             ? {
                 create: {
@@ -183,6 +185,8 @@ export class ResidentService {
         rt: validatedData.rt,
         rw: validatedData.rw,
         bloodType: validatedData.bloodType,
+        fatherName: validatedData.fatherName,
+        motherName: validatedData.motherName,
       };
 
       if (file) {
@@ -512,6 +516,8 @@ export class ResidentService {
       rt: resident.rt,
       rw: resident.rw,
       bloodType: resident.bloodType,
+      fatherName: resident.fatherName,
+      motherName: resident.motherName,
       documents: resident.documents.map((doc) => ({
         id: doc.id,
         type: doc.type,

@@ -6,11 +6,13 @@ import {
 } from '../../../lib/actions/list-letter.action';
 import { applyLetter } from '../../../lib/actions/letterRequest.action';
 import { useToast } from '../../ui/use-toast';
+import { SecondaryPartyData } from '../types/letterType.types';
 
 export const useLetterTypeActions = (categoryId: number) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Create Letter Type Mutation
   const createMutation = useMutation({
     mutationFn: createLetterType,
     onSuccess: () => {
@@ -31,6 +33,7 @@ export const useLetterTypeActions = (categoryId: number) => {
     },
   });
 
+  // Update Letter Type Mutation
   const updateMutation = useMutation({
     mutationFn: (data: { id: number; [key: string]: any }) =>
       updateLetterType(data.id, data),
@@ -52,6 +55,7 @@ export const useLetterTypeActions = (categoryId: number) => {
     },
   });
 
+  // Delete Letter Type Mutation
   const deleteMutation = useMutation({
     mutationFn: deleteLetterType,
     onSuccess: () => {
@@ -72,18 +76,43 @@ export const useLetterTypeActions = (categoryId: number) => {
     },
   });
 
+  // Apply Letter Mutation
   const applyMutation = useMutation({
-    mutationFn: (data: {
+    mutationFn: async ({
+      letterTypeId,
+      notes,
+      attachments,
+      additionalResidents,
+    }: {
       letterTypeId: number;
       notes: string;
       attachments: File[];
+      additionalResidents?: SecondaryPartyData;
     }) => {
-      if (typeof data.letterTypeId !== 'number' || isNaN(data.letterTypeId)) {
-        throw new Error('Invalid letterTypeId');
+      const formData = new FormData();
+      formData.append('letterTypeId', letterTypeId.toString());
+      formData.append('notes', notes);
+
+      attachments.forEach((file) => {
+        formData.append('attachments', file);
+      });
+
+      if (additionalResidents) {
+        const additionalResidentsString = JSON.stringify({
+          ...additionalResidents,
+          tanggal_lahir2: additionalResidents.tanggal_lahir2
+            ? new Date(additionalResidents.tanggal_lahir2)
+                .toISOString()
+                .split('T')[0]
+            : undefined,
+        });
+        formData.append('additionalResidents', additionalResidentsString);
       }
-      return applyLetter(data.letterTypeId, data.notes, data.attachments);
+
+      return applyLetter(formData);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['letterRequests'] });
       toast({
         title: 'Berhasil',
         description: 'Pengajuan surat berhasil dikirim',
@@ -100,6 +129,8 @@ export const useLetterTypeActions = (categoryId: number) => {
       });
     },
   });
+
+  // Handler for adding/editing letter types
   const handleAddEdit = async (data: any) => {
     data.categoryId = Number(categoryId);
     if (data.id) {
@@ -109,26 +140,42 @@ export const useLetterTypeActions = (categoryId: number) => {
     }
   };
 
+  // Handler for deleting letter types
   const handleDelete = async (id: number) => {
     deleteMutation.mutate(id);
   };
 
+  // Handler for applying for letters
   const handleApplyLetter = async (
     letterTypeId: number,
     notes: string,
     attachments: File[],
+    additionalResidents?: SecondaryPartyData,
   ) => {
     if (typeof letterTypeId !== 'number' || isNaN(letterTypeId)) {
       console.error('Invalid letterTypeId:', letterTypeId);
       throw new Error('Invalid letterTypeId');
     }
+
     try {
-      await applyMutation.mutateAsync({ letterTypeId, notes, attachments });
+      await applyMutation.mutateAsync({
+        letterTypeId,
+        notes,
+        attachments,
+        additionalResidents,
+      });
     } catch (error) {
       console.error('Error in handleApplyLetter:', error);
       throw error;
     }
   };
 
-  return { handleAddEdit, handleDelete, handleApplyLetter };
+  // Return all handlers and mutation states
+  return {
+    handleAddEdit,
+    handleDelete,
+    handleApplyLetter,
+  };
 };
+
+export default useLetterTypeActions;

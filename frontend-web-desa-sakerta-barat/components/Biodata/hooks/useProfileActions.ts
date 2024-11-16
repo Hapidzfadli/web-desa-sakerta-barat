@@ -44,6 +44,7 @@ export const useProfileActions = (
 
   const handleSaveResident = async (data: Record<string, string>) => {
     try {
+      console.log('Raw form data:', data);
       const processedData = {
         ...data,
         rt: data.rt ? Number(data.rt) : undefined,

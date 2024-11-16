@@ -28,7 +28,19 @@ const ResidentCard: React.FC<ResidentCardProps> = ({
     { label: 'Nama Lengkap', field: 'name' },
     { label: 'NIK', field: 'nationalId' },
     { label: 'Tanggal Lahir', field: 'dateOfBirth', format: formatDate },
-    { label: 'Agama', field: 'religion' },
+    {
+      label: 'Agama',
+      field: 'religion',
+      type: 'select',
+      options: [
+        { value: 'ISLAM', label: 'Islam' },
+        { value: 'KRISTEN', label: 'Kristen' },
+        { value: 'KATOLIK', label: 'Katolik' },
+        { value: 'HINDU', label: 'Hindu' },
+        { value: 'BUDDHA', label: 'Buddha' },
+        { value: 'KONGHUCU', label: 'Konghucu' },
+      ],
+    },
     {
       label: 'Status Pernikahan',
       field: 'maritalStatus',
@@ -41,7 +53,15 @@ const ResidentCard: React.FC<ResidentCardProps> = ({
       ],
     },
     { label: 'Pekerjaan', field: 'occupation' },
-    { label: 'Kewarganegaraan', field: 'nationality' },
+    {
+      label: 'Kewarganegaraan',
+      field: 'nationality',
+      type: 'select',
+      options: [
+        { value: 'WNI', label: 'WNI' },
+        { value: 'WNA', label: 'WNA' },
+      ],
+    },
     { label: 'Tempat Lahir', field: 'placeOfBirth' },
     {
       label: 'Jenis Kelamin',
@@ -52,15 +72,48 @@ const ResidentCard: React.FC<ResidentCardProps> = ({
         { value: 'PEREMPUAN', label: 'Perempuan' },
       ],
     },
+    {
+      label: 'Golongan Darah',
+      field: 'bloodType',
+      type: 'select',
+      options: [
+        { value: 'A', label: 'A' },
+        { value: 'B', label: 'B' },
+        { value: 'AB', label: 'AB' },
+        { value: 'O', label: 'O' },
+      ],
+    },
     { label: 'Nomor Kartu Keluarga', field: 'familyCardNumber' },
+    { label: 'Nama Ayah', field: 'fatherName' },
+    { label: 'Nama Ibu', field: 'motherName' },
     { label: 'Kecamatan', field: 'district' },
     { label: 'Kabupaten', field: 'regency' },
     { label: 'Provinsi', field: 'province' },
     { label: 'Kode Pos', field: 'postalCode' },
-    { label: 'RT', field: 'rt' },
-    { label: 'RW', field: 'rw' },
-    { label: 'Alamat KTP', field: 'idCardAddress' },
-    { label: 'Alamat Domisili', field: 'residentialAddress' },
+    {
+      label: 'RT',
+      field: 'rt',
+      type: 'number',
+      min: 1,
+      max: 999,
+    },
+    {
+      label: 'RW',
+      field: 'rw',
+      type: 'number',
+      min: 1,
+      max: 999,
+    },
+    {
+      label: 'Alamat KTP',
+      field: 'idCardAddress',
+      type: 'textarea',
+    },
+    {
+      label: 'Alamat Domisili',
+      field: 'residentialAddress',
+      type: 'textarea',
+    },
   ];
 
   return (
@@ -84,7 +137,7 @@ const ResidentCard: React.FC<ResidentCardProps> = ({
         {residentData ? (
           <div className="grid md:grid-cols-2 gap-4">
             {residentFields.map((item) => (
-              <div key={item.field}>
+              <div key={item.field} className="space-y-2">
                 <p className="label-form">{item.label}</p>
                 <p>
                   {item.format && residentData[item.field]
@@ -105,6 +158,7 @@ const ResidentCard: React.FC<ResidentCardProps> = ({
           </p>
         )}
       </CardContent>
+
       <Suspense fallback={<div>Loading...</div>}>
         <EditPopup
           title="Edit Biodata Penduduk"
@@ -126,6 +180,8 @@ const ResidentCard: React.FC<ResidentCardProps> = ({
                   ? 'textarea'
                   : 'text'),
             options: item.options,
+            min: item.min,
+            max: item.max,
           }))}
           onSave={onSave}
           validationSchema={updateResidentSchema}

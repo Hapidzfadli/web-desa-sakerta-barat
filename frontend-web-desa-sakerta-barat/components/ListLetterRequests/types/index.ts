@@ -16,6 +16,8 @@ export interface Resident {
   regency: string;
   province: string;
   postalCode: string;
+  fatherName: string;
+  motherName: string;
   rt: string;
   rw: string;
   bloodType: string;

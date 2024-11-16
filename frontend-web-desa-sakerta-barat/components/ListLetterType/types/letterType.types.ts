@@ -32,6 +32,20 @@ export interface ResidentData {
   documents: Document[];
 }
 
+export interface SecondaryPartyData {
+  nama_lengkap2: string;
+  nik2: string;
+  tempat_lahir2: string;
+  tanggal_lahir2: string;
+  jenis_kelamin2: string;
+  agama2: string;
+  status2: string;
+  pekerjaan2: string;
+  wn2: string;
+  alamat_lengkap2: string;
+  binti2: string;
+}
+
 export interface Document {
   id: number;
   type: string;

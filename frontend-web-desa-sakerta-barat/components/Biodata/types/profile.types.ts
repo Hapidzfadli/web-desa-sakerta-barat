@@ -34,6 +34,9 @@ export interface ResidentData {
   rw: number;
   idCardAddress: string;
   residentialAddress: string;
+  bloodType: string;
+  fatherName: string;
+  motherName: string;
   documents: Document[];
 }
 

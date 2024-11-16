@@ -2,25 +2,11 @@ import { buildQueryString } from '../../components/ListLetterRequests/utils/help
 import { API_URL } from '../../constants';
 import Cookies from 'js-cookie';
 
-export const applyLetter = async (
-  letterTypeId: number,
-  notes: string,
-  attachments: File[] = [],
-) => {
+export const applyLetter = async (formData: FormData): Promise<any> => {
   try {
     const token = Cookies.get('session');
     if (!token) {
       throw new Error('No authentication token found');
-    }
-
-    const formData = new FormData();
-    formData.append('letterTypeId', letterTypeId.toString());
-    formData.append('notes', notes);
-
-    if (attachments && attachments.length > 0) {
-      attachments.forEach((file, index) => {
-        formData.append(`attachments`, file);
-      });
     }
 
     const response = await fetch(`${API_URL}/api/letter-requests`, {

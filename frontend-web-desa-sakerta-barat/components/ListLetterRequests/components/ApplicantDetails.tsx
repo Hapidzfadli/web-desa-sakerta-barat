@@ -30,16 +30,6 @@ const ApplicantDetails: React.FC<ApplicantDetailsProps> = ({
         value: formatDate(resident.dateOfBirth),
         type: 'date',
       },
-      {
-        label: 'Alamat KTP',
-        name: 'idCardAddress',
-        value: resident.idCardAddress,
-      },
-      {
-        label: 'Alamat Domisili',
-        name: 'residentialAddress',
-        value: resident.residentialAddress,
-      },
       { label: 'Agama', name: 'religion', value: resident.religion },
       {
         label: 'Status Pernikahan',
@@ -67,9 +57,21 @@ const ApplicantDetails: React.FC<ApplicantDetailsProps> = ({
       { label: 'Kabupaten', name: 'regency', value: resident.regency },
       { label: 'Provinsi', name: 'province', value: resident.province },
       { label: 'Kode Pos', name: 'postalCode', value: resident.postalCode },
+      { label: 'Nama Ayah', name: 'fatherName', value: resident.fatherName },
+      { label: 'Nama Ibu', name: 'motherName', value: resident.motherName },
       { label: 'RT', name: 'rt', value: resident.rt },
       { label: 'RW', name: 'rw', value: resident.rw },
-      { label: 'Golongan Darah', name: 'bloodType', value: resident.bloodType },
+      {
+        label: 'Alamat KTP',
+        name: 'idCardAddress',
+        value: resident.idCardAddress,
+      },
+      {
+        label: 'Alamat Domisili',
+        name: 'residentialAddress',
+        value: resident.residentialAddress,
+      },
+      // { label: 'Golongan Darah', name: 'bloodType', value: resident.bloodType },
     ].map((field) => ({
       ...field,
       onChange: isEditing

@@ -60,6 +60,14 @@ export class ResidentValidation {
     rt: z.number().int().min(1).max(999).optional(),
     rw: z.number().int().min(1).max(999).optional(),
     bloodType: z.nativeEnum(BloodType).optional(),
+    fatherName: z
+      .string()
+      .max(100, 'Father Name must not exceed 100 characters')
+      .optional(),
+    motherName: z
+      .string()
+      .max(100, 'Mother Name must not exceed 100 characters')
+      .optional(),
   });
 
   static readonly UPDATE = ResidentValidation.CREATE.partial().omit({

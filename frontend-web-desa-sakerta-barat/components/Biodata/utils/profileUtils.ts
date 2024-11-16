@@ -85,6 +85,15 @@ export const createResidentSchema = z.object({
     .optional(),
   rt: z.union([z.string(), z.number()]).transform(Number).optional(),
   rw: z.union([z.string(), z.number()]).transform(Number).optional(),
+  bloodType: z.string().min(1, 'Blood Type must not exceed 1'),
+  fatherName: z
+    .string()
+    .max(100, 'Father Name must not exceed 100 characters')
+    .optional(),
+  motherName: z
+    .string()
+    .max(100, 'Mother Name must not exceed 100 characters')
+    .optional(),
 });
 
 export const updateResidentSchema = createResidentSchema.partial().omit({
