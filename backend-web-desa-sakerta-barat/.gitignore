@@ -3,7 +3,7 @@
 /node_modules
 /build
 .env
-
+.idea
 # Logs
 logs
 *.log

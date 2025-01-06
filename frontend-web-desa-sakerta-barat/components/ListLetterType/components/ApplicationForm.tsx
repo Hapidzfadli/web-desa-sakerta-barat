@@ -414,10 +414,15 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
                       className="glassy-label text-left text-sm sm:text-base"
                     >
                       {field.label}
-                      {field.required && <span className="text-red-500">*</span>}
+                      {field.required && (
+                        <span className="text-red-500">*</span>
+                      )}
                     </Label>
-                    {field.type === "select" ? (
-                      <Select value={field.value} onValueChange={field.onChange}>
+                    {field.type === 'select' ? (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
                         <SelectTrigger className="w-full input-form">
                           <SelectValue placeholder={`Pilih ${field.label}`} />
                         </SelectTrigger>
@@ -429,7 +434,7 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
                           ))}
                         </SelectContent>
                       </Select>
-                    ) : field.type === "textarea" ? (
+                    ) : field.type === 'textarea' ? (
                       <Textarea
                         id={field.name}
                         value={field.value}
@@ -439,7 +444,7 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
                       />
                     ) : (
                       <Input
-                        type={field.type || "text"}
+                        type={field.type || 'text'}
                         id={field.name}
                         value={field.value}
                         onChange={(e) => field.onChange?.(e.target.value)}
@@ -451,39 +456,39 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
                 ))}
               </div>
             </div>
-              )}
+          )}
 
-              {newAttachments.length > 0 && (
-                <div className="mt-4">
-                  <h4 className="text-sm font-medium mb-2">Lampiran Baru</h4>
-                  <div className="space-y-2">
-                    {newAttachments.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center p-2 border rounded-md"
-                      >
-                        <FileIcon className="w-4 h-4 mr-2 text-blue-500" />
-                        <span className="text-sm">{file.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setNewAttachments((prev) =>
-                              prev.filter((_, i) => i !== index)
-                            );
-                          }}
-                          className="ml-auto text-red-500 hover:text-red-700"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
+          {newAttachments.length > 0 && (
+            <div className="mt-4">
+              <h4 className="text-sm font-medium mb-2">Lampiran Baru</h4>
+              <div className="space-y-2">
+                {newAttachments.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center p-2 border rounded-md"
+                  >
+                    <FileIcon className="w-4 h-4 mr-2 text-blue-500" />
+                    <span className="text-sm">{file.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewAttachments((prev) =>
+                          prev.filter((_, i) => i !== index),
+                        );
+                      }}
+                      className="ml-auto text-red-500 hover:text-red-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
-          }
-          />
-          );
-          };
+          )}
+        </div>
+      }
+    />
+  );
+};
 
-          export default ApplicationForm;
+export default ApplicationForm;

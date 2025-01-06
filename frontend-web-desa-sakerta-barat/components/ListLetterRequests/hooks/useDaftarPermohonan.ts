@@ -115,8 +115,10 @@ export const useDaftarPermohonan = () => {
       setIsVerifying(false);
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['letterRequests', userId]);
-      queryClient.invalidateQueries(['letterRequest', userId, variables.id]);
+      queryClient.invalidateQueries({ queryKey: ['letterRequests', userId] });
+      queryClient.invalidateQueries({
+        queryKey: ['letterRequest', userId, variables.id],
+      });
       toast({
         title: 'Sukses',
         description: 'Status permohonan berhasil diperbarui',
@@ -155,17 +157,13 @@ export const useDaftarPermohonan = () => {
       setIsSigning(false);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['letterRequests', userId]);
-      queryClient.invalidateQueries([
-        'letterRequest',
-        userId,
-        previewRequestId,
-      ]);
-      queryClient.invalidateQueries([
-        'letterPreview',
-        userId,
-        previewRequestId,
-      ]);
+      queryClient.invalidateQueries({ queryKey: ['letterRequests', userId] });
+      queryClient.invalidateQueries({
+        queryKey: ['letterRequest', userId, previewRequestId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['letterPreview', userId, previewRequestId],
+      });
       toast({
         title: 'Sukses',
         description: 'Surat berhasil diproses',
@@ -190,7 +188,7 @@ export const useDaftarPermohonan = () => {
   const resubmitMutation = useMutation({
     mutationFn: (id: number) => resubmitLetterRequest(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['letterRequests', userId]);
+      queryClient.invalidateQueries({ queryKey: ['letterRequests', userId] });
       toast({
         title: 'Sukses',
         description: 'Permohonan berhasil diajukan kembali',
@@ -211,11 +209,9 @@ export const useDaftarPermohonan = () => {
   const updateResidentMutation = useMutation({
     mutationFn: (data: any) => updateResidentData(data),
     onSuccess: () => {
-      queryClient.invalidateQueries([
-        'letterRequest',
-        userId,
-        selectedRequestId,
-      ]);
+      queryClient.invalidateQueries({
+        queryKey: ['letterRequest', userId, selectedRequestId],
+      });
       toast({
         title: 'Sukses',
         description: 'Data penduduk berhasil diperbarui',
@@ -256,8 +252,10 @@ export const useDaftarPermohonan = () => {
   const completeMutation = useMutation({
     mutationFn: (id: number) => completeLetterRequest(id),
     onSuccess: (data, id) => {
-      queryClient.invalidateQueries(['letterRequests', userId]);
-      queryClient.invalidateQueries(['letterRequest', userId, id]);
+      queryClient.invalidateQueries({ queryKey: ['letterRequests', userId] });
+      queryClient.invalidateQueries({
+        queryKey: ['letterRequest', userId, id],
+      });
       toast({
         title: 'Sukses',
         description: 'Permohonan surat telah diselesaikan',
@@ -278,8 +276,10 @@ export const useDaftarPermohonan = () => {
   const archiveMutation = useMutation({
     mutationFn: (id: number) => archiveLetterRequest(id),
     onSuccess: (data, id) => {
-      queryClient.invalidateQueries(['letterRequests', userId]);
-      queryClient.invalidateQueries(['letterRequest', userId, id]);
+      queryClient.invalidateQueries({ queryKey: ['letterRequests', userId] });
+      queryClient.invalidateQueries({
+        queryKey: ['letterRequest', userId, id],
+      });
       toast({
         title: 'Sukses',
         description: 'Permohonan surat telah diarsipkan',
