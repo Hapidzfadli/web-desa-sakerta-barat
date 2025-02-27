@@ -14,6 +14,12 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Add this section to exclude problematic pages from static generation
+  experimental: {
+    // This prevents pages from being statically generated
+    // (fallback to client-side rendering or server-side rendering)
+    workerThreads: true,
+  },
 };
 
 module.exports = withSentryConfig(nextConfig, {

@@ -1,8 +1,12 @@
 import React from 'react';
-import ListLetters from '../../../components/ListLetters/ListLetters';
+import dynamic from 'next/dynamic';
+
+const DynamicListLetters = dynamic(
+  () => import('../../../components/ListLetters/ListLetters'),
+  { ssr: false },
+);
 
 const ListLettersAdmin = () => {
-  return <ListLetters />;
+  return <DynamicListLetters />;
 };
-
 export default ListLettersAdmin;
