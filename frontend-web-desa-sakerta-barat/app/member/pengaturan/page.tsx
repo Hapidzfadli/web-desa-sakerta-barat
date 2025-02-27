@@ -1,14 +1,25 @@
 'use client';
 import React, { useState } from 'react';
-import Biodata from '../../../components/Biodata/Biodata';
-import Security from '../../../components/Security/Security';
+import dynamic from 'next/dynamic';
 import { cn } from '../../../lib/utils';
+
+// Use dynamic imports with ssr: false
+const DynamicBiodata = dynamic(
+  () => import('../../../components/Biodata/Biodata'),
+  { ssr: false },
+);
+
+const DynamicSecurity = dynamic(
+  () => import('../../../components/Security/Security'),
+  { ssr: false },
+);
+
 const Pengaturan = () => {
   const [activeTab, setActiveTab] = useState('biodata');
 
   const tabs = [
-    { id: 'biodata', label: 'Biodata Diri', component: <Biodata /> },
-    { id: 'keamanan', label: 'Keamanan', component: <Security /> },
+    { id: 'biodata', label: 'Biodata Diri', component: <DynamicBiodata /> },
+    { id: 'keamanan', label: 'Keamanan', component: <DynamicSecurity /> },
   ];
 
   return (

@@ -1,8 +1,13 @@
 import React from 'react';
-import ListLetters from '../../../components/ListLetters/ListLetters';
+import dynamic from 'next/dynamic';
+
+const DynamicListLetter = dynamic(
+  () => import('../../../components/ListLetters/ListLetters'),
+  { ssr: false },
+);
 
 const Permohonan = () => {
-  return <ListLetters />;
+  return <DynamicListLetter />;
 };
 
 export default Permohonan;
