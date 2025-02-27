@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # Database MySQL
+  db:
+    image: mysql:8.0
+    container_name: web-desa-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: digidesa
+      MYSQL_USER: prisma
+      MYSQL_PASSWORD: digides21
+      MYSQL_ROOT_PASSWORD: rootpassword
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - web-desa-network
+
+  # Backend NestJS
+  backend:
+    build:
+      context: ./backend-web-desa-sakerta-barat
+      dockerfile: Dockerfile
+    container_name: web-desa-backend
+    restart: always
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=mysql://prisma:digides21@db:3306/digidesa
+      - JWT_SECRET=K&18E3w{vhv6{hE_3()&st?4h!4e2r
+      - SENTRY_DNS=https://0103d3c8ddaa7da67d3f79a823621a94@o4507682772942848.ingest.us.sentry.io/4507682778382336
+    networks:
+      - web-desa-network
+
+  # Frontend Next.js
+  frontend:
+    build:
+      context: ./frontend-web-desa-sakerta-barat
+      dockerfile: Dockerfile
+    container_name: web-desa-frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=https://desa.hapidzfadli.com/api
+    networks:
+      - web-desa-network
+
+  # Nginx sebagai reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: web-desa-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - web-desa-network
+
+  # Certbot untuk SSL
+  certbot:
+    image: certbot/certbot
+    container_name: web-desa-certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    command: certonly --webroot -w /var/www/certbot --force-renewal --email admin@hapidzfadli.com -d desa.hapidzfadli.com --agree-tos --no-eff-email
+
+networks:
+  web-desa-network:
+    driver: bridge
+
+volumes:
+  db-data:

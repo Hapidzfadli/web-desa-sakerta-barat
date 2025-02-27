@@ -6,7 +6,7 @@ const nextConfig = {
       process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
   },
   images: {
-    domains: ['localhost'],
+    domains: ['localhost', 'desa.hapidzfadli.com'],
   },
   typescript: {
     ignoreBuildErrors: true,
