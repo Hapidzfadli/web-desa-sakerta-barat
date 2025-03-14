@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Database MySQL
+  # Database MySQL remains the same
   db:
     image: mysql:8.0
     container_name: web-desa-db
@@ -16,7 +16,7 @@ services:
     networks:
       - web-desa-network
 
-  # Backend NestJS
+  # Backend NestJS remains the same
   backend:
     build:
       context: ./backend-web-desa-sakerta-barat
@@ -32,7 +32,7 @@ services:
     networks:
       - web-desa-network
 
-  # Frontend Next.js
+  # Frontend Next.js remains the same except for the API URL
   frontend:
     build:
       context: ./frontend-web-desa-sakerta-barat
@@ -46,14 +46,14 @@ services:
     networks:
       - web-desa-network
 
-  # Nginx sebagai reverse proxy
+  # Nginx as reverse proxy - CHANGED PORTS
   nginx:
     image: nginx:alpine
     container_name: web-desa-nginx
     restart: always
     ports:
-      - "80:80"
-      - "443:443"
+      - "8082:80"  # Changed from 80:80 to 8082:80
+      - "8443:443" # Changed from 443:443 to 8443:443
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       - ./certbot/conf:/etc/letsencrypt
@@ -64,13 +64,14 @@ services:
     networks:
       - web-desa-network
 
-  # Certbot untuk SSL
+  # Certbot configuration needs adjustment
   certbot:
     image: certbot/certbot
     container_name: web-desa-certbot
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
+    # We'll need to adjust this command later after system Nginx is configured
     command: certonly --webroot -w /var/www/certbot --force-renewal --email admin@hapidzfadli.com -d desa.hapidzfadli.com --agree-tos --no-eff-email
 
 networks:
