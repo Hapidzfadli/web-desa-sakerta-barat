@@ -3,7 +3,7 @@ const { withSentryConfig } = require('@sentry/nextjs');
 const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL:
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+      process.env.NEXT_PUBLIC_API_URL || 'https://desa.hapidzfadli.com',
   },
   images: {
     domains: ['localhost', 'desa.hapidzfadli.com'],
