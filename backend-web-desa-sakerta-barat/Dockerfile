@@ -1,7 +1,7 @@
 FROM node:18-alpine
 
 # Use apt instead of apk for Debian-based images
-RUN apt-get update && apt-get install -y openssl
+RUN apk add --no-cache openssl
 
 WORKDIR /app
 
