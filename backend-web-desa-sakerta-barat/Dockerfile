@@ -1,4 +1,4 @@
-FROM node:18
+FROM node:18-ubuntu
 
 # Use apt instead of apk for Debian-based images
 RUN apt-get update && apt-get install -y openssl
